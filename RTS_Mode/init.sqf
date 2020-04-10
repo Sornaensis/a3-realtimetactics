@@ -230,41 +230,6 @@ RTS_groupMon = {
 				RTS_initialWeapons,
 				RTS_initialVehicles,
 				RTS_casualties];
-		_groupinfo = 
-			if ( ! (isNull _group) ) then {
-				// Group information
-				_unitSkills = [(units _group) select { alive _x }, { skill _x }] call CBA_fnc_filter;
-				format 
-				["GROUP OVERVIEW\n\nStatus - %1\nType - %2\nBehaviour - %3\nFormation - %4\nCombat Mode - %5\nCombat Victories - %6\nComm Effect - %7\nMorale - %8\nCasualties - %9\nAvg. Skill - %10\nComm State - %11",
-				  _group getVariable ["status", "Unkown"],
-				  _group getVariable ["desc", "Unkown"],
-				  behaviour (leader _group),
-				  formation _group,
-				  combatMode _group,
-				  _group getVariable ["combat_victories", 0],
-				  (_group getVariable ["command_bonus", 1])- 1,
-				  _group getVariable ["morale", 0],
-				  format ["%1\nInitial Strength - %2", (_group getVariable ["initial_strength", 0]) - (count ((units _group) select { alive _x } )),(_group getVariable ["initial_strength", 0])],
-				  if ( count _unitSkills > 0 ) then { _unitSkills call BIS_fnc_arithmeticMean } else { 0 },
-				  _group getVariable ["comms", "None"]]
-			} else { 
-				""
-			};
-		_vehicleinfo = "";
-		if ( !(isNull _group) && ((vehicle (leader _group)) != (leader _group)) ) then {
-			_veh = vehicle (leader _group);
-			_passengers = ((crew _veh) select { alive _x && (group _x != _group) });
-			_groups = [];
-			{
-				_groups pushBackUnique (group _x);
-			} forEach _passengers;
-			_space = _veh emptyPositions "CARGO";
-			_vehicleinfo = format 
-				["Passenger Space - %1\nAvailable - %2\nPassenger Groups - %3",
-					_space + (count _passengers),
-					_space,
-					count _groups];
-		};
 					
 		// Controls information
 		_name = "";
@@ -274,8 +239,8 @@ RTS_groupMon = {
 			if !(isNil "_one") then { _name = "\n\n" + _one };
 			if !(isNil "_three") then { _additional = "\n\n" + _three };
 		};
-		_controlinfo = format ["NEXT COMMAND%1%2", _name, _additional];
-		hintSilent format ["%1\n\n%2\n\n%3\n\n%4",_commanderinfo,_groupinfo,_vehicleinfo, _controlinfo];
+		_controlinfo = format ["Press H For Command List\n\nNEXT COMMAND%1%2", _name, _additional];
+		hintSilent format ["%1\n\n%2",_commanderinfo, _controlinfo];
 };
 
 RTS_ai_system = compile preprocessFileLineNumbers "rts\systems\ai_command_processing.sqf";

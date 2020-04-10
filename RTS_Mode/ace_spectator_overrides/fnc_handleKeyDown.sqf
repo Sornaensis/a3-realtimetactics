@@ -85,7 +85,7 @@ if ( _key == DIK_T && _shift ) exitWith {
 };
 
 if ( _key == DIK_E || _key == DIK_R 
-	|| _key == DIK_T || _key == DIK_G || _key == DIK_SPACE ) exitWith {
+	|| _key == DIK_T || _key == DIK_SPACE ) exitWith {
 	if ( isNil "RTS_command" ) then {
 		[_key, _alt, _shift, _ctrl] call RTS_fnc_setCommand;
 	};
@@ -110,6 +110,27 @@ if ( _key == DIK_BACKSPACE && !RTS_backspace ) exitWith {
 		};
 	};
 	true
+};
+
+if ( _key == DIK_H ) exitWith {
+	RTS_command = [nil,nil,nil,
+	"Click and Drag, or Double Click on a soldier/vehicle to select a unit\n\n" +
+	"Hold Buttons and double click to assign an order to a unit\n\n" +
+	"E: Move" + "\n" +
+	"Shift+E: Fast Move" + "\n" +
+	"Ctrl+E: Careful Move" + "\n" +
+	"R: Mount/Dismount Crew" + "\n" +
+	"T: Watch Position" + "\n" +
+	"Shift+T: Check Position Visibility" + "\n" +
+	"X: Enter Building" + "\n" +
+	"Space: Load/Unload Passengers" + "\n" +
+	"F: Select Formation" + "\n" +
+	"V: Select Stance" + "\n" +
+	"C: Select Combat Mode" + "\n" +
+	"`: Control Unit" + "\n" +
+	"Backspace: Delete Last Order" + "\n" +
+	"P: Add Wait time to Last Order" + "\n" +
+	"Tab: Pause"];
 };
 
 
@@ -268,52 +289,7 @@ if ( _key == DIK_P && (RTS_Phase == "MAIN" || RTS_phase == "INITIALORDERS") ) ex
 
 if ( _key == DIK_GRAVE && RTS_Phase == "MAIN" && !RTS_paused ) exitWith {
 	if ( RTS_commanding && !(isNull RTS_selectedGroup) ) then {
-		while { count (RTS_slectedGroup getVariable ["commands",[]]) > 0 } do {
-			[RTS_selectedGroup] call RTS_fnc_removeCommand;
-		};
-		terminate RTS_ui;
-		[false] call ace_spectator_fnc_cam;
-		[false] call RTS_fnc_ui;
-		selectPlayer (leader RTS_selectedGroup);
-		RTS_killedEH = player addEventHandler ["killed", {
-			private _pos = getPosATL player;
-			private _dir = getDir player;
-			_pos set [2, 5];
-			private _leader = ((units (group player)) select { alive _x }) select 0;
-			(group player) selectLeader _leader;
-			{
-				_x commandMove (getPosATL _x);
-				[_x] commandFollow (group _leader);
-			} forEach (units (group _leader));
-			RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
-			player removeAction RTS_commandAction;
-			player removeEventHandler ["killed", RTS_killedEH];
-			selectPlayer RTS_commanderUnit;
-			[true] call ace_spectator_fnc_cam;
-			[true] call RTS_fnc_ui;
-			ace_spectator_camera setPosATL _pos;
-			ace_spectator_camera setDir _dir;
-		}];
-
-		RTS_commandAction = player addAction ["Command Mode", 
-		{
-			private _pos = getPosATL player;
-			private _dir = getDir player;
-			_pos set [2, 5];
-			private _group = group player;
-			{
-				_x commandMove (getPosATL _x);
-				[_x] commandFollow (leader _group);
-			} forEach (units _group);
-			RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
-			player removeAction RTS_commandAction;
-			player removeEventHandler ["killed", RTS_killedEH];
-			selectPlayer RTS_commanderUnit;
-			[true] call ace_spectator_fnc_cam;
-			[true] call RTS_fnc_ui;
-			ace_spectator_camera setPosATL _pos;
-			ace_spectator_camera setDir _dir;
-		}];
+		call RTS_fnc_takeControlOfUnit;
 	};
 	true
 };

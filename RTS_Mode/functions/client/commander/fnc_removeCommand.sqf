@@ -33,7 +33,7 @@ if ( _group in RTS_commandingGroups ) then {
 		[_group] call CBA_fnc_clearWaypoints;
 	};
 	
-	if ( RTS_phase == "MAIN" && count (_group getVariable ["commands", []]) == 0 && (_group getVariable ["status", ""]) == "OTM" ) then {
+	if ( RTS_phase == "MAIN" && count (_group getVariable ["commands", []]) == 0 && (_group getVariable ["status", ""]) == "OTM" && !(_group getVariable ["waypoint_canceled", false]) ) then {
 		if ( vehicle (leader _group) == (leader _group) ) then {
 			[_group, getPos (leader _group)] call RTS_fnc_addMoveCommand;
 		};

@@ -33,7 +33,7 @@ if (_key == DIK_TAB) exitWith {
 };
 
 if ( _key == DIK_E || _key == DIK_R 
-	|| _key == DIK_T || _key == DIK_G || _key == DIK_SPACE ) exitWith {
+	|| _key == DIK_T || _key == DIK_H || _key == DIK_SPACE ) exitWith {
 	RTS_command = nil;
 	true
 };

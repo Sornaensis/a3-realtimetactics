@@ -14,5 +14,6 @@
 	 Q(RTS_fnc_setupAllGroups),
 	 Q(RTS_fnc_setupAsSide),
 	 Q(RTS_fnc_setupClass_Rifleman),
-	 Q(RTS_fnc_setupClass_Marksman)]
+	 Q(RTS_fnc_setupClass_Marksman),
+	 Q(RTS_fnc_takeControlOfUnit)]
 ] call RTS_setupFunction;

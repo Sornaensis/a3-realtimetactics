@@ -1,164 +1,281 @@
+////////////////////////////////////////////////////////
+// GUI EDITOR OUTPUT START (by Sornaensis, v1.063, #Jewyvu)
+////////////////////////////////////////////////////////
 
-//// DIALOGS /////
+class UnitOverViewPanel: IGUIBack
+{
+	idc = 1800;
+	x = 0.0064056 * safezoneW + safezoneX;
+	y = 0.105035 * safezoneH + safezoneY;
+	w = 0.163062 * safezoneW;
+	h = 0.441985 * safezoneH;
+	colorBackground[] = {0,0,0,0.85};
+	colorActive[] = {0,0,0,0.85};
+};
+class UnitNameText: RscText
+{
+	idc = 1000;
+	text = "Unit Name"; //--- ToDo: Localize;
+	x = 0.0504765 * safezoneW + safezoneX;
+	y = 0.114439 * safezoneH + safezoneY;
+	w = 0.0661064 * safezoneW;
+	h = 0.0282118 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 1.35)";
+};
+class StatusLabel: RscText
+{
+	idc = 1001;
+	text = "Status"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.18967 * safezoneH + safezoneY;
+	w = 0.0352567 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class MoraleLabel: RscText
+{
+	idc = 1002;
+	text = "Morale"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.217882 * safezoneH + safezoneY;
+	w = 0.0352567 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class CommandEffectLabel: RscText
+{
+	idc = 1003;
+	text = "Command Effect"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.246094 * safezoneH + safezoneY;
+	w = 0.0572922 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class CombatVictoriesLabel: RscText
+{
+	idc = 1004;
+	text = "Combat Victories"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.274306 * safezoneH + safezoneY;
+	w = 0.0572922 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class CasualtyLabel: RscText
+{
+	idc = 1005;
+	text = "KIA / Total"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.302518 * safezoneH + safezoneY;
+	w = 0.0440709 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class FormationLabel: RscText
+{
+	idc = 1006;
+	text = "Formation"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.330729 * safezoneH + safezoneY;
+	w = 0.0396638 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class CombatModeLabel: RscText
+{
+	idc = 1007;
+	text = "Combat Mode"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.358941 * safezoneH + safezoneY;
+	w = 0.048478 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class HasRadioLabel: RscText
+{
+	idc = 1008;
+	text = "Has Radio"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.415365 * safezoneH + safezoneY;
+	w = 0.0396638 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class UnitCallsignText: RscText
+{
+	idc = 1009;
+	text = "Unit Callsign"; //--- ToDo: Localize;
+	x = 0.0548836 * safezoneW + safezoneX;
+	y = 0.152055 * safezoneH + safezoneY;
+	w = 0.0528851 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 1.1)";
+};
+class StanceLabel: RscText
+{
+	idc = 1010;
+	text = "Stance"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.387153 * safezoneH + safezoneY;
+	w = 0.0308496 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class AmmoLevelLabel: RscText
+{
+	idc = 1011;
+	text = "Ammunition Level"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.443576 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class PassengerInfoLabel: RscText
+{
+	idc = 1011;
+	text = "Passenger Info"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = (0.443576 + 0.443576 - 0.415365) * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class SelectCommanderBtn: RscButton
+{
+	idc = 1600;
+	text = "Commanding Element"; //--- ToDo: Localize;
+	x = 0.0152198 * safezoneW + safezoneX;
+	y = 0.5 * safezoneH + safezoneY;
+	w = 0.0705135 * safezoneW;
+	h = 0.0282118 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class StatusText: RscText
+{
+	idc = 1012;
+	text = "WAITING"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = 0.18967 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class MoraleText: RscText
+{
+	idc = 1013;
+	text = "100%"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = 0.217882 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class CommandEffectText: RscText
+{
+	idc = 1014;
+	text = "None"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = 0.246094 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class CombatVictoryText: RscText
+{
+	idc = 1015;
+	text = "15"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = 0.274306 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class CasualtyText: RscText
+{
+	idc = 1016;
+	text = "-  /  8"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = 0.302518 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ControlBtn: RscButton
+{
+	idc = 1601;
+	text = "Take Control"; //--- ToDo: Localize;
+	x = 0.116583 * safezoneW + safezoneX;
+	y = 0.5 * safezoneH + safezoneY;
+	w = 0.0440709 * safezoneW;
+	h = 0.0282118 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class FormationText: RscText
+{
+	idc = 1017;
+	text = "STAG COLUMN"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = 0.330729 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class CombatModeText: RscText
+{
+	idc = 1018;
+	text = "YELLOW"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = 0.358941 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class StanceText: RscText
+{
+	idc = 1019;
+	text = "Discretion"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = 0.387153 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class HasRadioText: RscText
+{
+	idc = 1020;
+	text = "Yes"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = 0.415365 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class AmmoLevelText: RscText
+{
+	idc = 1021;
+	text = "100%"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = 0.443576 * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class PassengerInfoText: RscText
+{
+	idc = 1021;
+	text = "100%"; //--- ToDo: Localize;
+	x = 0.103362 * safezoneW + safezoneX;
+	y = (0.443576 + 0.443576 - 0.415365) * safezoneH + safezoneY;
+	w = 0.0616993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+////////////////////////////////////////////////////////
+// GUI EDITOR OUTPUT END
+////////////////////////////////////////////////////////
 
-
-class UnitOverviewDialog {
-	idd = 6645;                    
-	movingEnable = true;           
-	enableSimulation = true;      
-	controlsBackground[] = { };    // no background controls needed
-	objects[] = { };               // no objects needed
-	controls[] = { UnitFrame, UnitText, OOBText, StrengthText, AmmoText, MoraleText, ROETExt, BehaviourText, FormationText, ROE_Box, Formation_Box, Behavior_Box, OOB_Text, Strength_Text, Ammo_Text, Morale_Text }; 
-
-	class UnitFrame: RscFrame
-	{
-		idc = 1800;
-		moving = 1;
-		x = 0.175;
-		y = 0.2;
-		w = 0.4375;
-		h = 0.68;
-		colorBackground[] = {0,0,0,1};
-	};
-	class UnitText: RscText
-	{
-		idc = 1000;
-		text = "Unit Overview"; //--- ToDo: Localize;
-		x = 0.2625;
-		y = 0.22;
-		w = 0.2125;
-		h = 0.08;
-		sizeEx = 1.6 * GUI_GRID_H;
-	};
-	class OOBText: RscText
-	{
-		idc = 1001;
-		text = "OOB"; //--- ToDo: Localize;
-		x = 0.2;
-		y = 0.32;
-		w = 0.0625;
-		h = 0.04;
-	};
-	class StrengthText: RscText
-	{
-		idc = 1002;
-		text = "Strength"; //--- ToDo: Localize;
-		x = 0.2;
-		y = 0.38;
-		w = 0.0875;
-		h = 0.04;
-	};
-	class AmmoText: RscText
-	{
-		idc = 1003;
-		text = "Ammo"; //--- ToDo: Localize;
-		x = 0.2;
-		y = 0.44;
-		w = 0.0875;
-		h = 0.04;
-	};
-	class MoraleText: RscText
-	{
-		idc = 1004;
-		text = "Morale"; //--- ToDo: Localize;
-		x = 0.2;
-		y = 0.5;
-		w = 0.0875;
-		h = 0.04;
-	};
-	class ROEText: RscText
-	{
-		idc = 1005;
-		text = "ROE"; //--- ToDo: Localize;
-		x = 0.2;
-		y = 0.6;
-		w = 0.0875;
-		h = 0.04;
-	};
-	class BehaviourText: RscText
-	{
-		idc = 1006;
-		text = "Behavior"; //--- ToDo: Localize;
-		x = 0.2;
-		y = 0.68;
-		w = 0.0875;
-		h = 0.04;
-	};
-	class FormationText: RscText
-	{
-		idc = 1007;
-		text = "Formation"; //--- ToDo: Localize;
-		x = 0.2;
-		y = 0.76;
-		w = 0.1125;
-		h = 0.04;
-	};
-	class ROE_Box: RscListbox
-	{
-		idc = 1500;
-		x = 0.325;
-		y = 0.6;
-		w = 0.2625;
-		h = 0.04;
-	};
-	class Behavior_Box: RscListbox
-	{
-		idc = 1501;
-		x = 0.325;
-		y = 0.68;
-		w = 0.2625;
-		h = 0.04;
-	};
-	class Formation_Box: RscListbox
-	{
-		idc = 1502;
-		x = 0.325;
-		y = 0.76;
-		w = 0.2625;
-		h = 0.04;
-	};
-	class OOB_Text: RscText
-	{
-		idc = 1008;
-		text = "oob_text"; //--- ToDo: Localize;
-		x = 0.325;
-		y = 0.32;
-		w = 0.2625;
-		h = 0.04;
-		sizeEx = 0.7;
-	};
-	class Strength_Text: RscText
-	{
-		idc = 1009;
-		text = "oob_text"; //--- ToDo: Localize;
-		x = 0.325;
-		y = 0.38;
-		w = 0.2625;
-		h = 0.04;
-		sizeEx = 0.7;
-	};
-	class Ammo_Text: RscText
-	{
-		idc = 1010;
-		text = "oob_text"; //--- ToDo: Localize;
-		x = 0.325;
-		y = 0.44;
-		w = 0.2625;
-		h = 0.04;
-		sizeEx = 0.7;
-	};
-	class Morale_Text: RscText
-	{
-		idc = 1011;
-		text = "oob_text"; //--- ToDo: Localize;
-		x = 0.325;
-		y = 0.5;
-		w = 0.2625;
-		h = 0.04;
-		sizeEx = 0.7;
-	};
-
-}
 
 /// Spectator
 
