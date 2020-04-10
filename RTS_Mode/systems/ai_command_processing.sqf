@@ -46,7 +46,6 @@
 						_pausetime = _pausetime - 1;
 						sleep 1;						
 					};
-					_group setVariable ["status", "OTM" ];
 					_unit disableAi "MOVE";
 					if ( _type == "TR UNLOAD") then {
 						private _groups = [];

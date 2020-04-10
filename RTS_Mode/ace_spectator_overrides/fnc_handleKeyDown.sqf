@@ -100,7 +100,7 @@ if ( _key == DIK_BACKSPACE && !RTS_backspace ) exitWith {
 		RTS_backspace = true;
 		private _commands = _group getVariable ["commands", []];
 		if (( count _commands ) == 1) then {
-			[_group] call RTS_fnc_removeCommand;
+			[_group,true] call RTS_fnc_removeCommand;
 		} else {
 			private _newcommands = [];
 			for "_i" from 0 to ((count _commands) - 2) do {
