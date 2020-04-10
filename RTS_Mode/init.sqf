@@ -239,7 +239,7 @@ RTS_groupMon = {
 			if !(isNil "_one") then { _name = "\n\n" + _one };
 			if !(isNil "_three") then { _additional = "\n\n" + _three };
 		};
-		_controlinfo = format ["Press H For Command List\n\nNEXT COMMAND%1%2", _name, _additional];
+		_controlinfo = format ["Hold H For Command List\n\nNEXT COMMAND%1%2", _name, _additional];
 		hintSilent format ["%1\n\n%2",_commanderinfo, _controlinfo];
 };
 
