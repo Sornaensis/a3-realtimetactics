@@ -1,6 +1,8 @@
 #include "..\..\..\RTS_defines.hpp"
 params ["_group", "_description", "_commandelement", "_grouptexture", "_icon"];
 
+clearGroupIcons _group;
+
 [_group] call CBA_fnc_clearWaypoints;
 RTS_commandingGroups set [count RTS_commandingGroups, _group];
 
@@ -88,7 +90,7 @@ if !(isNil "_veh") then {
 									RTS_casualties = RTS_casualties + 1; 
 									
 									// Morale impact
-									_group setVariable ["morale", (_group getVariable ["morale", 0]) - ( (_moralefactor/3) / ( 1 max _living ) )*_casualties - _commandbonus ];
+									_group setVariable ["morale", -20 max ((_group getVariable ["morale", 0]) - ( (_moralefactor/3) / ( 1 max _living ) )*_casualties - _commandbonus ) ];
 									
 									private _newmorale = _group getVariable ["morale", 0];
 									
@@ -111,12 +113,25 @@ if ( (count (units _group)) > 1 ) then {
 	[_group] spawn {
 		params ["_group"];
 		while { (count ((units _group) select { [_x] call CBA_fnc_isAlive })) > 0 } do {
+			private _leader = leader _group;
+			
+			if ( (vehicle _leader) != _leader && !(canMove (vehicle _leader)) ) then {
+				private _veh = vehicle _leader;
+				if ( group (driver _veh) == _group ) then {
+					[_group, getPos _leader] call RTS_fnc_addUnloadOrLoadCommand;				
+					[_group, getPos _leader] call RTS_fnc_addMountOrDismountCommand;
+				} else {
+					[_group, getPos _leader] call RTS_fnc_addUnloadOrLoadCommand;	
+				};
+			};
+		
 			_units = (units _group) select { [_x] call CBA_fnc_isAlive };
 			private _maxmorale = (count _units) / (_group getVariable ["initial_strength", 1]) * 100;
 			private _commandbonus = _group getVariable ["command_bonus", 0];
 			_commandbonus = (if ( _commandbonus > 1 ) then { _commandbonus } else { 1 });
 			
-			private _friendlyUnits = [getPosATL (leader _group), allunits select { side _x == RTS_sidePlayer }, 75] call CBA_fnc_getNearest;
+			private _friendlyUnits = [getPosATL (leader _group), allunits select { side _x == RTS_sidePlayer }, 150] call CBA_fnc_getNearest;
+			private _gotCommandBoost = false;
 			
 			{
 				private _neargroup = group _x;
@@ -124,8 +139,13 @@ if ( (count (units _group)) > 1 ) then {
 					private _dist = (getPosATL (leader _group)) distance (getPosATL (leader _neargroup));
 					private _commandboost = 150 / (if ( _dist > 1 ) then { _dist } else { 1 });
 					_group setVariable ["command_bonus", floor _commandboost];
+					_gotCommandBoost = true;
 				};
 			} forEach _friendlyUnits;
+			
+			if ( !_gotCommandBoost ) then {
+				_group setVariable ["command_bonus", 1];
+			};
 			
 			{
 				_nearest = [getPosATL _x, _units - [_x]] call CBA_fnc_getNearest;
@@ -141,7 +161,7 @@ if ( (count (units _group)) > 1 ) then {
 					
 			} forEach _units;
 			
-			_group setVariable ["morale", _maxmorale min ( (_group getVariable ["morale",0]) + 0.4 * _commandbonus )];
+			_group setVariable ["morale", _maxmorale min ( (_group getVariable ["morale",0]) + ( if ( (_group getVariable ["morale",0]) > 0 ) then { 0.1 } else { 0.03 } ) * _commandbonus )];
 			
 			if ( (_group getVariable ["morale",0]) > 0 ) then {
 				_group setVariable ["commandable", true];

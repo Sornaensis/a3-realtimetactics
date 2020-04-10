@@ -95,7 +95,7 @@ if (_init) then {
 	GVAR(uiDraw3DOrders) = addMissionEventHandler ["Draw3D", {call RTS_fnc_draw3dOrders}];
 	setViewDistance 4500;
 	
-	setGroupIconsVisible [true, true];
+	setGroupIconsVisible [false, false];
 	onGroupIconClick
 	{
 	    // Passed values for _this are:

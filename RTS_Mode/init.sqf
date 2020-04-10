@@ -52,6 +52,8 @@ if ( isDedicated || !hasInterface ) exitWith {};
 waitUntil { !(isNull player) && isPlayer player };
 waitUntil { time > 1 };
 
+setGroupIconsVisible [false, false];
+
 if ( !([] call RTS_fnc_isCommander) ) exitWith {};
 
 [] call (compile preprocessFileLineNumbers "rts\ace_spectator_overrides\setup.sqf");
@@ -114,6 +116,7 @@ RTS_formationChoose = false;
 RTS_combatChoose = false;
 RTS_stanceChoose = false;
 RTS_buildingposChoose = false;
+RTS_issuingPause = false;
 RTS_command = nil;
 RTS_commanding = false;
 RTS_commandingGroups = [];
@@ -239,7 +242,7 @@ RTS_groupMon = {
 				  formation _group,
 				  combatMode _group,
 				  _group getVariable ["combat_victories", 0],
-				  _group getVariable ["command_bonus", 0],
+				  (_group getVariable ["command_bonus", 1])- 1,
 				  _group getVariable ["morale", 0],
 				  format ["%1\nInitial Strength - %2", (_group getVariable ["initial_strength", 0]) - (count ((units _group) select { alive _x } )),(_group getVariable ["initial_strength", 0])],
 				  if ( count _unitSkills > 0 ) then { _unitSkills call BIS_fnc_arithmeticMean } else { 0 },

@@ -32,9 +32,17 @@ if ( _group in RTS_commandingGroups ) then {
 	if ( (count (waypoints _group)) > 0 ) then {
 		[_group] call CBA_fnc_clearWaypoints;
 	};
-	if ( _group getVariable ["status", "WAITING"] != "HOLDING" ) then {
-		_group setVariable ["status", "WAITING", false];
-	} else {
-		_group setVariable ["status", "HOLDING", false];
+	
+	if ( RTS_phase == "MAIN" && count (_group getVariable ["commands", []]) == 0 && (_group getVariable ["status", ""]) == "OTM" ) then {
+		if ( vehicle (leader _group) == (leader _group) ) then {
+			[_group, getPos (leader _group)] call RTS_fnc_addMoveCommand;
+		};
+		_group setVariable ["waypoint_canceled", true];
+	} else {	
+		if ( _group getVariable ["status", "WAITING"] != "HOLDING" ) then {
+			_group setVariable ["status", "WAITING", false];
+		} else {
+			_group setVariable ["status", "HOLDING", false];
+		};
 	};
 };

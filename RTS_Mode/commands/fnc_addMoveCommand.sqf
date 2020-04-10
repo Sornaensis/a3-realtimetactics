@@ -2,7 +2,17 @@ params ["_group", "_pos"];
 
 _commands = _group getVariable ["commands", []];
 
-private _newcommand = [_pos,"MOVE", if ( (vehicle (leader _group)) == (leader _group) ) then {"AWARE"} else {"SAFE"},combatMode _group,formation _group,"NORMAL"];
+private _newcommand = [ _pos,
+						"MOVE",
+						"AWARE",
+						combatMode _group,
+						formation _group,
+						if ( (vehicle (leader _group)) == (leader _group) ) then {
+							"NORMAL"
+						} else {
+							"FULL"
+						}
+						];
 
 _commands set [count _commands, _newcommand];
 

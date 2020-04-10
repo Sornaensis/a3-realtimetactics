@@ -61,6 +61,11 @@ if ( _key == DIK_V ) exitWith {
 	true
 };
 
+if ( _key == DIK_P ) exitWith {
+	RTS_issuingPause = false;
+	true
+};
+
 if ( _key == DIK_X ) exitWith {
 	RTS_buildingposChoose = false;
 	RTS_command = nil;

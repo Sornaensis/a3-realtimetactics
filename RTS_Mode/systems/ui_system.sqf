@@ -16,7 +16,7 @@ RTS_phaseButton buttonSetAction RTS_phaseButtonAction;
 RTS_phaseButton ctrlCommit 0;
 RTS_phaseButton ctrlShow false;
 RTS_missionTimeStarted = nil;
-
+RTS_missionTimeElapsedSoFar = 0;
 
 // Wait for mission to start
 [] spawn { 
@@ -29,6 +29,15 @@ RTS_missionTimeStarted = nil;
 RTS_targetPhase = RTS_phase;
 [] spawn {
 	while { true && RTS_commanding } do {
+		if ( RTS_phase == "MAIN" && RTS_paused && !(isNil "RTS_missionTimeStarted") ) then {
+			RTS_missionTimeElapsedSoFar = RTS_missionTimeElapsedSoFar + time - RTS_missionTimeStarted;
+			RTS_missionTimeStarted = nil;
+		};
+		
+		if ( RTS_phase == "MAIN" && !RTS_paused && (isNil "RTS_missionTimeStarted") ) then {
+			RTS_missionTimeStarted = time;
+		};
+			
 		// Update phase display
 		RTS_phaseBox ctrlSetText 
 			( if ( RTS_paused ) then { 
@@ -37,7 +46,7 @@ RTS_targetPhase = RTS_phase;
 					switch RTS_phase do {
 					case "DEPLOY": {"Deployment Phase"};
 					case "MAIN": { if ( !(isNil "RTS_missionTimeStarted") ) then {
-									format ["Combat Phase  -  %1", [time - RTS_missionTimeStarted] call BIS_fnc_secondsToString ]
+									format ["Combat Phase  -  %1", [RTS_missionTimeElapsedSoFar + time - RTS_missionTimeStarted] call BIS_fnc_secondsToString ]
 								   } else {
 								   	"Combat Phase"
 								   }

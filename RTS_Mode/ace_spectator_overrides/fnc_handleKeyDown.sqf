@@ -213,6 +213,59 @@ if ( _key == DIK_X && !RTS_buildingposChoose && (isNil "RTS_command") ) exitWith
 	true
 };
 
+if ( _key == DIK_P && (RTS_Phase == "MAIN" || RTS_phase == "INITIALORDERS") ) exitWith {
+	if ( RTS_commanding && !(isNull RTS_selectedGroup) && !RTS_issuingPause ) then {
+		RTS_issuingPause = true;
+		
+		private _commands = RTS_selectedGroup getVariable ["commands", []];
+		
+		if ( count _commands > 0 ) then {
+			private _currentCommand = _commands select (count _commands - 1);
+			
+			// Already pausing
+			if ( count _currentCommand > 6 ) then {
+				private _pausetime = _currentCommand select 6;
+				if ( _pausetime == 300 ) then {
+					_currentCommand set [6, 0];
+				} else {
+					if ( _pausetime == 240 ) then {
+						_currentCommand set [6, 300];
+					} else {
+						if ( _pausetime == 120 ) then {
+							_currentCommand set [6, 240];
+						} else {
+							if ( _pausetime == 90 ) then {
+								_currentCommand set [6, 120];
+							} else {
+								if ( _pausetime == 60 ) then {
+									_currentCommand set [6, 90];
+								} else {
+									if ( _pausetime == 30 ) then {
+										_currentCommand set [6, 60];
+									} else {
+										if ( _pausetime == 15 ) then {
+											_currentCommand set [6, 30];
+										} else {
+											if ( _pausetime == 0 ) then {
+												_currentCommand set [6, 15];
+											} else {
+												
+											};	
+										};		
+									};	
+								};		
+							};	
+						};
+					};
+				};
+			} else {
+				_currentCommand pushBack 15;
+			};
+		};
+	};
+	true	
+};
+
 if ( _key == DIK_GRAVE && RTS_Phase == "MAIN" && !RTS_paused ) exitWith {
 	if ( RTS_commanding && !(isNull RTS_selectedGroup) ) then {
 		while { count (RTS_slectedGroup getVariable ["commands",[]]) > 0 } do {
@@ -262,5 +315,6 @@ if ( _key == DIK_GRAVE && RTS_Phase == "MAIN" && !RTS_paused ) exitWith {
 			ace_spectator_camera setDir _dir;
 		}];
 	};
+	true
 };
 

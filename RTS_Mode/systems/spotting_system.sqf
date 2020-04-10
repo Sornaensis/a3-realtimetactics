@@ -69,6 +69,17 @@ RTS_spottingLoop = [] spawn {
 	} 
 };
 
+RTS_reveal_deadMen = [] spawn {
+	while { true } do {
+		{
+			_x hideObject false;
+			(vehicle _x) hideObject false;
+		} forEach allDeadMen;
+		
+		sleep 5;
+	};
+};
+
 
 RTS_fnc_spotting = {
 	params ["_enemy","_groups"];

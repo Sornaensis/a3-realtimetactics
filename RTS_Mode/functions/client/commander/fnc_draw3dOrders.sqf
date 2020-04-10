@@ -165,10 +165,22 @@ if ( RTS_commanding ) then {
 				};
 				
 				if ( _x == RTS_selectedGroup ) then {
+					
+					// Waypoint number
+					private _waypointDesc = format ["%1", _i + 1];
+					
+					if ( count (_commands select _i) > 6 ) then {
+						private _pausetime = (_commands select _i) select 6;
+						if ( _i == 0 && (_x getVariable ["status",""] == "PAUSED") ) then {
+							_pausetime = _x getVariable ["pause_remaining",0];
+						};
+						_waypointDesc = format ["%1 / Wait %2", _i + 1, [_pausetime,"MM:SS"] call BIS_fnc_secondsToString];
+					};
+					
 					// Draw all the waypoints
 					drawIcon3D ["\A3\ui_f\data\map\groupicons\waypoint.paa", [0,0,0,1], (_commands select _i) select 0, 1.1, 1.1,0];
 					drawIcon3D ["\A3\ui_f\data\map\groupicons\waypoint.paa", RTS_sideColor, (_commands select _i) select 0, 1, 1,0];
-					drawIcon3D ["", [1,1,1,1], (_commands select _i) select 0, 1, 1, 0, str (_i + 1),2,0.04];
+					drawIcon3D ["", [1,1,1,1], (_commands select _i) select 0, 1, 1, 0, _waypointDesc,2,0.04];
 				};
 			};
 		};
