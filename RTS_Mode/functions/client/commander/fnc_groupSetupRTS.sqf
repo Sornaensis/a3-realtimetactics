@@ -1,6 +1,8 @@
 #include "..\..\..\RTS_defines.hpp"
 params ["_group", "_description", "_commandelement", "_grouptexture", "_icon"];
 
+call disableFriendlyCollision;
+
 clearGroupIcons _group;
 
 [_group] call CBA_fnc_clearWaypoints;

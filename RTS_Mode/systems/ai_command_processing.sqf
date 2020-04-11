@@ -44,9 +44,9 @@
 					_group setVariable ["status", "PAUSED" ];
 					_pausetime = (if ( _pausetime > 0 ) then { _pausetime } else { _group getVariable ["pause_remaining", 0] });
 					while { _pausetime > 0 } do {
-						_group setVariable ["pause_remaining", _pausetime];
-						_pausetime = _pausetime - 1;
+						_group setVariable ["pause_remaining", _pausetime - 1];
 						sleep 1;
+						_pausetime = _group getVariable ["pause_remaining", 0];
 						waitUntil { !RTS_paused };						
 					};
 					_group setVariable ["pause_remaining", 0];
@@ -156,9 +156,9 @@
 						_group setVariable ["status", "PAUSED" ];
 						_pausetime = (if ( _pausetime > 0 ) then { _pausetime } else { _group getVariable ["pause_remaining", 0] });
 						while { _pausetime > 0 } do {
-							_group setVariable ["pause_remaining", _pausetime];
-							_pausetime = _pausetime - 1;
+							_group setVariable ["pause_remaining", _pausetime - 1];
 							sleep 1;	
+							_pausetime = _group getVariable ["pause_remaining", 0];
 							waitUntil { !RTS_paused };							
 						};
 						_group setVariable ["pause_remaining", 0];

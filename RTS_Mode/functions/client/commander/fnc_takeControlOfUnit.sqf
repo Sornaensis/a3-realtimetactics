@@ -1,6 +1,7 @@
 private _group = RTS_selectedGroup;
 if ( isNull _group ) exitWith {};
 if ( (_group getVariable ["morale", 0]) < 1 ) exitWith {};
+if ( RTS_paused ) exitWith {};
 
 while { count (_group getVariable ["commands",[]]) > 0 } do {
 	[_group,true] call RTS_fnc_removeCommand;
