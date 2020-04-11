@@ -33,6 +33,8 @@ if ( !(isNull _commandelement) ) then {
 	_commandelement setVariable ["subordinates", _subunits, false];
 };
 
+_group setVariable ["initial_ammo", [_group] call RTS_fnc_getAmmoLevel ];
+
 _group setVariable ["commandable", true, true];  // Determines whether the commander can issue orders
 _group setVariable ["command_bonus", 0, false];   // 0-70 : Command bonus determined by the unit's distance to its _commandelement
 												  //  Command bonus has a 0-25% reduction on morale loss from casualties

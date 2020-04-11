@@ -54,6 +54,33 @@ waitUntil { time > 1 };
 
 setGroupIconsVisible [false, false];
 
+makeVehicleSafe = {
+	private _veh = _this select 0;
+	private _side = side _veh;
+	{
+		if ( side _x == _side && !(isPlayer _x) ) then {
+			_veh disableCollisionWith _x;
+		};
+	} forEach allUnits;
+};
+disableFriendlyCollision = {
+	{
+		if ( !( _x isKindOf "StaticWeapon" ) && !( _x isKindOf "EmptyDetector" ) ) then {
+			[_x] call makeVehicleSafe;
+		};
+	} forEach vehicles;
+};
+
+call disableFriendlyCollision;
+
+RTS_safeVehicleThread = [] spawn {
+	while { true } do {
+		call disableFriendlyCollision;
+		sleep 30;
+	};
+};
+
+
 if ( !([] call RTS_fnc_isCommander) ) exitWith {};
 
 [] call (compile preprocessFileLineNumbers "rts\ace_spectator_overrides\setup.sqf");

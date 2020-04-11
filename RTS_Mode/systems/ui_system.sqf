@@ -157,7 +157,22 @@ RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 				};
 			};
 			
-			RTS_ammoLevelText ctrlSetText (RTS_selectedGroup getVariable ["ammo_level", "100%"]);
+			private _ammo = [RTS_selectedGroup] call RTS_fnc_getAmmoLevel;
+			private _initialAmmo = RTS_selectedGroup getVariable ["initial_ammo", 1];
+			
+			private _ammolevel = round (((_ammo / _initialammo) min 1.0) * 100);
+			
+			RTS_ammoLevelText ctrlSetText (format ["%1%2", _ammolevel, "%"]);
+			
+			if ( _ammolevel > 70 ) then {
+				RTS_ammoLevelText ctrlSetTextColor [0,1,0,1];
+			} else {
+				if ( _ammolevel > 35 ) then {
+					RTS_ammoLevelText ctrlSetTextColor [1,1,0,1];
+				} else {
+					RTS_ammoLevelText ctrlSetTextColor [1,0,0,1];
+				};
+			};
 			
 			private _vehicleinfo = "-";
 			if ( !(isNull RTS_selectedGroup) && ((vehicle (leader RTS_selectedGroup)) != (leader RTS_selectedGroup)) ) then {
@@ -189,6 +204,7 @@ RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 			RTS_combatVictoryText ctrlSetText "-";
 			RTS_casualtyText ctrlSetText "-";
 			RTS_hasRadioText ctrlSetText "-";
+			RTS_commandEffectText ctrlSetText "-";
 			
 			RTS_moraleText ctrlSetText "-";
 			RTS_moraleText ctrlSetTextColor [1,1,1,1];			
