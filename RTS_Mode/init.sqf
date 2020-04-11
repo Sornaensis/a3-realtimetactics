@@ -257,7 +257,7 @@ RTS_killedEH = player addEventHandler ["killed", {
 RTS_groupMon = {
 		private _group = RTS_selectedGroup;
 		_commanderinfo = format
-			["COMBAT OVERVIEW\n\nInitial Strength - %1\nInitial Weapons - %2\nInitial Vehicles - %3\nCasualties - %4", 
+			["COMBAT OVERVIEW<br/><br/><t align='left'>Initial Strength:</t><t align='right'>%1</t><br/><t align='left'>Initial Weapons:</t><t align='right'>%2</t><br/><t align='left'>Initial Vehicles:</t><t align='right'>%3</t><br/><t align='left'>Casualties:</t><t align='right'>%4</t>", 
 				RTS_initialMen,
 				RTS_initialWeapons,
 				RTS_initialVehicles,
@@ -268,31 +268,31 @@ RTS_groupMon = {
 		_additional = "";
 		if ( ! isNil "RTS_command" ) then { 
 			RTS_command params ["_one","","","_three"];
-			if !(isNil "_one") then { _name = "\n\n" + _one };
-			if !(isNil "_three") then { _additional = "\n\n" + _three };
+			if !(isNil "_one") then { _name = "<br/><br/>" + _one };
+			if !(isNil "_three") then { _additional = "<br/><br/>" + _three };
 		};
 		
 		private _helptext =
-		"Click and Drag, or Double Click on a soldier/vehicle to select a unit\n\n" +
-		"Hold Buttons and double click to assign an order to a unit\n\n" +
-		"E: Move" + "\n" +
-		"Shift+E: Fast Move" + "\n" +
-		"Ctrl+E: Careful Move" + "\n" +
-		"R: Mount/Dismount Crew" + "\n" +
-		"T: Watch Position" + "\n" +
-		"Shift+T: Check Position Visibility" + "\n" +
-		"X: Enter Building" + "\n" +
-		"Space: Load/Unload Passengers" + "\n" +
-		"F: Select Formation" + "\n" +
-		"V: Select Stance" + "\n" +
-		"C: Select Combat Mode" + "\n" +
-		"`: Control Unit" + "\n" +
-		"Backspace: Delete Last Order" + "\n" +
-		"P: Add Wait time to Last Order" + "\n" +
-		"Tab: Pause";
+		"<t size='1.1'>Click and Drag, or Double Click on a soldier/vehicle to select a unit<br/><br/>" +
+		"Hold Buttons and double click to assign an order to a unit<br/><br/></t>" +
+		"<t align='left' size='1'>E -</t><t align='right'>Move</t>" + "<br/>" +
+		"<t align='left' size='1'>Shift+E -</t><t align='right'>Fast Move</t>" + "<br/>" +
+		"<t align='left' size='1'>Ctrl+E -</t><t align='right'>Careful Move</t>" + "<br/>" +
+		"<t align='left' size='1'>R -</t><t align='right'> &#160;Mount/Dismount Crew</t>" + "<br/>" +
+		"<t align='left' size='1'>T -</t><t align='right'>Watch Position</t>" + "<br/>" +
+		"<t align='left' size='1'>Shift+T -</t><t align='right'>Check Position Visibility</t>" + "<br/>" +
+		"<t align='left' size='1'>X -</t><t align='right'>Enter Building</t>" + "<br/>" +
+		"<t align='left' size='1'>Space -</t><t align='right'>Load/Unload Passengers</t>" + "<br/>" +
+		"<t align='left' size='1'>F -</t><t align='right'>Select Formation</t>" + "<br/>" +
+		"<t align='left' size='1'>V -</t><t align='right'>Select Stance</t>" + "<br/>" +
+		"<t align='left' size='1'>C -</t><t align='right'>Select Combat Mode</t>" + "<br/>" +
+		"<t align='left' size='1'>` -</t><t align='right'>Control Unit</t>" + "<br/>" +
+		"<t align='left' size='1'>Backspace -</t><t align='right'>Delete Last Order</t>" + "<br/>" +
+		"<t align='left' size='1'>P -</t><t align='right'>Add Wait time to Last Order</t>" + "<br/>" +
+		"<t align='left' size='1'>Tab -</t><t align='right'>Pause</t>";
 		
-		_controlinfo = format ["Press H For Command List\n\nNEXT COMMAND%1%2", _name, _additional];
-		hintSilent format ["%1\n\n%2\n\n%3",_commanderinfo, _controlinfo, ( if ( RTS_showHelp ) then { _helptext } else { "" } ) ];
+		_controlinfo = format ["Press H For Command List<br/><br/>NEXT COMMAND%1%2", _name, _additional];
+		hintSilent (parseText (format ["%1<br/><br/>%2<br/><br/>%3",_commanderinfo, _controlinfo, ( if ( RTS_showHelp ) then { _helptext } else { "" } ) ]));
 };
 
 RTS_ai_system = compile preprocessFileLineNumbers "rts\systems\ai_command_processing.sqf";

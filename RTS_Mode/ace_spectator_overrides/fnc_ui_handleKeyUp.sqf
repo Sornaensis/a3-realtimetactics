@@ -32,8 +32,14 @@ if (_key == DIK_TAB) exitWith {
 	RTS_pausing = false;
 };
 
+
+if ( _key == DIK_H ) exitWith {
+	RTS_helpKey = false;
+	true
+};
+
 if ( _key == DIK_E || _key == DIK_R 
-	|| _key == DIK_T || _key == DIK_H || _key == DIK_SPACE ) exitWith {
+	|| _key == DIK_T || _key == DIK_SPACE ) exitWith {
 	RTS_command = nil;
 	true
 };
@@ -63,14 +69,6 @@ if ( _key == DIK_V ) exitWith {
 
 if ( _key == DIK_P ) exitWith {
 	RTS_issuingPause = false;
-	true
-};
-
-
-if ( _key == DIK_H ) exitWith {
-	if ( RTS_helpKey ) then {
-		RTS_helpKey = false;
-	};
 	true
 };
 
