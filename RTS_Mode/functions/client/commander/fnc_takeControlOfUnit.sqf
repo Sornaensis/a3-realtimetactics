@@ -11,7 +11,10 @@ terminate RTS_ui;
 [false] call RTS_fnc_ui;
 
 private _unit = (leader _group);
-selectPlayer (leader _group);
+
+if ( !(alive _unit) ) exitWith {};
+
+selectPlayer _unit;
 
 {
 	_x commandMove (getPosATL _x);
