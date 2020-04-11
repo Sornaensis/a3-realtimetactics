@@ -37,6 +37,7 @@ if ( _group in RTS_commandingGroups ) then {
 		if ( vehicle (leader _group) == (leader _group) ) then {
 			[_group, getPos (leader _group)] call RTS_fnc_addMoveCommand;
 		};
+		_group setVariable ["pause_remaining", 0];
 		_group setVariable ["waypoint_canceled", true];
 	} else {	
 		if ( _group getVariable ["status", "WAITING"] != "HOLDING" ) then {

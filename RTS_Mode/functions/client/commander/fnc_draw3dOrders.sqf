@@ -169,12 +169,14 @@ if ( RTS_commanding ) then {
 					// Waypoint number
 					private _waypointDesc = format ["%1", _i + 1];
 					
-					if ( count (_commands select _i) > 6 ) then {
-						private _pausetime = (_commands select _i) select 6;
-						if ( _i == 0 && (_x getVariable ["status",""] == "PAUSED") ) then {
-							_pausetime = _x getVariable ["pause_remaining",0];
-						};
+					if ( _i == 0 && ( (_x getVariable ["pause_remaining",0]) > 0 ) ) then {
+						private _pausetime = _x getVariable ["pause_remaining",0];
 						_waypointDesc = format ["%1 / Wait %2", _i + 1, [_pausetime,"MM:SS"] call BIS_fnc_secondsToString];
+					} else {
+						if ( count (_commands select _i) > 6 ) then {
+							private _pausetime = (_commands select _i) select 6;
+							_waypointDesc = format ["%1 / Wait %2", _i + 1, [_pausetime,"MM:SS"] call BIS_fnc_secondsToString];
+						};
 					};
 					
 					// Draw all the waypoints

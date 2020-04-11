@@ -40,13 +40,16 @@
 					_group setVariable ["status", "WAITING" ]; 
 				} else {
 					// Pause for variable seconds
+					_unit disableAi "MOVE";
 					_group setVariable ["status", "PAUSED" ];
+					_pausetime = (if ( _pausetime > 0 ) then { _pausetime } else { _group getVariable ["pause_remaining", 0] });
 					while { _pausetime > 0 } do {
 						_group setVariable ["pause_remaining", _pausetime];
 						_pausetime = _pausetime - 1;
-						sleep 1;						
+						sleep 1;
+						waitUntil { !RTS_paused };						
 					};
-					_unit disableAi "MOVE";
+					_group setVariable ["pause_remaining", 0];
 					if ( _type == "TR UNLOAD") then {
 						private _groups = [];
 						{ 
@@ -151,11 +154,14 @@
 					} else {
 						// Pause for variable seconds
 						_group setVariable ["status", "PAUSED" ];
+						_pausetime = (if ( _pausetime > 0 ) then { _pausetime } else { _group getVariable ["pause_remaining", 0] });
 						while { _pausetime > 0 } do {
 							_group setVariable ["pause_remaining", _pausetime];
 							_pausetime = _pausetime - 1;
-							sleep 1;						
+							sleep 1;	
+							waitUntil { !RTS_paused };							
 						};
+						_group setVariable ["pause_remaining", 0];
 						[_group] call RTS_fnc_removeCommand;
 					};
 				};

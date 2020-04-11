@@ -128,7 +128,7 @@ RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 				RTS_selectCommanderBtn ctrlEnable false;
 			};
 			
-			if ( RTS_phase == "MAIN" ) then {
+			if ( RTS_phase == "MAIN" || (RTS_selectedGroup getVariable ["morale", 0]) > 1 ) then {
 				RTS_controlUnitBtn ctrlEnable true;
 			} else {
 				RTS_controlUnitBtn ctrlEnable false;
@@ -143,6 +143,7 @@ RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 			private _kia = (RTS_selectedGroup getVariable ["initial_strength", 0]) - (count ((units RTS_selectedGroup) select { alive _x } ));
 			RTS_casualtyText ctrlSetText (format ["%1 / %2", (if ( _kia == 0 ) then { "-" } else { _kia }) ,(RTS_selectedGroup getVariable ["initial_strength", 0])]);
 			RTS_hasRadioText ctrlSetText (if ( RTS_selectedGroup getVariable ["HasRadio", false] ) then { "Yes" } else { "No" } );
+			RTS_commandEffectText ctrlSetText ( if ( (RTS_selectedGroup getVariable ["command_bonus",1]) - 1 > 0 ) then { str (RTS_selectedGroup getVariable ["command_bonus",1]) } else { "None" });
 			
 			private _morale = RTS_selectedGroup getVariable ["morale", 0];
 			RTS_moraleText ctrlSetText (format ["%1%2", round _morale, "%"]);

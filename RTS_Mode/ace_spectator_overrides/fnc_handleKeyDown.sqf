@@ -238,49 +238,67 @@ if ( _key == DIK_P && (RTS_Phase == "MAIN" || RTS_phase == "INITIALORDERS") ) ex
 	if ( RTS_commanding && !(isNull RTS_selectedGroup) && !RTS_issuingPause ) then {
 		RTS_issuingPause = true;
 		
+		private _group = RTS_selectedGroup;
 		private _commands = RTS_selectedGroup getVariable ["commands", []];
+		private _pausetime = _group getVariable ["pause_remaining", 0];;
 		
-		if ( count _commands > 0 ) then {
+		if ( count _commands > 1 ) then {
 			private _currentCommand = _commands select (count _commands - 1);
 			
 			// Already pausing
 			if ( count _currentCommand > 6 ) then {
-				private _pausetime = _currentCommand select 6;
-				if ( _pausetime == 300 ) then {
-					_currentCommand set [6, 0];
+				_pausetime = _currentCommand select 6;
+			} else {
+				_pausetime = 0;
+			};
+		};
+		
+		
+		if ( _pausetime >= 300 ) then {
+			_pausetime = 0;
+		} else {
+			if ( _pausetime >= 240 ) then {
+				_pausetime = 300;
+			} else {
+				if ( _pausetime >= 120 ) then {
+					_pausetime = 240;
 				} else {
-					if ( _pausetime == 240 ) then {
-						_currentCommand set [6, 300];
+					if ( _pausetime >= 90 ) then {
+						_pausetime = 120;
 					} else {
-						if ( _pausetime == 120 ) then {
-							_currentCommand set [6, 240];
+						if ( _pausetime >= 60 ) then {
+							_pausetime = 90;
 						} else {
-							if ( _pausetime == 90 ) then {
-								_currentCommand set [6, 120];
+							if ( _pausetime >= 30 ) then {
+								_pausetime = 60;
 							} else {
-								if ( _pausetime == 60 ) then {
-									_currentCommand set [6, 90];
+								if ( _pausetime >= 15 ) then {
+									_pausetime = 30;
 								} else {
-									if ( _pausetime == 30 ) then {
-										_currentCommand set [6, 60];
-									} else {
-										if ( _pausetime == 15 ) then {
-											_currentCommand set [6, 30];
-										} else {
-											if ( _pausetime == 0 ) then {
-												_currentCommand set [6, 15];
-											} else {
-												
-											};	
-										};		
+									if ( _pausetime >= 0 ) then {
+										_pausetime = 15;
 									};	
 								};		
 							};	
-						};
-					};
+						};		
+					};	
 				};
+			};
+		};
+		
+		if ( count _commands > 1 ) then {
+			private _currentCommand = _commands select (count _commands - 1);
+			
+			// Already pausing
+			if ( count _currentCommand > 6 ) then {
+				_currentCommand set [6, _pausetime];
 			} else {
-				_currentCommand pushBack 15;
+				_currentCommand pushback _pausetime;
+			};
+		} else {
+			_group setVariable ["pause_remaining", _pausetime];
+			if ( count _commands < 1 ) then {
+				[_group, getPos (leader _group)] call RTS_fnc_addMoveCommand;
 			};
 		};
 	};
