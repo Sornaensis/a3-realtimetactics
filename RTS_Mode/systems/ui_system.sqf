@@ -188,7 +188,7 @@ RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 				_vehicleinfo = format 
 					["%1/%2 - %3 Groups",
 						(count _passengers),
-						_space,
+						_space + (count _passengers),
 						count _groups];
 			};
 			
