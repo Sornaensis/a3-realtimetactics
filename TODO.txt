@@ -1,0 +1,21 @@
+Interface:
+	- Better controls for orders
+	- Dropdown menus for unit window
+	- Equipment overview panel
+	- OOB panel
+	- Jump to selected unit
+
+Missions:
+	- Generate objectives from map markers
+	- Generate dynamic objectives
+	- Add points system
+	- Add Reinforcements system
+	- Add enemy commander AI (counterattacks etc)
+
+Mechanics:
+	- Add more morale handling
+	- Make morale impact skills
+	- Add morale degradation for hits and suppression
+	- Make command bonus impact skills
+	- Add off map artillery and air assets, and controller units for them
+	- Add on map artillery
