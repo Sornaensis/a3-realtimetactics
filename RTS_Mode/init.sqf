@@ -153,6 +153,9 @@ RTS_selectedGroup = grpnull;
 RTS_fakeCameraTarget = "Land_HandyCam_F" createVehicleLocal [0,0,0];
 RTS_fakeCameraTarget hideObject true;
 RTS_groupIconMaxDistance = 1500;
+RTS_briefingComplete = false;
+RTS_helpKey = false;
+RTS_showHelp = false;
 
 // RTS Specific Commands
 [] call (compile preprocessFileLineNumbers "rts\commands\setup.sqf");
@@ -183,7 +186,9 @@ RTS_setupComplete = false;
 // Setup command hierarchy
 [] call (compile preprocessFileLineNumbers "rts\systems\high_command_setup.sqf");
 
-sleep 10;
+[] execVm "rts\briefing\presentMissionToCommander.sqf";
+
+waitUntil { RTS_briefingComplete };
 
 [] spawn {
 
@@ -266,8 +271,28 @@ RTS_groupMon = {
 			if !(isNil "_one") then { _name = "\n\n" + _one };
 			if !(isNil "_three") then { _additional = "\n\n" + _three };
 		};
-		_controlinfo = format ["Hold H For Command List\n\nNEXT COMMAND%1%2", _name, _additional];
-		hintSilent format ["%1\n\n%2",_commanderinfo, _controlinfo];
+		
+		private _helptext =
+		"Click and Drag, or Double Click on a soldier/vehicle to select a unit\n\n" +
+		"Hold Buttons and double click to assign an order to a unit\n\n" +
+		"E: Move" + "\n" +
+		"Shift+E: Fast Move" + "\n" +
+		"Ctrl+E: Careful Move" + "\n" +
+		"R: Mount/Dismount Crew" + "\n" +
+		"T: Watch Position" + "\n" +
+		"Shift+T: Check Position Visibility" + "\n" +
+		"X: Enter Building" + "\n" +
+		"Space: Load/Unload Passengers" + "\n" +
+		"F: Select Formation" + "\n" +
+		"V: Select Stance" + "\n" +
+		"C: Select Combat Mode" + "\n" +
+		"`: Control Unit" + "\n" +
+		"Backspace: Delete Last Order" + "\n" +
+		"P: Add Wait time to Last Order" + "\n" +
+		"Tab: Pause";
+		
+		_controlinfo = format ["Press H For Command List\n\nNEXT COMMAND%1%2", _name, _additional];
+		hintSilent format ["%1\n\n%2\n\n%3",_commanderinfo, _controlinfo, ( if ( RTS_showHelp ) then { _helptext } else { "" } ) ];
 };
 
 RTS_ai_system = compile preprocessFileLineNumbers "rts\systems\ai_command_processing.sqf";

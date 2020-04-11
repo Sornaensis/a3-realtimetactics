@@ -66,6 +66,15 @@ if ( _key == DIK_P ) exitWith {
 	true
 };
 
+
+if ( _key == DIK_H ) exitWith {
+	if ( RTS_helpKey ) then {
+		RTS_helpKey = false;
+	};
+	true
+};
+
+
 if ( _key == DIK_X ) exitWith {
 	RTS_buildingposChoose = false;
 	RTS_command = nil;

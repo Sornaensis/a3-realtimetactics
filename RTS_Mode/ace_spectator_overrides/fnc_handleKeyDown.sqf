@@ -113,24 +113,11 @@ if ( _key == DIK_BACKSPACE && !RTS_backspace ) exitWith {
 };
 
 if ( _key == DIK_H ) exitWith {
-	RTS_command = [nil,nil,nil,
-	"Click and Drag, or Double Click on a soldier/vehicle to select a unit\n\n" +
-	"Hold Buttons and double click to assign an order to a unit\n\n" +
-	"E: Move" + "\n" +
-	"Shift+E: Fast Move" + "\n" +
-	"Ctrl+E: Careful Move" + "\n" +
-	"R: Mount/Dismount Crew" + "\n" +
-	"T: Watch Position" + "\n" +
-	"Shift+T: Check Position Visibility" + "\n" +
-	"X: Enter Building" + "\n" +
-	"Space: Load/Unload Passengers" + "\n" +
-	"F: Select Formation" + "\n" +
-	"V: Select Stance" + "\n" +
-	"C: Select Combat Mode" + "\n" +
-	"`: Control Unit" + "\n" +
-	"Backspace: Delete Last Order" + "\n" +
-	"P: Add Wait time to Last Order" + "\n" +
-	"Tab: Pause"];
+	if ( !RTS_helpKey ) then {
+		RTS_helpKey = true;
+		RTS_showHelp = !RTS_showHelp;
+	};
+	true
 };
 
 
