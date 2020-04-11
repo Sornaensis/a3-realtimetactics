@@ -15,8 +15,10 @@ RTS_phaseButtonAction = "RTS_targetPhase = if ( RTS_phase == 'DEPLOY' ) then { '
 RTS_phaseButton buttonSetAction RTS_phaseButtonAction;
 RTS_phaseButton ctrlCommit 0;
 RTS_phaseButton ctrlShow false;
-RTS_missionTimeStarted = nil;
-RTS_missionTimeElapsedSoFar = 0;
+
+if ( isNil "RTS_missionTimeElapsedSoFar" ) then {
+	RTS_missionTimeElapsedSoFar = 0;
+};
 
 // Wait for mission to start
 [] spawn { 
