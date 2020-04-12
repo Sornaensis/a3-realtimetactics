@@ -80,7 +80,6 @@ RTS_safeVehicleThread = [] spawn {
 	};
 };
 
-
 if ( !([] call RTS_fnc_isCommander) ) exitWith {};
 
 [] call (compile preprocessFileLineNumbers "rts\ace_spectator_overrides\setup.sqf");
@@ -162,6 +161,7 @@ RTS_showHelp = false;
 [] spawn (compile preprocessFileLineNumbers "rts\systems\commander_sys.sqf");
 [] spawn (compile preprocessFileLineNumbers "rts\systems\spotting_system.sqf");
 RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
+[] spawn (compile preprocessFileLineNumbers "rts\systems\objectives_sys.sqf");
 
 // Reveal dead stuff
 {
@@ -186,9 +186,10 @@ RTS_setupComplete = false;
 // Setup command hierarchy
 [] call (compile preprocessFileLineNumbers "rts\systems\high_command_setup.sqf");
 
-[] execVm "rts\briefing\presentMissionToCommander.sqf";
-
-waitUntil { RTS_briefingComplete };
+if ( !RTS_skipBriefing ) then {
+	[] execVm "rts\briefing\presentMissionToCommander.sqf";
+	waitUntil { RTS_briefingComplete };
+};
 
 [] spawn {
 

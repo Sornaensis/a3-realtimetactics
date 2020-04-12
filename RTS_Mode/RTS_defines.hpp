@@ -8,3 +8,7 @@
 #ifndef RTS_SingleCommander
 	#define RTS_SingleCommander false
 #endif
+
+#ifndef RTS_skipBriefing
+	#define RTS_skipBriefing false
+#endif
