@@ -16,6 +16,25 @@ clearGroupIcons _group;
 	}, [_group, _icon] ] call CBA_fnc_globalExecute;
 
 
+// VCOM Stuff
+_group setVariable ["VCM_NOFLANK",true];
+_group setVariable ["VCM_DisableForm",true];
+_group setVariable ["VCM_NORESCUE",true];
+_group setVariable ["VCM_TOUGHSQUAD",true];
+
+if ( (vehicle (leader _group)) == (leader _group) ) then {
+	{ 
+		_x disableAi "AUTOCOMBAT";
+	} forEach (units _group);
+};
+
+_group enableAttack false;
+{
+	_x allowFleeing 0;
+	_x disableAi "FSM";
+	addSwitchableUnit _x;
+} forEach (units _group);
+
 // Groups maintain orders in group namespace
 // Groups can have morale break if they are separated from command elements and have low morale from taking casualties
 
