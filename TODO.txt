@@ -6,7 +6,6 @@ Interface:
 	- Jump to selected unit
 
 Missions:
-	- Generate objectives from map markers
 	- Generate dynamic objectives
 	- Add points system
 	- Add Reinforcements system

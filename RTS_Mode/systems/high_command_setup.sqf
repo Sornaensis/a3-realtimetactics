@@ -1,4 +1,4 @@
-private _commanders = switch ( side player ) do {
+private _commanders = switch ( RTS_sidePlayer ) do {
 						case west: { RTS_bluforHCModules };
 						case east: { RTS_opforHCModules  };
 						case resistance: { RTS_greenforHCModules };

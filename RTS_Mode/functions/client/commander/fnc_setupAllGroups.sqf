@@ -4,3 +4,5 @@
 		_params call RTS_fnc_groupSetupRTS;
 	};
 } forEach (allGroups select { side _x == RTS_sidePlayer });
+
+call disableFriendlyCollision;

@@ -63,40 +63,36 @@ publicVariable "RTS_missionAccomplished";
 
 private _objectives = [];
 
-{
-	private _i = 1;
-	private _j = 1;
-	private _mark = format ["%1_objective_%2_%3", _x, _i, _j];
-	(getMarkerSize _mark) params ["_mx", "_my"];
-	while { _i < 10 } do {
-		while { _mx + _my != 0 } do {	
-			_mark setMarkerAlphaLocal 0;
-			
-			// Create objective marker
-			private _newmark = (str (side player)) + _mark;
-			private _objText = markerText _mark;
-			createMarker [_newmark, getMarkerPos _mark];
-			_newMark setMarkerAlpha 1;
-			_newMark setMarkerShape (markerShape _mark);
-			_newMark setMarkerBrush (markerBrush _mark);
-			_newMark setMarkerSize (markerSize _mark);
-			_newMark setMarkerDir (markerDir _mark);
-			_newMark setMarkerColor ([(side player)] call objectiveInitialColor);
-			
-			_objectives pushBack ( [_x, _newMark, _objText, false] );
-			
-			_j = _j + 1;
-			_mark = format ["%1_objective_%2_%3", _x, _i, _j];
-			_mx = (getMarkerSize _mark) select 0;
-			_my = (getMarkerSize _mark) select 1;
-		};
-		_i = _i + 1;
-		_j = 1;
-		_mark = format ["%1_objective_%2_%3", _x, _i, _j];
-		_mx = (getMarkerSize _mark) select 0;
-		_my = (getMarkerSize _mark) select 1;
+
+private _i = 1;
+private _j = 1;
+while { _i < 10 } do {	
+	while { _j < 20 } do {	
+		{
+			private _mark = format ["%1_objective_%2_%3", _x, _i, _j];
+			(getMarkerSize _mark) params ["_mx", "_my"];
+			if ( _mx + _my != 0 ) then {
+				_mark setMarkerAlphaLocal 0;	
+				
+				// Create objective marker
+				private _newmark = (str (side player)) + _mark;
+				private _objText = markerText _mark;
+				createMarker [_newmark, getMarkerPos _mark];
+				_newMark setMarkerAlpha 1;
+				_newMark setMarkerShape (markerShape _mark);
+				_newMark setMarkerBrush (markerBrush _mark);
+				_newMark setMarkerSize (markerSize _mark);
+				_newMark setMarkerDir (markerDir _mark);
+				_newMark setMarkerColor ([(side player)] call objectiveInitialColor);
+				
+				_objectives pushBack ( [_x, _newMark, _objText, false] );			
+			};	
+		} forEach _objectiveTypes;
+		_j = _j + 1;
 	};
-} forEach _objectiveTypes;
+	_i = _i + 1;
+	_j = 1;
+};
 
 waitUntil { RTS_setupComplete };
 

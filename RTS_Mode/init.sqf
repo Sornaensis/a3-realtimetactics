@@ -12,6 +12,8 @@ mapAnimCommit;
 
 RTS_setupScripts = [];
 
+setGroupIconsVisible [true, false];
+
 // Function for creating function setups
 RTS_setupFunction = {
 	params ["_prefix", "_functions"];
@@ -161,6 +163,7 @@ RTS_showHelp = false;
 [] spawn (compile preprocessFileLineNumbers "rts\systems\commander_sys.sqf");
 [] spawn (compile preprocessFileLineNumbers "rts\systems\spotting_system.sqf");
 RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
+RTS_reinforce = [] spawn (compile preprocessFileLineNumbers "rts\systems\reinforcements.sqf");
 [] spawn (compile preprocessFileLineNumbers "rts\systems\objectives_sys.sqf");
 
 // Reveal dead stuff
@@ -185,6 +188,14 @@ RTS_setupComplete = false;
 
 // Setup command hierarchy
 [] call (compile preprocessFileLineNumbers "rts\systems\high_command_setup.sqf");
+
+RTS_bluforStaticReinforcements = [west] call RTS_fnc_getAllReinforcements;
+RTS_opforStaticReinforcements = [east] call RTS_fnc_getAllReinforcements;
+RTS_greenforStaticReinforcements = [resistance] call RTS_fnc_getAllReinforcements;
+
+publicVariable "RTS_bluforStaticReinforcements";
+publicVariable "RTS_opforStaticReinforcements";
+publicVariable "RTS_greenforStaticReinforcements";
 
 if ( !RTS_skipBriefing ) then {
 	[] execVm "rts\briefing\presentMissionToCommander.sqf";
@@ -308,6 +319,6 @@ RTS_groupMon = {
 RTS_ai_system = compile preprocessFileLineNumbers "rts\systems\ai_command_processing.sqf";
 RTS_processingThread = addMissionEventHandler ["Draw3D", { call RTS_ai_system }];
 // Update status info on every frame (for now, will use proper UI eventually)
-RTS_monitorHandler = addMissionEventHandler ["Draw3D", { if ( RTS_commanding ) then { call RTS_groupMon }; }];
+//RTS_monitorHandler = addMissionEventHandler ["Draw3D", { if ( RTS_commanding ) then { call RTS_groupMon }; }];
 
 };
