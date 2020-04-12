@@ -110,7 +110,7 @@ for "_i" from 0 to ( (count _objectives) - 1 ) do {
 	
 	(_objectives select _i) pushback _taskName;
 	
-	sleep 2;
+	sleep 5;
 };
 
 RTS_objectiveLoop = [_objectives] spawn {
