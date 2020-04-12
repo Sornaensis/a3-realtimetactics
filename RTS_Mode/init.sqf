@@ -200,6 +200,10 @@ if ( isNil "RTS_commandObject" ) then {
 
 RTS_commandObject addAction ["Begin Commanding", 
 	{
+		if ( scriptDone RTS_ui ) then {
+			RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
+		};
+		
 		RTS_commanderUnit = player;
 		[true] call ace_spectator_fnc_cam;
 		[true] call RTS_fnc_ui;

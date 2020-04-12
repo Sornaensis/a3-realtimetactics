@@ -235,6 +235,13 @@ if ( _key == DIK_P && (RTS_Phase == "MAIN" || RTS_phase == "INITIALORDERS") ) ex
 if ( _key == DIK_GRAVE && RTS_Phase == "MAIN" && !RTS_paused ) exitWith {
 	if ( RTS_commanding && !(isNull RTS_selectedGroup) ) then {
 		call RTS_fnc_takeControlOfUnit;
+	} else {
+		if ( RTS_commanding && isNull RTS_selectedGroup ) then {
+			terminate RTS_ui;
+			[false] call ace_spectator_fnc_cam;
+			[false] call RTS_fnc_ui;
+			selectPlayer RTS_commanderUnit;
+		};
 	};
 	true
 };
