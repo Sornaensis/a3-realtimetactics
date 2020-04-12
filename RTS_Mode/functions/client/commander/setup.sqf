@@ -17,5 +17,5 @@
 	 Q(RTS_fnc_setupClass_Marksman),
 	 Q(RTS_fnc_takeControlOfUnit),
 	 Q(RTS_fnc_getAmmoLevel),
-	 Q(RTS_fn_releaseControlOfUnit)]
+	 Q(RTS_fnc_releaseControlOfUnit)]
 ] call RTS_setupFunction;

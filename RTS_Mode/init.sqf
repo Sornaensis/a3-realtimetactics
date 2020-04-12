@@ -192,7 +192,12 @@ waitUntil { RTS_briefingComplete };
 
 [] spawn {
 
-command_laptop addAction ["Begin Commanding", 
+
+if ( isNil "RTS_commandObject" ) then {
+	RTS_commandObject = player;
+};
+
+RTS_commandObject addAction ["Begin Commanding", 
 	{
 		RTS_commanderUnit = player;
 		[true] call ace_spectator_fnc_cam;

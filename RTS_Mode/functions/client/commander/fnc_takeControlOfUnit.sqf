@@ -21,6 +21,14 @@ selectPlayer _unit;
 	[_x] commandFollow _unit;
 } forEach (units (group _unit));
 
+[_unit] spawn {
+	params ["_unit"];
+	waitUntil { _unit getVariable ["ACE_isUnconscious", false] || !isPlayer _unit };
+	if ( alive _unit && _unit getVariable ["ACE_isUnconscious", false] ) then {
+		call RTS_fnc_releaseControlOfUnit;
+		_unit setDamage 1;
+	};		
+};
 
 RTS_commandAction = player addAction ["Command Mode", 
 {
