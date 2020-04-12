@@ -99,6 +99,10 @@ if !(isNil "_veh") then {
 									private _newmorale = _group getVariable ["morale", 0];
 									
 									if ( _newmorale < 0 ) then {
+										// If a unit breaks, the commander should not be able to control them personally
+										if ( count ((units _group) select { _x == player && alive _x }) > 0 ) then {
+											call RTS_fnc_releaseControlOfUnit;
+										};
 										_group setVariable ["commandable", false];
 										while { count (_group getVariable ["commands",[]]) > 0 } do {
 											[_group] call RTS_fnc_removeCommand;
