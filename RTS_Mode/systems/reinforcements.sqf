@@ -151,7 +151,7 @@ spawnReinforcements = {
 			_setup call RTS_fnc_groupSetupRTS;
 		} forEach _unitData;
 	};
-	
+		
 	call disableFriendlyCollision;	
 };
 
@@ -162,6 +162,8 @@ reinforcementsTimeLoop = {
 		(_reinforcements select _i) params ["","_time","_unitData"];
 		waitUntil { sleep 0.5; (call missionTime) >= _time };
 		[_unitData,_side] call spawnReinforcements; // serial
+		playSound "Alarm";
+		[ "Reinforcements", "Arrived" ] spawn BIS_fnc_infoText;
 	};
 };
 

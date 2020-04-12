@@ -6,7 +6,6 @@ call disableFriendlyCollision;
 clearGroupIcons _group;
 
 [_group] call CBA_fnc_clearWaypoints;
-RTS_commandingGroups set [count RTS_commandingGroups, _group];
 
 [-1, 
 	{
@@ -21,6 +20,7 @@ RTS_commandingGroups set [count RTS_commandingGroups, _group];
 // Groups can have morale break if they are separated from command elements and have low morale from taking casualties
 
 _group setVariable ["moralefactor", 200];
+_group setVariable ["icon", _icon];
 _group setVariable ["status", if (RTS_phase == "MAIN") then { "WAITING" } else { "HOLDING" }, false];
 _group setVariable ["texture", _grouptexture, false];
 _group setVariable ["desc", _description, false];
@@ -124,6 +124,9 @@ if ( (count (units _group)) > 1 ) then {
 			private _leader = leader _group;
 			
 			if ( (vehicle _leader) != _leader && !(canMove (vehicle _leader)) ) then {
+				{
+					_x enableAI "MOVE";
+				} forEach (units _group);
 				private _veh = vehicle _leader;
 				if ( group (driver _veh) == _group ) then {
 					[_group, getPos _leader] call RTS_fnc_addUnloadOrLoadCommand;				
@@ -187,3 +190,5 @@ if ( (count (units _group)) > 1 ) then {
 if RTS_SingleCommander then {
 	_group setVariable ["RTS_setup", [], false];
 };
+
+RTS_commandingGroups pushbackunique _group;

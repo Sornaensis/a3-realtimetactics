@@ -17,6 +17,7 @@ if ( !(alive _unit) ) exitWith {};
 selectPlayer _unit;
 
 {
+	_x enableAI "MOVE";
 	_x commandMove (getPosATL _x);
 	[_x] commandFollow _unit;
 } forEach (units (group _unit));
@@ -46,6 +47,7 @@ RTS_killedEH = player addEventHandler ["killed", {
 		private _leader = _livingUnits select 0;
 		(group _unit) selectLeader _leader;
 		{
+			_x enableAI "MOVE";
 			_x commandMove (getPosATL _x);
 			[_x] commandFollow _leader;
 		} forEach (units (group _leader));

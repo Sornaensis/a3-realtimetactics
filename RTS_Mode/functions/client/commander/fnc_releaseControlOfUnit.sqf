@@ -8,6 +8,11 @@ player removeEventHandler ["killed", RTS_killedEH];
 selectPlayer RTS_commanderUnit;
 
 {
+	if ( vehicle _x != _x ) then {
+		if ( driver (vehicle _x) == _x ) then {
+			_x disableAI "MOVE";
+		};
+	};
 	_x commandMove (getPosATL _x);
 	[_x] commandFollow (leader _group);
 } forEach (units _group);

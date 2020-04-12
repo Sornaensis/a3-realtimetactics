@@ -12,3 +12,7 @@
 #ifndef RTS_skipBriefing
 	#define RTS_skipBriefing false
 #endif
+
+#ifndef RTS_timeLimit
+	#define RTS_timeLimit 0
+#endif

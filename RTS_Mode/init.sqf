@@ -157,6 +157,8 @@ RTS_groupIconMaxDistance = 1500;
 RTS_briefingComplete = false;
 RTS_helpKey = false;
 RTS_showHelp = false;
+RTS_missionFailLimit = if ( RTS_timeLimit > 0 ) then { RTS_timeLimit } else { nil };
+
 
 // RTS Specific Commands
 [] call (compile preprocessFileLineNumbers "rts\commands\setup.sqf");
@@ -185,17 +187,6 @@ RTS_reinforce = [] spawn (compile preprocessFileLineNumbers "rts\systems\reinfor
 } forEach (allunits select { side _x != RTS_sidePlayer } );
 
 RTS_setupComplete = false;
-
-// Setup command hierarchy
-[] call (compile preprocessFileLineNumbers "rts\systems\high_command_setup.sqf");
-
-RTS_bluforStaticReinforcements = [west] call RTS_fnc_getAllReinforcements;
-RTS_opforStaticReinforcements = [east] call RTS_fnc_getAllReinforcements;
-RTS_greenforStaticReinforcements = [resistance] call RTS_fnc_getAllReinforcements;
-
-publicVariable "RTS_bluforStaticReinforcements";
-publicVariable "RTS_opforStaticReinforcements";
-publicVariable "RTS_greenforStaticReinforcements";
 
 if ( !RTS_skipBriefing ) then {
 	[] execVm "rts\briefing\presentMissionToCommander.sqf";
@@ -227,6 +218,8 @@ RTS_commandObject addAction ["Begin Commanding",
 	}];
 
 waitUntil { RTS_setupComplete };
+
+RTS_mapHandling = [] spawn (compile preprocessFileLineNumbers "rts\systems\map_handling.sqf");
 
 RTS_killedEH = player addEventHandler ["killed", {
 	private _pos = getPosATL player;
@@ -283,6 +276,10 @@ RTS_groupMon = {
 				RTS_initialWeapons,
 				RTS_initialVehicles,
 				RTS_casualties];
+		
+		if ( RTS_timeLimit > 0 ) then {
+			_commanderinfo = _commanderinfo + (format ["<br/><t align='left'>Time Limit:</t><t align='right'>%1</t>", [RTS_timeLimit, "HH:MM"] call BIS_fnc_secondsToString ]);
+		};
 					
 		// Controls information
 		_name = "";
@@ -319,6 +316,6 @@ RTS_groupMon = {
 RTS_ai_system = compile preprocessFileLineNumbers "rts\systems\ai_command_processing.sqf";
 RTS_processingThread = addMissionEventHandler ["Draw3D", { call RTS_ai_system }];
 // Update status info on every frame (for now, will use proper UI eventually)
-//RTS_monitorHandler = addMissionEventHandler ["Draw3D", { if ( RTS_commanding ) then { call RTS_groupMon }; }];
+RTS_monitorHandler = addMissionEventHandler ["Draw3D", { if ( RTS_commanding ) then { call RTS_groupMon }; }];
 
 };

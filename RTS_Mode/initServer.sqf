@@ -13,6 +13,20 @@ publicVariable "RTS_bluforHCModules";
 publicVariable "RTS_opforHCModules";
 publicVariable "RTS_greenforHCModules";
 
+// Setup command hierarchy
+RTS_highCommandSetup = compile preprocessFileLineNumbers "rts\systems\high_command_setup.sqf";
+{
+	[_x] call RTS_highCommandSetup;
+} forEach [west, east, resistance];
+
+RTS_bluforStaticReinforcements = [west] call RTS_fnc_getAllReinforcements;
+RTS_opforStaticReinforcements = [east] call RTS_fnc_getAllReinforcements;
+RTS_greenforStaticReinforcements = [resistance] call RTS_fnc_getAllReinforcements;
+
+publicVariable "RTS_bluforStaticReinforcements";
+publicVariable "RTS_opforStaticReinforcements";
+publicVariable "RTS_greenforStaticReinforcements";
+
 			//    Blufor    GreenFor   Opfor
 RTS_phase = "";
 RTS_commanders = [objnull,  objnull ,  objnull];

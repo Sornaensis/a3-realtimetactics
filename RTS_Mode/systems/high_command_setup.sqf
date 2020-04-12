@@ -1,4 +1,6 @@
-private _commanders = switch ( RTS_sidePlayer ) do {
+params ["_side"];
+
+private _commanders = switch ( _side ) do {
 						case west: { RTS_bluforHCModules };
 						case east: { RTS_opforHCModules  };
 						case resistance: { RTS_greenforHCModules };
@@ -18,7 +20,7 @@ private _commandgroup = createGroup sideLogic;
 
 // Create command structure
 {
-	private _commandingMen = (synchronizedObjects _x) select { side _x == RTS_sidePlayer };
+	private _commandingMen = (synchronizedObjects _x) select { side _x == _side };
 	
 	// Can only have exactly one commander
 	if ( (count _commandingMen) == 1 ) then {
@@ -32,11 +34,11 @@ private _commandgroup = createGroup sideLogic;
 			_subunits = _subunits + _x;
 		} forEach _subordinates;
 		
-		private _subgroups = [_subunits select { side _x == RTS_sidePlayer }, { group _x }] call CBA_fnc_filter;
+		private _subgroups = [_subunits select { side _x == _side }, { group _x }] call CBA_fnc_filter;
 		{
 			private _setup = _x getVariable ["RTS_setup", [nil,nil,nil,nil,nil]];
 			_setup set [2, _commandgroup];
-			_x setVariable ["RTS_setup", _setup];
+			_x setVariable ["RTS_setup", _setup, true];
 			_x setVariable ["HasRadio", true];
 		} forEach _subgroups;
 	};
