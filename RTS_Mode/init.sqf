@@ -265,7 +265,7 @@ RTS_killedEH = player addEventHandler ["killed", {
 } forEach RTS_commandingGroups;
 
 
-[] spawn (compile preprocessFileLineNumbers "rts\systems\radio_communications.sqf");
+RTS_radioComms = [] spawn (compile preprocessFileLineNumbers "rts\systems\radio_communications.sqf");
 
 // temporary group monitor
 RTS_groupMon = {

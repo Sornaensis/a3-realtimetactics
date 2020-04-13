@@ -87,12 +87,93 @@ while { _i < 10 } do {
 				
 				_objectives pushBack ( [_x, _newMark, _objText, false] );			
 			};	
+		} forEach [ "occupy" ];
+		_j = _j + 1;
+	};
+	_i = _i + 1;
+	_j = 1;
+};
+
+RTS_allSidesObjectives = +_objectives;
+
+private _side = ( switch ( RTS_sidePlayer ) do {
+					case west: { "blufor" };
+					case east: { "opfor" };
+					case resistance: { "greenfor" };
+				});
+
+RTS_playerSideObjectives = [];
+
+_i = 1;
+_j = 1;
+while { _i < 10 } do {	
+	while { _j < 20 } do {	
+		{
+			private _mark = format ["%1_%2_objective_%2_%3", _side, _x, _i, _j];
+			(getMarkerSize _mark) params ["_mx", "_my"];
+			if ( _mx + _my != 0 ) then {
+				_mark setMarkerAlphaLocal 0;	
+				
+				// Create objective marker
+				private _newmark = (str (side player)) + _mark;
+				private _objText = markerText _mark;
+				createMarker [_newmark, getMarkerPos _mark];
+				_newMark setMarkerAlpha 1;
+				_newMark setMarkerShape (markerShape _mark);
+				_newMark setMarkerBrush (markerBrush _mark);
+				_newMark setMarkerSize (markerSize _mark);
+				_newMark setMarkerDir (markerDir _mark);
+				_newMark setMarkerColor ([(side player)] call objectiveInitialColor);
+				
+				RTS_playerSideObjectives pushBack ( [_x, _newMark, _objText, false] );
+				_objectives pushBack ( [_x, _newMark, _objText, false] );
+								
+			};	
 		} forEach _objectiveTypes;
 		_j = _j + 1;
 	};
 	_i = _i + 1;
 	_j = 1;
 };
+
+RTS_enemySideObjectives = [];
+
+_side = ( switch ( RTS_sideEnemy ) do {
+					case west: { "blufor" };
+					case east: { "opfor" };
+					case resistance: { "greenfor" };
+				});
+
+_i = 1;
+_j = 1;
+while { _i < 10 } do {	
+	while { _j < 20 } do {	
+		{
+			private _mark = format ["%1_%2_objective_%2_%3", _side, _x, _i, _j];
+			(getMarkerSize _mark) params ["_mx", "_my"];
+			if ( _mx + _my != 0 ) then {
+				_mark setMarkerAlphaLocal 0;	
+				
+				// Create objective marker
+				private _newmark = (str (side player)) + _mark;
+				private _objText = markerText _mark;
+				createMarker [_newmark, getMarkerPos _mark];
+				_newMark setMarkerAlpha 1;
+				_newMark setMarkerShape (markerShape _mark);
+				_newMark setMarkerBrush (markerBrush _mark);
+				_newMark setMarkerSize (markerSize _mark);
+				_newMark setMarkerDir (markerDir _mark);
+				_newMark setMarkerColor ([(side player)] call objectiveInitialColor);
+				
+				RTS_enemySideObjectives pushBack ( [_x, _newMark, _objText, false] );								
+			};	
+		} forEach _objectiveTypes;
+		_j = _j + 1;
+	};
+	_i = _i + 1;
+	_j = 1;
+};
+
 
 waitUntil { RTS_setupComplete };
 
