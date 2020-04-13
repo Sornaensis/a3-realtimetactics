@@ -8,7 +8,6 @@ Interface:
 Missions:
 	- Generate dynamic objectives
 	- Add points system
-	- Add Reinforcements system
 	- Add enemy commander AI (counterattacks etc)
 
 Mechanics:
