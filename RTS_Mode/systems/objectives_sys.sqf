@@ -109,6 +109,8 @@ for "_i" from 0 to ( (count _objectives) - 1 ) do {
 	sleep 5;
 };
 
+RTS_objectivesSetupDone = true;
+
 RTS_objectiveLoop = [_objectives] spawn {
 	params ["_objectives"];
 	

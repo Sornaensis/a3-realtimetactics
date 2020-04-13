@@ -160,12 +160,24 @@ reinforcementsTimeLoop = {
 	
 	for "_i" from 0 to ((count _reinforcements) - 1) do {
 		(_reinforcements select _i) params ["","_time","_unitData"];
+		
+		private _taskName = format ["%1_TIME_Reinforcements_%1", _side, _time];
+		
+		[ _side, [ _taskName ], [ "Reinforcements", format ["Reinforcements available after %1", [_time, "HH:MM"] call BIS_fnc_secondsToString], ""], objnull, "CREATED" ] call BIS_fnc_taskCreate;
+		
 		waitUntil { sleep 0.5; (call missionTime) >= _time };
 		[_unitData,_side] call spawnReinforcements; // serial
-		playSound "Alarm";
-		[ "Reinforcements", "Arrived" ] spawn BIS_fnc_infoText;
+		
+		[ _taskName,  [ "Reinforcements", "Reinforcements Arrived", ""] ] call BIS_fnc_taskSetDescription;
+		[ _taskName, "SUCCEEDED" ] call BIS_fnc_taskSetState;
+		
+		sleep 5; [ _taskName ] call BIS_fnc_deleteTask;
 	};
 };
+
+waitUntil { RTS_objectivesSetupDone };
+
+sleep 2;
 
 RTS_friendlyReinforcementLoop = ([_friendlyReinforcements select { (_x select 0) == "TIME" },RTS_sidePlayer]) spawn reinforcementsTimeLoop;
 RTS_enemyReinforcementLoop = ([_enemyReinforcements select { (_x select 0) == "TIME" },RTS_sideEnemy]) spawn reinforcementsTimeLoop;

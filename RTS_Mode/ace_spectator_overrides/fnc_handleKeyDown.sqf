@@ -133,7 +133,7 @@ if ( _key == DIK_F && !RTS_formationChoose && (isNil "RTS_command") ) exitWith {
 
 if ( _key == DIK_C && !RTS_combatChoose && (isNil "RTS_command") ) exitWith {
 	RTS_combatChoose = true;
-	RTS_command = ["Set Combat Mode",{}, nil, "<t align='left'>1 - Hold Fire</t><br/><t align='left'>2 - Return Fire</t><br/><t align='left'>3 - Fire at Will</t>"];
+	RTS_command = ["Set Combat Mode",{}, nil, "<t align='left'>1 - Return Fire</t><br/><t align='left'>2 - Fire at Will</t><br/><t align='left'>3 - CQC</t>"];
 	true
 };
 
@@ -271,9 +271,9 @@ if( RTS_combatChoose ) exitWith {
 	if !(isNull _group) then {
 		private _mode = "";
 		switch ( _key ) do {
-			case DIK_1: { _mode = "BLUE" };
-			case DIK_2: { _mode = "GREEN" };
-			case DIK_3: { _mode = "YELLOW" };
+			case DIK_1: { _mode = "GREEN" };
+			case DIK_2: { _mode = "YELLOW" };
+			case DIK_3: { _mode = "RED" };
 		};
 		
 		if ( _mode != "" ) then {

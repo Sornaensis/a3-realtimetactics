@@ -158,7 +158,7 @@ RTS_briefingComplete = false;
 RTS_helpKey = false;
 RTS_showHelp = false;
 RTS_missionFailLimit = if ( RTS_timeLimit > 0 ) then { RTS_timeLimit } else { nil };
-
+RTS_objectivesSetupDone = false;
 
 // RTS Specific Commands
 [] call (compile preprocessFileLineNumbers "rts\commands\setup.sqf");
@@ -279,6 +279,11 @@ RTS_groupMon = {
 		
 		if ( RTS_timeLimit > 0 ) then {
 			_commanderinfo = _commanderinfo + (format ["<br/><t align='left'>Time Limit:</t><t align='right'>%1</t>", [RTS_timeLimit, "HH:MM"] call BIS_fnc_secondsToString ]);
+		};
+		
+		if ( RTS_debug ) then {
+			private _opforUnits = allUnits select { alive _x && side _x == RTS_sideEnemy };	
+			_commanderinfo = _commanderinfo + (format ["<br/><t align='left'>Opfor Strength:</t><t align='right'>%1</t>", count _opforUnits ]);
 		};
 					
 		// Controls information

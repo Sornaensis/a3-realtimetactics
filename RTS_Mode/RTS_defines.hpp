@@ -16,3 +16,7 @@
 #ifndef RTS_timeLimit
 	#define RTS_timeLimit 0
 #endif
+
+#ifndef RTS_debug
+	#define RTS_debug false
+#endif
