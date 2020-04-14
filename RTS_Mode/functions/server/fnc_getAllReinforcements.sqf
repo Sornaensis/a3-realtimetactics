@@ -2,8 +2,14 @@ params ["_side"];
 
 private _setups = [];
 
+private _sideName = ( switch ( _side ) do {
+					case west: { "blufor" };
+					case east: { "opfor" };
+					case resistance: { "greenfor" };
+				});
+
 for "_i" from 1 to 40 do {
-	private _reinfVar = missionNameSpace getVariable [ format ["RTS_reinf_%1", _i], []];
+	private _reinfVar = missionNameSpace getVariable [ format ["RTS_reinf_%1_%2", _sideName, _i], []];
 	if ( count _reinfVar > 0 ) then {
 		_reinfVar params ["_logic", "_side", "_wave", "_type", "_time" ];
 		_setups pushback [ [ _side, _wave, _type, _time ], _logic ];		

@@ -1,19 +1,11 @@
-/*RTS_skillLoop = [] spawn {
-	while { true } do {
-		{
-			_x setSkill ["spotTime", 0.8];
-			_x setSkill ["spotDistance", 0.8];
-		} forEach allUnits;
-		sleep 1;
-	};
-};
-*/
+#include "../RTS_defines.hpp"
+
 waitUntil { RTS_phase == "MAIN" };
 
 // OPFOR check if they are spotted
 RTS_spottingLoop = [] spawn { 
 	while {true} do { 
-		if ( RTS_commanding ) then {
+		if ( RTS_commanding && !RTS_godseye ) then {
 			{
 				private _group = _x;
 				private _check = _group getVariable ["spottingCheck", nil];
@@ -64,6 +56,7 @@ RTS_spottingLoop = [] spawn {
 		} else {
 			{
 				(vehicle _x) hideObject false;
+				_x hideObject false;
 			} forEach (allunits select { side _x != RTS_sidePlayer } );
 		};
 	} 

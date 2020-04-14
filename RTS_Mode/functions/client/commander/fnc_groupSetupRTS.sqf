@@ -5,6 +5,8 @@ call disableFriendlyCollision;
 
 clearGroupIcons _group;
 
+RTS_commandingGroups pushbackunique _group;
+
 [_group] call CBA_fnc_clearWaypoints;
 
 [-1, 
@@ -215,5 +217,3 @@ if !(isNil "_veh") then {
 if RTS_SingleCommander then {
 	_group setVariable ["RTS_setup", [], false];
 };
-
-RTS_commandingGroups pushbackunique _group;

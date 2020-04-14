@@ -62,6 +62,7 @@ makeVehicleSafe = {
 	{
 		if ( side _x == _side && !(isPlayer _x) ) then {
 			_veh disableCollisionWith _x;
+			_veh disableCollisionWith (vehicle _x);
 		};
 	} forEach allUnits;
 };
@@ -167,6 +168,7 @@ RTS_objectivesSetupDone = false;
 RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
 RTS_reinforce = [] spawn (compile preprocessFileLineNumbers "rts\systems\reinforcements.sqf");
 [] spawn (compile preprocessFileLineNumbers "rts\systems\objectives_sys.sqf");
+[] spawn (compile preprocessFileLineNumbers "rts\systems\ai_commanding_sys.sqf");
 
 // Reveal dead stuff
 {
@@ -270,12 +272,19 @@ RTS_radioComms = [] spawn (compile preprocessFileLineNumbers "rts\systems\radio_
 // temporary group monitor
 RTS_groupMon = {
 		private _group = RTS_selectedGroup;
+		
+		private _currentMen = 0;
+		
+		{
+			_currentMen = _currentMen + (count (units _x));
+		} forEach RTS_commandingGroups;
+		
 		_commanderinfo = format
 			["COMBAT OVERVIEW<br/><br/><t align='left'>Initial Strength:</t><t align='right'>%1</t><br/><t align='left'>Initial Weapons:</t><t align='right'>%2</t><br/><t align='left'>Initial Vehicles:</t><t align='right'>%3</t><br/><t align='left'>Casualties:</t><t align='right'>%4</t>", 
 				RTS_initialMen,
 				RTS_initialWeapons,
 				RTS_initialVehicles,
-				RTS_casualties];
+				RTS_initialMen - _currentMen];
 		
 		if ( RTS_timeLimit > 0 ) then {
 			_commanderinfo = _commanderinfo + (format ["<br/><t align='left'>Time Limit:</t><t align='right'>%1</t>", [RTS_timeLimit, "HH:MM"] call BIS_fnc_secondsToString ]);

@@ -75,7 +75,7 @@ while { _i < 10 } do {
 				_mark setMarkerAlphaLocal 0;	
 				
 				// Create objective marker
-				private _newmark = (str (side player)) + _mark;
+				private _newmark = "allsides_" + _mark;
 				private _objText = markerText _mark;
 				createMarker [_newmark, getMarkerPos _mark];
 				_newMark setMarkerAlpha 1;
@@ -87,7 +87,7 @@ while { _i < 10 } do {
 				
 				_objectives pushBack ( [_x, _newMark, _objText, false] );			
 			};	
-		} forEach [ "occupy" ];
+		} forEach [ "occupy", "clear" ];
 		_j = _j + 1;
 	};
 	_i = _i + 1;
@@ -115,7 +115,7 @@ while { _i < 10 } do {
 				_mark setMarkerAlphaLocal 0;	
 				
 				// Create objective marker
-				private _newmark = (str (side player)) + _mark;
+				private _newmark = "player_" + _mark;
 				private _objText = markerText _mark;
 				createMarker [_newmark, getMarkerPos _mark];
 				_newMark setMarkerAlpha 1;
@@ -155,10 +155,10 @@ while { _i < 10 } do {
 				_mark setMarkerAlphaLocal 0;	
 				
 				// Create objective marker
-				private _newmark = (str (side player)) + _mark;
+				private _newmark = "enemy_" + _mark;
 				private _objText = markerText _mark;
 				createMarker [_newmark, getMarkerPos _mark];
-				_newMark setMarkerAlpha 1;
+				_newMark setMarkerAlpha 0;
 				_newMark setMarkerShape (markerShape _mark);
 				_newMark setMarkerBrush (markerBrush _mark);
 				_newMark setMarkerSize (markerSize _mark);

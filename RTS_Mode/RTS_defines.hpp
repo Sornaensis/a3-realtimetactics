@@ -20,3 +20,7 @@
 #ifndef RTS_debug
 	#define RTS_debug false
 #endif
+
+#ifndef RTS_godseye
+	#define RTS_godseye false
+#endif

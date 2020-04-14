@@ -137,20 +137,31 @@ spawnReinforcements = {
 		_group setVariable ["RTS_setup", _setup];
 	} forEach _unitData;
 	
-	if ( _side == RTS_sidePlayer ) then {
-		{
-			_x params ["_group","_setup"];
+	{
+		_x params ["_group","_setup"];
 		
+		if ( _side == RTS_sidePlayer ) then {
 			{
 				_x hideObjectGlobal false;
 				(vehicle _x) hideObjectGlobal false;
 				_x enableSimulationGlobal true;
 				(vehicle _x) enableSimulationGlobal true;
-			} forEach (units _group);			
-			
+			} forEach (units _group);
 			_setup call RTS_fnc_groupSetupRTS;
-		} forEach _unitData;
-	};
+		} else {
+			{
+				_x hideObjectGlobal false;
+				(vehicle _x) hideObjectGlobal false;
+				_x hideObject true;
+				(vehicle _x) hideObject true;
+				_x enableSimulationGlobal true;
+				(vehicle _x) enableSimulationGlobal true;
+			} forEach (units _group);
+			_group setVariable ["opfor_status", "RESERVE"];
+			RTS_enemyGroups pushback _group;
+		};
+	} forEach _unitData;
+
 		
 	call disableFriendlyCollision;	
 };

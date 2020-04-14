@@ -112,7 +112,7 @@ if ( RTS_commanding ) then {
 		if ( !( isObjectHidden _x ) && ((vehicle _x) == _x) ) then {
 			_selectedgroup = RTS_selectedGroup;
 			_draw = if ( !(isNull _selectedgroup) ) then {
-						_x in (_selectedgroup getVariable ["spotted", grpnull])
+						_x in (_selectedgroup getVariable ["spotted", []])
 					} else {
 						true
 					};
