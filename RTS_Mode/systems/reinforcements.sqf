@@ -159,18 +159,21 @@ spawnReinforcements = {
 			} forEach (units _group);
 			_group setVariable ["opfor_status", "RESERVE"];
 			RTS_enemyGroups pushback _group;
+			RTS_enemyTotalStrength = RTS_enemyTotalStrength + (count (units _group));
 		};
 	} forEach _unitData;
 
 		
-	call disableFriendlyCollision;	
+	call disableFriendlyFire;
 };
 
 reinforcementsTimeLoop = {
 	params ["_reinforcements","_side"];
 	
-	for "_i" from 0 to ((count _reinforcements) - 1) do {
-		(_reinforcements select _i) params ["","_time","_unitData"];
+	private _sorted = [_reinforcements, [], {_x select 1}, "ASCEND"] call BIS_fnc_sortBy;
+	
+	for "_i" from 0 to ((count _sorted) - 1) do {
+		(_sorted select _i) params ["","_time","_unitData"];
 		
 		private _taskName = format ["%1_TIME_Reinforcements_%1", _side, _time];
 		

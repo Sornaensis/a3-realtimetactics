@@ -203,6 +203,7 @@ if ( RTS_commanding ) then {
 								case "YELLOW": { "Fire at Will" };
 								case "RED": { "CQC" };
 								case "GREEN": { "Return Fire" };
+								default { _combat };
 							})];
 					};
 					

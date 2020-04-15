@@ -56,32 +56,6 @@ waitUntil { time > 1 };
 
 setGroupIconsVisible [false, false];
 
-makeVehicleSafe = {
-	private _veh = _this select 0;
-	private _side = side _veh;
-	{
-		if ( side _x == _side && !(isPlayer _x) ) then {
-			_veh disableCollisionWith _x;
-			_veh disableCollisionWith (vehicle _x);
-		};
-	} forEach allUnits;
-};
-disableFriendlyCollision = {
-	{
-		if ( !( _x isKindOf "StaticWeapon" ) && !( _x isKindOf "EmptyDetector" ) ) then {
-			[_x] call makeVehicleSafe;
-		};
-	} forEach vehicles;
-};
-
-call disableFriendlyCollision;
-
-RTS_safeVehicleThread = [] spawn {
-	while { true } do {
-		call disableFriendlyCollision;
-		sleep 30;
-	};
-};
 
 if ( !([] call RTS_fnc_isCommander) ) exitWith {};
 
@@ -240,6 +214,37 @@ RTS_killedEH = player addEventHandler ["killed", {
 	ace_spectator_camera setPosATL _pos;
 	ace_spectator_camera setDir _dir;
 }];
+
+noFriendlyFireHandler = {
+	params ["_unit", "_selection", "_damage", "_source", "_projectile", "_hitIndex", "_instigator", "_hitPoint"];
+	
+	private _side = _unit getVariable "handleDamageSide";
+	private _ret = _damage;
+	
+	if ( side _source == _side) then {
+		_ret = 0;
+	};
+	if ( side _instigator == _side ) then {
+		_ret = 0;
+	};
+	
+	_ret
+};
+
+disableFriendlyFire = {
+
+	{
+		private _unit = _x;
+		
+		private _side = side _unit;
+		
+		if ( (_unit getVariable ["noFriendlyFire", objnull]) isEqualTo objnull ) then {
+			_unit setVariable ["handleDamageSide", _side];
+			_unit setVariable ["noFriendlyFire", _unit addEventHandler [ "HandleDamage", noFriendlyFireHandler ]];
+		};
+		
+	} forEach allUnits;
+};
 
 [] call RTS_fnc_setupAllGroups;
 

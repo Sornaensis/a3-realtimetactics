@@ -140,6 +140,7 @@ RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 								case "YELLOW": { "Fire at Will" };
 								case "RED": { "CQC" };
 								case "GREEN": { "Return Fire" };
+								default { str (combatMode RTS_selectedGroup) };
 							});
 			
 			RTS_unitNameText ctrlSetText (RTS_selectedGroup getVariable ["desc", "Unknown"]);
@@ -219,5 +220,6 @@ RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 			RTS_ammoLevelText ctrlSetText "-";
 			RTS_passengerInfoText ctrlSetText "-";
 		};
+		sleep 0.5;
 	};
 };

@@ -1,5 +1,6 @@
 #include "\z\ace\addons\spectator\script_component.hpp"
 #include "\A3\ui_f\hpp\defineDIKCodes.inc"
+#include "../../../RTS_defines.hpp"
 
 if ( RTS_commanding ) then {
 	if ( RTS_buildingposChoose && !isNil "RTS_selectedBuilding" ) then {
@@ -111,7 +112,7 @@ if ( RTS_commanding ) then {
 		_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.7]; 
 		if ( !( isObjectHidden _x ) && ((vehicle _x) == _x) ) then {
 			_selectedgroup = RTS_selectedGroup;
-			_draw = if ( !(isNull _selectedgroup) ) then {
+			_draw = if ( !(isNull _selectedgroup) && !RTS_godseye ) then {
 						_x in (_selectedgroup getVariable ["spotted", []])
 					} else {
 						true
@@ -129,10 +130,10 @@ if ( RTS_commanding ) then {
 		_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
 		if ( !( isObjectHidden _x ) ) then {
 			_selectedgroup = RTS_selectedGroup;
-			_draw = if ( !(isNull _selectedgroup) ) then {
+			_draw = if ( !(isNull _selectedgroup) && !RTS_godseye ) then {
 						_tmp = false;
 						{
-							_tmp = _x in (_selectedgroup getVariable ["spotted", grpnull])
+							_tmp = _x in (_selectedgroup getVariable ["spotted", []])
 						} forEach (crew _x);
 						_tmp
 					} else {
@@ -143,16 +144,20 @@ if ( RTS_commanding ) then {
 				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", RTS_enemyColor, _drawpos, 0.6, 0.6,0];
 			};
 		};
-	} forEach ( RTS_opfor_vehicles );
-	
+	} forEach ( if ( RTS_godseye ) then { 
+					[((allUnits select { side _x == RTS_sideEnemy }) select { (vehicle _x) != _x } ), { vehicle _x }] call CBA_fnc_filter
+				 } else { 
+				 	RTS_opfor_vehicles 
+				 });
+		
 	{
 		private ["_pos", "_drawpos"];
 		_pos = getPosATLVisual _x;
 		_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.7]; 
 		if ( !( isObjectHidden _x ) && ((vehicle _x) == _x) ) then {
 			_selectedgroup = RTS_selectedGroup;
-			_draw = if ( !(isNull _selectedgroup) ) then {
-						_x in (_selectedgroup getVariable ["spotted", grpnull])
+			_draw = if ( !(isNull _selectedgroup) && !RTS_godseye ) then {
+						_x in (_selectedgroup getVariable ["spotted", []])
 					} else {
 						true
 					};
@@ -169,10 +174,10 @@ if ( RTS_commanding ) then {
 		_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
 		if ( !( isObjectHidden _x ) ) then {
 			_selectedgroup = RTS_selectedGroup;
-			_draw = if ( !(isNull _selectedgroup) ) then {
+			_draw = if ( !(isNull _selectedgroup) && !RTS_godseye ) then {
 						_tmp = false;
 						{
-							_tmp = _x in (_selectedgroup getVariable ["spotted", grpnull])
+							_tmp = _x in (_selectedgroup getVariable ["spotted", []])
 						} forEach (crew _x);
 						_tmp
 					} else {

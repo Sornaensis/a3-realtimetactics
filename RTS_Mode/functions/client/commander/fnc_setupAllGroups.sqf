@@ -5,4 +5,4 @@
 	};
 } forEach (allGroups select { side _x == RTS_sidePlayer });
 
-call disableFriendlyCollision;
+call disableFriendlyFire;

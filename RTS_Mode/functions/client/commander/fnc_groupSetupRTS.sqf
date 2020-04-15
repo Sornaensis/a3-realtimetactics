@@ -1,8 +1,6 @@
 #include "..\..\..\RTS_defines.hpp"
 params ["_group", "_description", "_commandelement", "_grouptexture", "_icon"];
 
-call disableFriendlyCollision;
-
 clearGroupIcons _group;
 
 RTS_commandingGroups pushbackunique _group;
@@ -31,6 +29,7 @@ if ( (vehicle (leader _group)) == (leader _group) ) then {
 };
 
 _group enableAttack false;
+_group setCombatMode "GREEN"; // Return fire by default
 {
 	_x allowFleeing 0;
 	_x disableAi "FSM";

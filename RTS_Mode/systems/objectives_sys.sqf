@@ -271,5 +271,7 @@ RTS_objectiveLoop = [_objectives] spawn {
 			RTS_missionFinished = false;
 			publicVariable "RTS_missionFinished";
 		};
+		
+		sleep 1;
 	};
 };
