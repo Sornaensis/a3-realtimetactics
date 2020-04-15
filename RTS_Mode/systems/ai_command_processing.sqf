@@ -129,10 +129,18 @@
 					private _complete = false;
 					while { ( ( count ((units _group) select { alive _x }) ) > 0 ) && ((count _commands) > 0) && !_complete} do {
 						(leader _group) doMove _pos;
-						_group setSpeedMode _speed;
-						_group setCombatMode _combat;
-						_group setFormation _form;
-						_group setBehaviour _behaviour;
+						if ( _speed != "" ) then {
+							_group setSpeedMode _speed;
+						};
+						if ( _combat != "" ) then {
+							_group setCombatMode _combat;
+						};
+						if ( _form != "" ) then {
+							_group setFormation _form;
+						};
+						if ( _behaviour != "" ) then {
+							_group setBehaviour _behaviour;
+						};
 						{
 							_x doWatch objnull;
 							if ( _x != (leader _group) ) then {

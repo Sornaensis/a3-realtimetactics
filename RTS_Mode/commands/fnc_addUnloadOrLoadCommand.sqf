@@ -7,9 +7,9 @@ private _veh = vehicle _leader;
 private _driver = driver _veh;
 private _newcommand = [];
 if ( _veh != _leader && (group _driver) == _group ) then {
-	_newcommand = [_pos,"TR UNLOAD", "AWARE",combatMode _group,formation _group,"FULL"];
+	_newcommand = [_pos,"TR UNLOAD", "AWARE","","","FULL"];
 } else {
-	_newcommand = [_pos,"GETIN", "AWARE",combatMode _group,formation _group,"FULL"];
+	_newcommand = [_pos,"GETIN", "AWARE","","","FULL"];
 };
 
 

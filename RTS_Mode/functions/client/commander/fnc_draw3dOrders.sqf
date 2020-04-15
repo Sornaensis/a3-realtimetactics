@@ -167,16 +167,43 @@ if ( RTS_commanding ) then {
 				if ( _x == RTS_selectedGroup ) then {
 					
 					// Waypoint number
+					private _group = _x;
+					private _command = _commands select _i;
 					private _waypointDesc = format ["%1", _i + 1];
 					
 					if ( _i == 0 && ( (_x getVariable ["pause_remaining",0]) > 0 ) ) then {
 						private _pausetime = _x getVariable ["pause_remaining",0];
 						_waypointDesc = format ["%1 / Wait %2", _i + 1, [_pausetime,"MM:SS"] call BIS_fnc_secondsToString];
 					} else {
-						if ( count (_commands select _i) > 6 ) then {
-							private _pausetime = (_commands select _i) select 6;
+						if ( count _command > 6 ) then {
+							private _pausetime = _command select 6;
 							_waypointDesc = format ["%1 / Wait %2", _i + 1, [_pausetime,"MM:SS"] call BIS_fnc_secondsToString];
 						};
+					};
+					
+					_command params ["_pos", "_type", "_behaviour", "_combat", "_form", "_speed"];
+					
+					// Speed mode info
+					if ( _type == "MOVE" ) then {
+						if ( _speed == "LIMITED" ) then {
+							_waypointDesc = format ["%1 / %2", _waypointDesc, "Slow"];
+						};
+						if ( _speed == "FULL" ) then {
+							_waypointDesc = format ["%1 / %2", _waypointDesc, "Fast"];
+						};						
+					};
+					
+					if ( _form != "" ) then {
+						_waypointDesc = format ["%1 / %2", _waypointDesc, _form];
+					};
+					
+					if ( _combat != "" ) then {
+						_waypointDesc = format ["%1 / %2", _waypointDesc, 
+							( switch ( _combat ) do {
+								case "YELLOW": { "Fire at Will" };
+								case "RED": { "CQC" };
+								case "GREEN": { "Return Fire" };
+							})];
 					};
 					
 					// Draw all the waypoints

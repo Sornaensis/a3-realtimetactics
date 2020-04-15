@@ -174,6 +174,7 @@ while { _i < 10 } do {
 	_j = 1;
 };
 
+RTS_objectivesSetupInitial = true;
 
 waitUntil { RTS_setupComplete };
 

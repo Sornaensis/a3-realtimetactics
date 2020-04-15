@@ -136,10 +136,16 @@ RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 				RTS_controlUnitBtn ctrlEnable false;
 			};
 			
+			private _combatMode = ( switch ( combatMode RTS_selectedGroup ) do {
+								case "YELLOW": { "Fire at Will" };
+								case "RED": { "CQC" };
+								case "GREEN": { "Return Fire" };
+							})
+			
 			RTS_unitNameText ctrlSetText (RTS_selectedGroup getVariable ["desc", "Unknown"]);
 			RTS_stanceText ctrlSetText (unitPos (leader RTS_selectedGroup));
 			RTS_statusText ctrlSetText (RTS_selectedGroup getVariable ["status", "HOLDING"]);
-			RTS_combatModeText ctrlSetText (combatMode RTS_selectedGroup);
+			RTS_combatModeText ctrlSetText _combatMode;
 			RTS_formationText ctrlSetText (formation RTS_selectedGroup);
 			RTS_combatVictoryText ctrlSetText (str (RTS_selectedGroup getVariable ["combat_victories", 0]));
 			private _kia = (RTS_selectedGroup getVariable ["initial_strength", 0]) - (count ((units RTS_selectedGroup) select { alive _x } ));

@@ -277,7 +277,13 @@ if( RTS_combatChoose ) exitWith {
 		};
 		
 		if ( _mode != "" ) then {
-			_group setCombatMode _mode;
+			private _commands = _group getVariable ["commands", []];
+			if ( count _commands > 0 ) then {
+				(_commands select ((count _commands) - 1)) set [3, _mode];
+			};
+			if ( count _commands < 2 ) then {
+				_group setCombatMode _mode;
+			};
 		};
 	};
 	true
@@ -301,7 +307,13 @@ if( RTS_formationChoose ) exitWith {
 		};
 		
 		if ( _form != "" ) then {
-			_group setFormation _form;
+			private _commands = _group getVariable ["commands", []];
+			if ( count _commands > 0 ) then {
+				(_commands select ((count _commands) - 1)) set [4, _form];
+			};
+			if ( count _commands < 2 ) then {
+				_group setFormation _form;
+			};
 		};
 	};
 	true

@@ -43,7 +43,7 @@ setupAsGarrison = {
 	params ["_group", "_marker", "_radius"];
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["opfor_status", "GARRISON"];
-	[_group, getMarkerPos _marker, _radius, 2, 0.5, 1 ] call CBA_fnc_taskDefend;
+	[_group, getMarkerPos _marker, _radius, 2, 0.5, 0.65 ] call CBA_fnc_taskDefend;
 	_group setVariable ["VCM_NOFLANK",true];
 	_group setVariable ["VCM_NORESCUE",true];
 };
@@ -57,7 +57,7 @@ setupAsPatrol = {
 	_group setVariable ["VCM_NORESCUE",false];
 };
 
-waitUntil { RTS_objectivesSetupDone };
+waitUntil { RTS_objectivesSetupInitial };
 
 RTS_enemyGroups = [];
 

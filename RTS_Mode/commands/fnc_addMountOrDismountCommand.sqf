@@ -8,10 +8,10 @@ private _driver = driver _veh;
 private _newcommand = [];
 if ( _veh != _leader && (group _driver) == _group ) then {
 	if ( (count ( (crew (vehicle (leader _group))) select { group _x != _group && alive _x } )) == 0) then {
-		_newcommand = [_pos,"DISMOUNT", "AWARE",combatMode _group,formation _group,"FULL"];
+		_newcommand = [_pos,"DISMOUNT", "AWARE","","","FULL"];
 	};
 } else {
-	_newcommand = [_pos,"MOUNT", "AWARE",combatMode _group,formation _group,"FULL"];
+	_newcommand = [_pos,"MOUNT", "AWARE","","","FULL"];
 };
 
 

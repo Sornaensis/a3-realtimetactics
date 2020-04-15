@@ -5,8 +5,8 @@ _commands = _group getVariable ["commands", []];
 private _newcommand = [ _pos,
 						"MOVE",
 						"AWARE",
-						combatMode _group,
-						formation _group,
+						"",
+						"",
 						if ( (vehicle (leader _group)) == (leader _group) ) then {
 							"NORMAL"
 						} else {

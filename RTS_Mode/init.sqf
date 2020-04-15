@@ -160,6 +160,7 @@ RTS_helpKey = false;
 RTS_showHelp = false;
 RTS_missionFailLimit = if ( RTS_timeLimit > 0 ) then { RTS_timeLimit } else { nil };
 RTS_objectivesSetupDone = false;
+RTS_objectivesSetupInitial = false;
 
 // RTS Specific Commands
 [] call (compile preprocessFileLineNumbers "rts\commands\setup.sqf");

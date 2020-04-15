@@ -18,7 +18,7 @@ private _pos = _positions select _i;
 
 _commands = _group getVariable ["commands", []];
 
-private _newcommand = [_pos,"MOVE", if ( (vehicle (leader _group)) == (leader _group) ) then {"AWARE"} else {"SAFE"},combatMode _group,formation _group,"NORMAL"];
+private _newcommand = [_pos,"MOVE", if ( (vehicle (leader _group)) == (leader _group) ) then {"AWARE"} else {"SAFE"},"","","NORMAL"];
 
 _commands set [count _commands, _newcommand];
 

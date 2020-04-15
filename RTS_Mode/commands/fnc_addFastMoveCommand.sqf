@@ -9,8 +9,8 @@ private _newcommand = [ _pos,
 						} else {
 							"COMBAT"
 						}, 
-						combatMode _group, 
-						formation _group,
+						"", 
+						"",
 						"FULL"
 						];
 
