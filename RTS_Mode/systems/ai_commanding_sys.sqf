@@ -64,7 +64,12 @@ doCounterAttack = {
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["opfor_status", "COUNTER-ATTACK"];
 	_group setVariable ["opfor_objective", _marker];
-	[_group, getMarkerPos _marker, _radius] call CBA_fnc_taskAttack;
+	
+	if ( vehicle (leader _group) != leader _group ) then {
+		[_group, getMarkerPos _marker, _radius, 7, "MOVE", "COMBAT", "RED", "FULL"] call CBA_fnc_taskPatrol;
+	} else {
+		[_group, getMarkerPos _marker, _radius] call CBA_fnc_taskAttack;
+	};
 	_group setVariable ["VCM_NOFLANK",false];
 	_group setVariable ["VCM_NORESCUE",true];
 };
@@ -238,7 +243,7 @@ counterAttack = {
 		private _attack = _attacks select 0;
 		private _attackTime = _attack select 1;
 		
-		if ( time > (_attackTime + 120) ) then { 
+		if ( time > (_attackTime + 60) ) then { 
 			_attack set [1, time];
 			(getMarkerSize _marker) params ["_mx","_my"];
 			private _radius = (_mx max _my) * 1.5;
