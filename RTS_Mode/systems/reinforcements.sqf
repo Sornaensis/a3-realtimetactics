@@ -156,6 +156,16 @@ spawnReinforcements = {
 				(vehicle _x) hideObject true;
 				_x enableSimulationGlobal true;
 				(vehicle _x) enableSimulationGlobal true;
+				_x addEventHandler [ "killed", { (_this select 0) hideObject false; (vehicle (_this select 0)) hideObject false; } ];
+				_x addEventHandler ["killed", 
+									{
+										params ["","_killer"];
+										private _group = group _killer;
+										if ( side _group == RTS_sidePlayer && _group in RTS_commandingGroups ) then {
+											_group setVariable ["combat_victories", (_group getVariable ["combat_victories", 0]) + 1];
+										};							
+									}];
+				[_x] call RTS_setupUnit;
 			} forEach (units _group);
 			_group setVariable ["opfor_status", "RESERVE"];
 			RTS_enemyGroups pushback _group;

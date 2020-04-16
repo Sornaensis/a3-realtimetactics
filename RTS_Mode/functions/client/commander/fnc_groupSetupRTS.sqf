@@ -34,6 +34,8 @@ _group setCombatMode "GREEN"; // Return fire by default
 	_x allowFleeing 0;
 	_x disableAi "FSM";
 	addSwitchableUnit _x;
+	_x call RTS_fnc_aiSkill;
+	[_x] call RTS_setupUnit;
 } forEach (units _group);
 
 // Groups maintain orders in group namespace

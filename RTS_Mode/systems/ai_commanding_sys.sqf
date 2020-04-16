@@ -310,15 +310,16 @@ RTS_ai_commander = [] spawn  {
 		private _totalGroups = call totalStrength;
 		
 		private _reserveUnits = ([_reserveGroups, { count (units _x) }] call CBA_fnc_filter) call sum_list;
+		private _totalUnits = ([_totalGroups, { count (units _x) }] call CBA_fnc_filter) call sum_list;
 		
-		private _reserveCoeff = floor ( _reserveUnits / RTS_enemyTotalStrength * 100 );
+		private _reserveCoeff = floor ( _reserveUnits / (_totalUnits max 1) * 100 );
 		
 		if ( _reserveCoeff >= RTS_targetReserveCoeff ) then {
 			private _taskGroup = selectRandom _reserveGroups;
 			
 			private _strength = count (units _taskGroup);
 			
-			if ( (floor ( (_reserveUnits - _strength) / RTS_enemyTotalStrength * 100 )) >= RTS_targetReserveCoeff ) then {
+			if ( (floor ( (_reserveUnits - _strength) / (_totalUnits max 1) * 100 )) >= RTS_targetReserveCoeff ) then {
 					
 				private _nearestObj = [leader _taskGroup, [RTS_enemySideObjectives,{_x select 1}] call CBA_fnc_filter] call CBA_fnc_getNearest;
 				

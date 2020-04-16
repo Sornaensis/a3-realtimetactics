@@ -14,6 +14,14 @@ RTS_setupScripts = [];
 
 setGroupIconsVisible [true, false];
 
+// Vcom will do side specific stuff for AI
+VCM_SIDESPECIFICSKILL = true;
+
+// Skill increase or decrease as a percentage
+RTS_bluforAIModifier = 0;
+RTS_opforAIModifier = 0; 
+RTS_greenforAIModifier = 0; 
+
 // Function for creating function setups
 RTS_setupFunction = {
 	params ["_prefix", "_functions"];
@@ -37,7 +45,15 @@ RTS_rerunAllSetups = {
 	} forEach RTS_setupScripts;
 };
 
+RTS_setupUnit = {
+	params ["_unit"];
+	_unit removeAllEventHandlers "HandleDamage";
+	_unit removeAllEventHandlers "Hit";
+};
+
 [] call (compile preprocessFileLineNumbers "rts\functions\shared\setup.sqf");
+
+VCM_AISIDESPEC = RTS_fnc_aiSkill;
 
 _initserver = [] spawn (compile preprocessFileLineNumbers "rts\initServer.sqf");
 
@@ -148,11 +164,8 @@ RTS_reinforce = [] spawn (compile preprocessFileLineNumbers "rts\systems\reinfor
 // Reveal dead stuff
 {
 	(vehicle _x) hideObject true;
+	_x call RTS_fnc_aiSkill;
 	_x addEventHandler [ "killed", { (_this select 0) hideObject false; (vehicle (_this select 0)) hideObject false; } ];
-} forEach (allunits select { side _x != RTS_sidePlayer } );
-
-
-{
 	_x addEventHandler ["killed", 
 						{
 							params ["","_killer"];
@@ -295,10 +308,26 @@ RTS_groupMon = {
 		if ( RTS_timeLimit > 0 ) then {
 			_commanderinfo = _commanderinfo + (format ["<br/><t align='left'>Time Limit:</t><t align='right'>%1</t>", [RTS_timeLimit, "HH:MM"] call BIS_fnc_secondsToString ]);
 		};
+	
 		
 		if ( RTS_debug ) then {
 			private _opforUnits = allUnits select { alive _x && side _x == RTS_sideEnemy };	
 			_commanderinfo = _commanderinfo + (format ["<br/><t align='left'>Opfor Strength:</t><t align='right'>%1</t>", count _opforUnits ]);
+			if ( !(isNull RTS_selectedGroup) ) then {
+				
+				private _unitStatus = "<br/>";
+				
+				{
+					_unitStatus = format ["%1<t align='left'>%2</t><t align='right'>%3</t><br/>", _unitStatus, _x, [ (_x skillFinal "aimingAccuracy") toFixed 2, 
+																													 (_x skillFinal "aimingShake") toFixed 2, 	
+																													 (_x skillFinal "aimingSpeed") toFixed 2,
+																													 (_x skillFinal "spotDistance") toFixed 2,
+																													 (_x skillFinal "courage") toFixed 2
+																													]];
+				} forEach (units RTS_selectedGroup);
+				
+				_commanderinfo = _commanderinfo + _unitStatus;
+			};
 		};
 					
 		// Controls information
