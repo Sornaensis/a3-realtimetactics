@@ -318,7 +318,7 @@ RTS_groupMon = {
 				private _unitStatus = "<br/>";
 				
 				{
-					_unitStatus = format ["%1<t align='left'>%2</t><t align='right'>%3</t><br/>", _unitStatus, _x, [ (_x skillFinal "aimingAccuracy") toFixed 2, 
+					_unitStatus = format ["%1<t align='left'>%2</t><br/><t align='right'>%3</t><br/>", _unitStatus, _x, [ (_x skillFinal "aimingAccuracy") toFixed 2, 
 																													 (_x skillFinal "aimingShake") toFixed 2, 	
 																													 (_x skillFinal "aimingSpeed") toFixed 2,
 																													 (_x skillFinal "spotDistance") toFixed 2,

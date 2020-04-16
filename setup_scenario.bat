@@ -7,6 +7,6 @@ cd ..
 
 xcopy /s scenario_setup %directory%
 
-mklink /D %directory%\rts RTS_Mode
+mklink /D %directory%\rts %directory%\..\RTS_Mode
 
 set /p non="Press enter to exit... "
