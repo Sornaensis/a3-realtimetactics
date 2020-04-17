@@ -115,7 +115,7 @@ spawnReinforcements = {
 			_unit setPosATL ( _unitPos findEmptyPosition [0,10,"MAN"] );
 			_unit setDir _unitDir;
 			_unit setUnitLoadout _unitLoadout;
-			if ( !isNull _vehicleUnit ) then {
+			if ( !(isNull _vehicleUnit) ) then {
 				[_vehicleUnit,_unit,_unitVehicleInfo] call assignToVehicle;
 			};
 			_unit enableSimulationGlobal false;
@@ -166,6 +166,7 @@ spawnReinforcements = {
 										};							
 									}];
 				[_x] call RTS_setupUnit;
+				_x call RTS_fnc_aiSkill;
 			} forEach (units _group);
 			_group setVariable ["opfor_status", "RESERVE"];
 			RTS_enemyGroups pushback _group;

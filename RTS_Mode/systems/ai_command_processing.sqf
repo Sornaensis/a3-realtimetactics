@@ -8,7 +8,7 @@
 		_group setVariable ["status", "OTM"];
 		(_commands select 0) params ["_pos", "_type", "_behaviour", "_combat", "_form", "_speed"];
 		private _pausetime = 0;
-		if ( count (_commands select 0) > 6 ) then {
+		if ( count (_commands select 0) > 6 && !isNil ((_commands select 0) select 6) ) then {
 			_pausetime = (_commands select 0) select 6;
 		};
 		{
@@ -28,7 +28,7 @@
 					_unit doMove _pos;
 					(group _unit) setSpeedMode _speed;
 					(group _unit) setBehaviour _behaviour;
-					_future = time + 15;
+					private _future = time + 15;
 					waitUntil { (_group getVariable ["waypoint_canceled", false]) || speed (vehicle _unit) != 0 || (time > _future && !RTS_paused) };
 					sleep 3;
 					waitUntil { (_group getVariable ["waypoint_canceled", false]) || (speed (vehicle _unit) == 0 && !RTS_paused) || ([_unit, _pos] call CBA_fnc_getDistance) < 9 || !(alive _unit) };
@@ -78,18 +78,6 @@
 				};
 			};
 		} else {
-			if ( _behaviour != "COMBAT" ) then {
-				{
-					_x disableAI "COVER";
-					_x disableAI "AUTOTARGET";
-					_x disableAI "FSM";
-					_x disableAI "AUTOCOMBAT";
-				} forEach (units _group);
-			} else {
-				{
-					_x enableAI "AUTOCOMBAT";
-				} forEach (units _group);
-			};
 			if ( _type == "GETIN" || _type == "MOUNT" ) then {
 				(units _group) allowGetIn true;
 				private _candidates = [];
@@ -122,55 +110,158 @@
 						};
 					_wp waypointAttachVehicle _wpveh;
 				};
-			} else {
-				[_group, _pos, _behaviour, _combat, _speed, _form, _pausetime] spawn {
-					params ["_group", "_pos", "_behaviour", "_combat", "_speed", "_form", "_pausetime"];
-					private _commands = _group getVariable ["commands", []];
-					private _complete = false;
-					while { ( ( count ((units _group) select { alive _x }) ) > 0 ) && ((count _commands) > 0) && !_complete} do {
-						(leader _group) doMove _pos;
-						if ( _speed != "" ) then {
-							_group setSpeedMode _speed;
-						};
-						if ( _combat != "" ) then {
-							_group setCombatMode _combat;
-						};
-						if ( _form != "" ) then {
-							_group setFormation _form;
-						};
-						if ( _behaviour != "" ) then {
-							_group setBehaviour _behaviour;
-						};
-						{
-							_x doWatch objnull;
-							if ( _x != (leader _group) ) then {
-								[_x] doFollow (leader _group);
+			} else {	
+				if ( _type == "SEARCH" ) then {
+					[_group, (_commands select 0) select 7,_pausetime] spawn {
+					    params ["_group", "_building","_pausetime"];
+					    private _leader = leader _group;
+					    [_group] call RTS_fnc_autoCombat;
+					    [_group] call CBA_fnc_clearWaypoints;
+					
+					    // Add a waypoint to regroup after the search
+					    _group lockWP true;
+					    private _wp = _group addWaypoint [getPos _leader, -1, currentWaypoint _group];
+					    private _cond = "({unitReady _x || !(alive _x)} count thisList) == count thisList";
+					    private _comp = format ["this setFormation '%1'; this setBehaviour '%2'; deleteWaypoint [group this, currentWaypoint (group this)];", formation _group, behaviour _leader];
+					    _wp setWaypointStatements [_cond, _comp];
+					
+					    // Prepare group to search
+					    _group setBehaviour "Combat";
+					    _group setFormDir ([_leader, _building] call BIS_fnc_dirTo);
+					
+					    // Leader will only wait outside if group larger than 2
+					    if (count (units _group) <= 2) then {
+					        _leader = objNull;
+					    };
+					
+					    // Search while there are still available positions
+					    private _positions = _building buildingPos -1;
+					    while {!(_positions isEqualTo []) && !(_group getVariable ["waypoint_canceled", false])} do {
+					        // Update units in case of death
+					        private _units = (units _group) - [_leader];
+							
+					        // Abort search if the group has no units left
+					        if (_units isEqualTo []) exitWith {};
+					
+					        // Send all available units to the next available position
+					        {
+					            if (_positions isEqualTo []) exitWith {};
+					            if (unitReady _x) then {
+					                private _pos = _positions deleteAt 0;
+					                _x commandMove _pos;
+					                titleText [ format ["%1 moveTo %2", _x, _pos], "PLAIN"];
+					                sleep 2;
+					            };
+					        } forEach _units;
+					    };
+					    _group lockWP false;
+					    if ( _group getVariable ["waypoint_canceled", false] ) then { 
+							_group setVariable ["waypoint_canceled", false ]; 
+							_group setVariable ["status", "WAITING" ]; 
+						} else {
+							// Pause for variable seconds
+							_group setVariable ["status", "PAUSED" ];
+							_pausetime = (if ( _pausetime > 0 ) then { _pausetime } else { _group getVariable ["pause_remaining", 0] });
+							while { _pausetime > 0 } do {
+								_group setVariable ["pause_remaining", _pausetime - 1];
+								sleep 1;
+								_pausetime = _group getVariable ["pause_remaining", 0];
+								waitUntil { !RTS_paused };						
 							};
-						} forEach (units _group);
-						waitUntil { (_group getVariable ["waypoint_canceled", false]) || ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 10 || !((count (_group getVariable ["commands", []])) > 0) || !(alive (leader _group) ) };
-						if ( _group getVariable ["waypoint_canceled", false] ) then { 
-							_complete = true;
+							_group setVariable ["pause_remaining", 0];
 						};
-						if ( ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 10 ) then {
-							_complete = true;
-						};
-						_commands = _group getVariable ["commands", []];
-					};
-					if ( _group getVariable ["waypoint_canceled", false] ) then { 
-						_group setVariable ["waypoint_canceled", false ]; 
-						_group setVariable ["status", "WAITING" ];
-					} else {
-						// Pause for variable seconds
-						_group setVariable ["status", "PAUSED" ];
-						_pausetime = (if ( _pausetime > 0 ) then { _pausetime } else { _group getVariable ["pause_remaining", 0] });
-						while { _pausetime > 0 } do {
-							_group setVariable ["pause_remaining", _pausetime - 1];
-							sleep 1;	
-							_pausetime = _group getVariable ["pause_remaining", 0];
-							waitUntil { !RTS_paused };							
-						};
-						_group setVariable ["pause_remaining", 0];
+						[_group,true] call RTS_fnc_autoCombat;
 						[_group] call RTS_fnc_removeCommand;
+					};
+				} else {
+					(leader _group) doMove _pos;
+					if ( _speed != "" ) then {
+						_group setSpeedMode _speed;
+					};
+					if ( _combat != "" ) then {
+						_group setCombatMode _combat;
+						if ( _combat == "RED" ) then {
+							[_group] call RTS_fnc_autoCombat;
+							_group enableAttack true;
+						} else {
+							[_group, true] call RTS_fnc_autoCombat;
+							_group enableAttack false;
+						};
+					} else {
+						[_group] call RTS_fnc_autoCombat;
+						_group enableAttack false;
+					};
+					if ( _form != "" ) then {
+						_group setFormation _form;
+					};
+					if ( _behaviour != "" ) then {
+						_group setBehaviour _behaviour;
+					};
+					{
+						_x doWatch objnull;
+						if ( _x != (leader _group) ) then {
+							[_x] doFollow (leader _group);
+						};
+					} forEach (units _group);
+					[_group, _pos, _behaviour, _combat, _speed, _form, _pausetime] spawn {
+						params ["_group", "_pos", "_behaviour", "_combat", "_speed", "_form", "_pausetime"];
+						private _commands = _group getVariable ["commands", []];
+						private _complete = false;
+						while { ( ( count ((units _group) select { alive _x }) ) > 0 ) && ((count _commands) > 0) && !_complete} do {
+							(leader _group) doMove _pos;
+							if ( _speed != "" ) then {
+								_group setSpeedMode _speed;
+							};
+							if ( _combat != "" ) then {
+								_group setCombatMode _combat;
+								if ( _combat == "RED" ) then {
+									[_group] call RTS_fnc_autoCombat;
+									_group enableAttack true;
+								} else {
+									[_group, true] call RTS_fnc_autoCombat;
+									_group enableAttack false;
+								};
+							} else {
+								[_group] call RTS_fnc_autoCombat;
+								_group enableAttack false;
+							};
+							if ( _form != "" ) then {
+								_group setFormation _form;
+							};
+							if ( _behaviour != "" ) then {
+								_group setBehaviour _behaviour;
+							};
+							{
+								_x doWatch objnull;
+								if ( _x != (leader _group) ) then {
+									[_x] doFollow (leader _group);
+								};
+							} forEach (units _group);
+							waitUntil { (_group getVariable ["waypoint_canceled", false]) || ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 10 || !((count (_group getVariable ["commands", []])) > 0) || !(alive (leader _group) ) };
+							if ( _group getVariable ["waypoint_canceled", false] ) then { 
+								_complete = true;
+							};
+							if ( ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 10 ) then {
+								_complete = true;
+							};
+							_commands = _group getVariable ["commands", []];
+						};
+						if ( _group getVariable ["waypoint_canceled", false] ) then { 
+							_group setVariable ["waypoint_canceled", false ]; 
+							_group setVariable ["status", "WAITING" ];
+						} else {
+							// Pause for variable seconds
+							_group setVariable ["status", "PAUSED" ];
+							_pausetime = (if ( _pausetime > 0 ) then { _pausetime } else { _group getVariable ["pause_remaining", 0] });
+							while { _pausetime > 0 } do {
+								_group setVariable ["pause_remaining", _pausetime - 1];
+								sleep 1;	
+								_pausetime = _group getVariable ["pause_remaining", 0];
+								waitUntil { !RTS_paused };							
+							};
+							_group setVariable ["pause_remaining", 0];
+							[_group] call RTS_fnc_removeCommand;
+						};
 					};
 				};
 			};

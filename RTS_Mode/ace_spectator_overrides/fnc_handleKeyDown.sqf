@@ -150,14 +150,19 @@ if ( _key == DIK_V && !RTS_stanceChoose && (isNil "RTS_command") ) exitWith {
 if ( _key == DIK_X && !RTS_buildingposChoose && (isNil "RTS_command") ) exitWith {
 	RTS_buildingposChoose = true;
 	RTS_selectedBuilding = nearestObject [(screenToWorld getMousePosition), "House"];
-	RTS_command = ["Get In Building", 
-					{ 
-						if ( RTS_phase == "DEPLOY" ) then {
-							_this call RTS_fnc_putInBuilding;
-						} else {
-							_this call RTS_fnc_commandGetInBuilding;
-						};						
-					}, nil, ""];
+	
+	if ( _shift ) then {
+		RTS_command = ["Search Building", { _this call RTS_fnc_commandSearchBuilding }, nil, ""];
+	} else {
+		RTS_command = ["Get In Building", 
+						{ 
+							if ( RTS_phase == "DEPLOY" ) then {
+								_this call RTS_fnc_putInBuilding;
+							} else {
+								_this call RTS_fnc_commandGetInBuilding;
+							};						
+						}, nil, ""];
+	};
 	true
 };
 
@@ -283,6 +288,11 @@ if( RTS_combatChoose ) exitWith {
 			};
 			if ( count _commands < 2 ) then {
 				_group setCombatMode _mode;
+				if ( _mode == "RED" ) then {
+					[_group] call RTS_fnc_autoCombat;
+				} else {
+					[_group, true] call RTS_fnc_autoCombat;
+				};	
 			};
 		};
 	};

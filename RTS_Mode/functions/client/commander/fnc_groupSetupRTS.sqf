@@ -17,10 +17,11 @@ RTS_commandingGroups pushbackunique _group;
 
 
 // VCOM Stuff
-_group setVariable ["VCM_NOFLANK",true];
-_group setVariable ["VCM_DisableForm",true];
-_group setVariable ["VCM_NORESCUE",true];
-_group setVariable ["VCM_TOUGHSQUAD",true];
+//_group setVariable ["VCM_NOFLANK",true];
+//_group setVariable ["VCM_DisableForm",true];
+//_group setVariable ["VCM_NORESCUE",true];
+//_group setVariable ["VCM_TOUGHSQUAD",true];
+_group setVariable ["VCM_DISABLE",true];
 
 if ( (vehicle (leader _group)) == (leader _group) ) then {
 	{ 
@@ -29,7 +30,7 @@ if ( (vehicle (leader _group)) == (leader _group) ) then {
 };
 
 _group enableAttack false;
-_group setCombatMode "GREEN"; // Return fire by default
+_group setCombatMode "YELLOW";
 {
 	_x allowFleeing 0;
 	_x disableAi "FSM";
@@ -143,6 +144,11 @@ if !(isNil "_veh") then {
 			{
 				_x setUnitPos "AUTO";
 			} forEach (units _group);
+			{
+				doStop _x;
+				_x doFollow (leader _group);
+			} forEach (units _group);
+			[_group, true] call RTS_fnc_autoCombat;
 		};
 		
 	}];
@@ -187,19 +193,31 @@ if !(isNil "_veh") then {
 			_group setVariable ["command_bonus", 1];
 		};
 		
-		{
-			_nearest = [getPosATL _x, _units - [_x]] call CBA_fnc_getNearest;
-			if ( ( [_nearest, _x] call CBA_fnc_getDistance ) > 15 && (_x != leader _group) && ( (time + 15) > (_x getVariable ["returning", time]) ) ) then {
-				_x setVariable ["returning", time + 15]; 
-				_x doWatch objnull;
-				_x doFollow (leader _group);
-			} else {
-				if ( ( [_nearest, _x] call CBA_fnc_getDistance ) < 15 ) then {
-					_x setVariable ["returning", time];
+		private _commands = _group getVariable ["commands", []];
+		private _type = "WAIT";
+		
+		if ( count _commands > 0 ) then {
+			private _current = _commands select 0;
+			_type = _current select 1;
+		};
+		
+		if ( _type != "SEARCH" ) then {
+		
+			{
+				_nearest = [getPosATL _x, _units - [_x]] call CBA_fnc_getNearest;
+				if ( ( [_nearest, _x] call CBA_fnc_getDistance ) > 20 && (_x != leader _group) && ( time > (_x getVariable ["returning", time]) ) ) then {
+					_x setVariable ["returning", time + 20];
+					doStop _x;
+					_x doWatch objnull;
+					_x doFollow (leader _group);
+				} else {
+					if ( ( [_nearest, _x] call CBA_fnc_getDistance ) < 20 ) then {
+						_x setVariable ["returning", time + 20];
+					};
 				};
-			};
-				
-		} forEach _units;
+					
+			} forEach _units;
+		};
 		
 		_group setVariable ["morale", _maxmorale min ( (_group getVariable ["morale",0]) + ( if ( (_group getVariable ["morale",0]) > 0 ) then { 0.1 } else { 0.03 } ) * _commandbonus )];
 		

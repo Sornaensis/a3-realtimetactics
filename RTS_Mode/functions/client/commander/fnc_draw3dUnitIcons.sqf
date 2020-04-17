@@ -74,6 +74,10 @@ if ( RTS_commanding ) then {
 			};
 		};
 		
+		if ( combatMode _group == "RED" ) then {
+			_desc = "[CQC]" + _desc;
+		};
+		
 		if (_group == RTS_selectedGroup) then {	
 			{
 				private ["_pos", "_drawpos"];

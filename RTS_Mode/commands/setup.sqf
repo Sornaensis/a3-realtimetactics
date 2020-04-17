@@ -13,5 +13,6 @@
 	Q(RTS_fnc_addFastMoveCommand),
 	Q(RTS_fnc_addMoveCommand),
 	Q(RTS_fnc_commandGetInBuilding),
+	Q(RTS_fnc_commandSearchBuilding),
 	Q(RTS_fnc_putInBuilding)]
 ] call RTS_setupFunction;
