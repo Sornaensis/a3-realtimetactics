@@ -149,7 +149,6 @@
 					            if (unitReady _x) then {
 					                private _pos = _positions deleteAt 0;
 					                _x commandMove _pos;
-					                titleText [ format ["%1 moveTo %2", _x, _pos], "PLAIN"];
 					                sleep 2;
 					            };
 					        } forEach _units;
