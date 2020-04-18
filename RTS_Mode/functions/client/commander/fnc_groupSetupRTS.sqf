@@ -1,11 +1,19 @@
 #include "..\..\..\RTS_defines.hpp"
-params ["_group", "_description", "_commandelement", "_grouptexture", "_icon"];
+params ["_group", "_description", "_commandelement", "_grouptexture", "_icon", "_exp", "_leaderfactor" ];
 
 clearGroupIcons _group;
 
 RTS_commandingGroups pushbackunique _group;
 
 [_group] call CBA_fnc_clearWaypoints;
+
+if ( !isNil "_exp" ) then {
+	_group setVariable [ "Experience", _exp ];
+};
+
+if ( !isNil "_leaderfactor" ) then {
+	_group setVariable [ "LeaderFactor", _leaderfactor ];
+};
 
 [-1, 
 	{
@@ -32,7 +40,6 @@ _group setCombatMode "YELLOW";
 	_x allowFleeing 0;
 	_x disableAi "FSM";
 	addSwitchableUnit _x;
-	_x call RTS_fnc_aiSkill;
 	[_x] call RTS_setupUnit;
 	private _unit = _x;
 	{
@@ -189,8 +196,6 @@ if !(isNil "_veh") then {
 			if ( group (driver _veh) == _group ) then {
 				[_group, getPos _leader] call RTS_fnc_addUnloadOrLoadCommand;				
 				[_group, getPos _leader] call RTS_fnc_addMountOrDismountCommand;
-			} else {
-				[_group, getPos _leader] call RTS_fnc_addUnloadOrLoadCommand;	
 			};
 		};
 	

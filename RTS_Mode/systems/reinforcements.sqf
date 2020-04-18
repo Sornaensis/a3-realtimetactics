@@ -166,7 +166,6 @@ spawnReinforcements = {
 										};							
 									}];
 				[_x] call RTS_setupUnit;
-				_x call RTS_fnc_aiSkill;
 			} forEach (units _group);
 			_group setVariable ["opfor_status", "RESERVE"];
 			RTS_enemyGroups pushback _group;

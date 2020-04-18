@@ -184,15 +184,19 @@ if ( RTS_commanding ) then {
 					_command params ["_pos", "_type", "_behaviour", "_combat", "_form", "_speed"];
 					
 					// Speed mode info
-					if ( _type == "MOVE" ) then {
-						if ( _speed == "LIMITED" ) then {
-							_waypointDesc = format ["%1 / %2", _waypointDesc, "Slow"];
+					if ( vehicle (leader _group) == (leader _group) ) then { 
+						if ( _type == "MOVE" ) then {
+							if ( _speed == "NORMAL" ) then {
+								_waypointDesc = format ["%1 / %2", _waypointDesc, "Quick"];
+							};
+							if ( _speed == "FULL" ) then {
+								_waypointDesc = format ["%1 / %2", _waypointDesc, "Fast"];
+							};						
 						};
-						if ( _speed == "FULL" ) then {
-							_waypointDesc = format ["%1 / %2", _waypointDesc, "Fast"];
-						};						
+						if ( _type == "SEARCH" ) then {
+							_waypointDesc = format ["%1 / %2", _waypointDesc, "Search"];					
+						};
 					};
-					
 					if ( _form != "" ) then {
 						_waypointDesc = format ["%1 / %2", _waypointDesc, _form];
 					};

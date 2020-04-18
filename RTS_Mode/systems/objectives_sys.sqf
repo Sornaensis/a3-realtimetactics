@@ -193,85 +193,84 @@ for "_i" from 0 to ( (count _objectives) - 1 ) do {
 
 RTS_objectivesSetupDone = true;
 
-RTS_objectiveLoop = [_objectives] spawn {
-	params ["_objectives"];
+// track objectives
+RTS_activeObjectives = +_objectives;
+
+RTS_objectiveLoop =  addMissionEventHandler ["Draw3D", 
+{ 
+	_objectives = RTS_activeObjectives;
 	
 	// Do objective logic here
-	
-	while { true } do {
-		{
-			_x params ["_type", "_marker", "", "_completed", "_taskName"];
+	{
+		_x params ["_type", "_marker", "", "_completed", "_taskName"];
+			
+		switch ( _type ) do {
+			case "occupy": {
+				private _enemy = allUnits select { alive _x && side _x == RTS_sideEnemy };
+				private _friendly = allUnits select { alive _x && side _x == RTS_sidePlayer };
+				private _inareaEnemy = _enemy select { (getPos _x) inArea _marker };
+				private _inareaFriendly = _friendly select { (getPos _x) inArea _marker };
 				
-			switch ( _type ) do {
-				case "occupy": {
-					private _enemy = allUnits select { alive _x && side _x == RTS_sideEnemy };
-					private _friendly = allUnits select { alive _x && side _x == RTS_sidePlayer };
-					private _inareaEnemy = _enemy select { (getPos _x) inArea _marker };
-					private _inareaFriendly = _friendly select { (getPos _x) inArea _marker };
-					
-					if ( !_completed && count _inareaEnemy == 0 && count _inareaFriendly > 0 ) then {
-						[_taskName, "SUCCEEDED"] call BIS_fnc_taskSetState;
-						_marker setMarkerColor ([RTS_sideEnemy] call objectiveInitialColor);
-						_x set [3, true];
-					} else {
-						if ( _completed && count _inareaEnemy > 0 && count _inareaFriendly < 1) then {
-							[_taskName, "CREATED"] call BIS_fnc_taskSetState;
-							_marker setMarkerColor ([RTS_sidePlayer] call objectiveInitialColor);
-							_x set [3, false];
-						};
+				if ( !_completed && count _inareaEnemy == 0 && count _inareaFriendly > 0 ) then {
+					[_taskName, "SUCCEEDED"] call BIS_fnc_taskSetState;
+					_marker setMarkerColor ([RTS_sideEnemy] call objectiveInitialColor);
+					_x set [3, true];
+				} else {
+					if ( _completed && count _inareaEnemy > 0 && count _inareaFriendly < 1) then {
+						[_taskName, "ASSIGNED"] call BIS_fnc_taskSetState;
+						_marker setMarkerColor ([RTS_sidePlayer] call objectiveInitialColor);
+						_x set [3, false];
 					};
-					
 				};
-				case "clear": {
-					private _enemy = allUnits select { alive _x && side _x == RTS_sideEnemy };
-					private _inareaEnemy = _enemy select { (getPos _x) inArea _marker };
-					private _friendly = allUnits select { alive _x && side _x == RTS_sidePlayer };
-					private _inareaFriendly = _friendly select { (getPos _x) inArea _marker };
-					
-					if ( !_completed && count _inareaEnemy == 0 && count _inareaFriendly > 0) then {
-						[_taskName, "SUCCEEDED"] call BIS_fnc_taskSetState;
-						_marker setMarkerColor ([RTS_sideEnemy] call objectiveInitialColor);
-						_x set [3, true];
-					} else {
-						if ( _completed && count _inareaEnemy > 0 ) then {
-							[_taskName, "CREATED"] call BIS_fnc_taskSetState;
-							_marker setMarkerColor ([RTS_sidePlayer] call objectiveInitialColor);
-							_x set [3, false];
-						};
+				
+			};
+			case "clear": {
+				private _enemy = allUnits select { alive _x && side _x == RTS_sideEnemy };
+				private _inareaEnemy = _enemy select { (getPos _x) inArea _marker };
+				private _friendly = allUnits select { alive _x && side _x == RTS_sidePlayer };
+				private _inareaFriendly = _friendly select { (getPos _x) inArea _marker };
+				
+				if ( !_completed && count _inareaEnemy == 0 && count _inareaFriendly > 0) then {
+					[_taskName, "SUCCEEDED"] call BIS_fnc_taskSetState;
+					_marker setMarkerColor ([RTS_sideEnemy] call objectiveInitialColor);
+					_x set [3, true];
+				} else {
+					if ( _completed && count _inareaEnemy > 0 ) then {
+						[_taskName, "ASSIGNED"] call BIS_fnc_taskSetState;
+						_marker setMarkerColor ([RTS_sidePlayer] call objectiveInitialColor);
+						_x set [3, false];
 					};
+				};
 
-				};
-				case "touch": {
-					if ( !_completed ) then {
-						private _friendly = allUnits select { alive _x && side _x == RTS_sidePlayer };
-						private _inarea = _friendly select { (getPos _x) inArea _marker };
-						
-						if ( count _inarea > 0 ) then {
-							_x set [3, true];
-							[_taskName, "SUCCEEDED"] call BIS_fnc_taskSetState;
-							_marker setMarkerColor ([RTS_sideEnemy] call objectiveInitialColor);
-							_x set [3, true];
-						};
+			};
+			case "touch": {
+				if ( !_completed ) then {
+					private _friendly = allUnits select { alive _x && side _x == RTS_sidePlayer };
+					private _inarea = _friendly select { (getPos _x) inArea _marker };
+					
+					if ( count _inarea > 0 ) then {
+						_x set [3, true];
+						[_taskName, "SUCCEEDED"] call BIS_fnc_taskSetState;
+						_marker setMarkerColor ([RTS_sideEnemy] call objectiveInitialColor);
+						_x set [3, true];
 					};
 				};
 			};
-			
-		} forEach _objectives;
-		
-		private _allComplete = true;
-		{
-			_x params ["","","","_completed"];
-			_allComplete = _allComplete && _completed;
-		} forEach _objectives;
-		
-		if ( _allComplete ) then {
-			RTS_missionFinished = true;
-			publicVariable "RTS_missionFinished";
-		} else {
-			RTS_missionFinished = false;
-			publicVariable "RTS_missionFinished";
 		};
 		
-		sleep 1;
+	} forEach _objectives;
+	
+	private _allComplete = true;
+	{
+		_x params ["","","","_completed"];
+		_allComplete = _allComplete && _completed;
+	} forEach _objectives;
+	
+	if ( _allComplete ) then {
+		RTS_missionFinished = true;
+		publicVariable "RTS_missionFinished";
+	} else {
+		RTS_missionFinished = false;
+		publicVariable "RTS_missionFinished";
 	};
-};
+}];

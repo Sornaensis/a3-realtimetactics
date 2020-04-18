@@ -44,7 +44,7 @@ setupAsGarrison = {
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["opfor_status", "GARRISON"];
 	_group setVariable ["opfor_objective", _marker];
-	[_group, getMarkerPos _marker, _radius, 2, 0.5, 0.65 ] call CBA_fnc_taskDefend;
+	[_group, getMarkerPos _marker, _radius, 2, 0.7, 0.6 ] call CBA_fnc_taskDefend;
 	_group setVariable ["VCM_NOFLANK",true];
 	_group setVariable ["VCM_NORESCUE",true];
 };
@@ -54,7 +54,7 @@ setupAsPatrol = {
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["opfor_status", "PATROL"];
 	_group setVariable ["opfor_objective", _marker];
-	[_group, getMarkerPos _marker, _radius, 7, "MOVE", "CARELESS", "RED", "NORMAL"] call CBA_fnc_taskPatrol;
+	[_group, getMarkerPos _marker, _radius, 7, "MOVE", "SAFE", "RED", "NORMAL"] call CBA_fnc_taskPatrol;
 	_group setVariable ["VCM_NOFLANK",false];
 	_group setVariable ["VCM_NORESCUE",false];
 };

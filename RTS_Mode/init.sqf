@@ -202,7 +202,6 @@ RTS_reinforce = [] spawn (compile preprocessFileLineNumbers "rts\systems\reinfor
 // Reveal dead stuff
 {
 	(vehicle _x) hideObject true;
-	_x call RTS_fnc_aiSkill;
 	_x addEventHandler [ "killed", { (_this select 0) hideObject false; (vehicle (_this select 0)) hideObject false; } ];
 	_x addEventHandler ["killed", 
 						{
@@ -299,6 +298,14 @@ disableFriendlyFire = {
 
 [] call RTS_fnc_setupAllGroups;
 
+RTS_aiSkillLimiter = [] spawn {
+	while { true } do {
+		{
+			_x call RTS_fnc_aiSkill;
+		} forEach allunits;
+		sleep 4;
+	};
+};
 {
 
 	_group = _x;
@@ -386,7 +393,8 @@ RTS_groupMon = {
 																													 (_x skillFinal "aimingShake") toFixed 2, 	
 																													 (_x skillFinal "aimingSpeed") toFixed 2,
 																													 (_x skillFinal "spotDistance") toFixed 2,
-																													 (_x skillFinal "courage") toFixed 2
+																													 (_x skillFinal "spotTime") toFixed 2,
+																													 (_x getVariable ["SoftFactor", 0]) toFixed 3
 																													]];
 				} forEach (units RTS_selectedGroup);
 				
@@ -407,12 +415,13 @@ RTS_groupMon = {
 		"<t size='1.1'>Click and Drag, or Double Click on a soldier/vehicle to select a unit<br/><br/>" +
 		"Hold Buttons and double click to assign an order to a unit<br/><br/></t>" +
 		"<t align='left' size='1'>E -</t><t align='right'>Move</t>" + "<br/>" +
-		"<t align='left' size='1'>Shift+E -</t><t align='right'>Fast Move</t>" + "<br/>" +
-		"<t align='left' size='1'>Ctrl+E -</t><t align='right'>Careful Move</t>" + "<br/>" +
+		"<t align='left' size='1'>Shift+E -</t><t align='right'>Quick Move</t>" + "<br/>" +
+		"<t align='left' size='1'>Ctrl+E -</t><t align='right'>Fast Move</t>" + "<br/>" +
 		"<t align='left' size='1'>R -</t><t align='right'> &#160;Mount/Dismount Crew</t>" + "<br/>" +
 		"<t align='left' size='1'>T -</t><t align='right'>Watch Position</t>" + "<br/>" +
 		"<t align='left' size='1'>Shift+T -</t><t align='right'>Check Position Visibility</t>" + "<br/>" +
 		"<t align='left' size='1'>X -</t><t align='right'>Enter Building</t>" + "<br/>" +
+		"<t align='left' size='1'>Shift+X -</t><t align='right'>Search Building</t>" + "<br/>" +
 		"<t align='left' size='1'>Space -</t><t align='right'>Load/Unload Passengers</t>" + "<br/>" +
 		"<t align='left' size='1'>F -</t><t align='right'>Select Formation</t>" + "<br/>" +
 		"<t align='left' size='1'>V -</t><t align='right'>Select Stance</t>" + "<br/>" +

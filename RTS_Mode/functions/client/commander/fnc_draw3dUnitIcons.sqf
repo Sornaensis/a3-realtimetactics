@@ -140,7 +140,8 @@ if ( RTS_commanding ) then {
 		
 		if ( (count _nearest) > 0 ) then {
 			if ( (_nearest select 0) < 500 ) then {
-				_drawpos = [(_pos select 0) + (50 - (random 100)), (_pos select 1) + (50 - (random 100)), (_pos select 2) + 0.2]; 
+				_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+				_near = true;
 			};
 		};
 		
