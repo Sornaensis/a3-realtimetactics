@@ -49,6 +49,11 @@ if ( _key == DIK_BACKSPACE ) exitWith {
 	true
 };
 
+if ( _key == DIK_DELETE ) exitWith {
+	RTS_delete = false;
+	true
+};
+
 if ( _key == DIK_F ) exitWith {
 	RTS_formationChoose = false;
 	RTS_command = nil;

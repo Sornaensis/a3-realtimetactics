@@ -7,12 +7,12 @@ if ( RTS_phase == "MAIN" || RTS_phase == "INITIALORDERS" ) then {
 		// Move
 		case DIK_E: {
 			if ( _shift ) then {
-				RTS_command = ["Fast Move", { _this call RTS_fnc_addFastMoveCommand } ];
+				RTS_command = ["Quick Move", { _this call RTS_fnc_addMoveCommand } ];
 			} else {
 				if ( _ctrl ) then {
-					RTS_command = ["Careful Move", { _this call RTS_fnc_addSlowMoveCommand } ];
+					RTS_command = ["Sprint", { _this call RTS_fnc_addFastMoveCommand  } ];
 				} else {
-					RTS_command = ["Move", { _this call RTS_fnc_addMoveCommand } ];
+					RTS_command = ["Move", { _this call RTS_fnc_addSlowMoveCommand } ];
 				};
 			};
 		};

@@ -29,6 +29,9 @@ if ( _key == DIK_TAB && RTS_Phase == "MAIN" ) exitWith {
 			{
 				_x enableSimulation false;
 			} forEach allDead;
+			{
+				_x enableSimulation false;
+			} forEach ( entities [[], ["Logic"], true] );
 		} else {
 			RTS_paused = false;
 			{
@@ -40,6 +43,9 @@ if ( _key == DIK_TAB && RTS_Phase == "MAIN" ) exitWith {
 			{
 				_x enableSimulation true;
 			} forEach allDead;
+			{
+				_x enableSimulation true;
+			} forEach ( entities [[], ["Logic"], true] );
 		};
 	};
 };
@@ -107,6 +113,20 @@ if ( _key == DIK_BACKSPACE && !RTS_backspace ) exitWith {
 				_newcommands set [count _newcommands, _commands select _i];
 			};
 			_group setVariable ["commands", _newcommands, true];
+		};
+	};
+	true
+};
+
+// Remove current waypoint
+
+if ( _key == DIK_DELETE && !RTS_delete ) exitWith {
+	private _group =  RTS_selectedGroup;
+	if !( isNull _group ) then {
+		RTS_delete = true;
+		private _commands = _group getVariable ["commands", []];
+		if (( count _commands ) > 0) then {
+			[_group,true] call RTS_fnc_removeCommand;
 		};
 	};
 	true
@@ -287,11 +307,14 @@ if( RTS_combatChoose ) exitWith {
 				(_commands select ((count _commands) - 1)) set [3, _mode];
 			};
 			if ( count _commands < 2 ) then {
-				_group setCombatMode _mode;
-				if ( _mode == "RED" ) then {
+				if ( (count _commands) == 0 && _mode == "RED" ) then {
+					_group setCombatMode _mode;
 					[_group] call RTS_fnc_autoCombat;
 				} else {
-					[_group, true] call RTS_fnc_autoCombat;
+					if ( _mode != "RED" ) then {
+						_group setCombatMode _mode;
+						[_group,true] call RTS_fnc_autoCombat;
+					};
 				};	
 			};
 		};

@@ -16,6 +16,31 @@ setGroupIconsVisible [true, false];
 
 // Vcom will do side specific stuff for AI
 VCM_SIDESPECIFICSKILL = true;
+VCM_AIMagLimit = 1; 
+VCM_Debug = false; 
+VCM_MINECHANCE = 75;
+VCM_SIDEENABLED = [west,east,resistance]; 
+VCM_RAGDOLL = true; 
+VCM_RAGDOLLCHC = 50; 
+VCM_FullSpeed = true; 
+VCM_HEARINGDISTANCE = 1000; 
+VCM_WARNDIST = 1000; 
+VCM_WARNDELAY = 30; 
+VCM_STATICARMT = 300;
+VCM_StealVeh = false;
+VCM_ClassSteal = true;
+VCM_AIDISTANCEVEHPATH = 0; 
+VCM_ADVANCEDMOVEMENT = false; 
+VCM_FRMCHANGE = true; 
+VCM_SKILLCHANGE = true;
+VCM_USECBASETTINGS = true;
+VCM_CARGOCHNG = true; 
+VCM_TURRETUNLOAD = true;
+VCM_DISEMBARKRANGE = 200;
+VCM_AISNIPERS = false; 
+VCM_AISUPPRESS = true; 
+Vcm_DrivingActivated = true;
+Vcm_PlayerAISkills = false; 
 
 // Skill increase or decrease as a percentage
 RTS_bluforAIModifier = 0;
@@ -130,6 +155,7 @@ RTS_casualties = 0;
 RTS_phase = "DEPLOY";
 RTS_selecting = false;
 RTS_selectStart = [];
+RTS_delete = false;
 RTS_backspace = false;
 RTS_formationChoose = false;
 RTS_combatChoose = false;
@@ -151,6 +177,18 @@ RTS_showHelp = false;
 RTS_missionFailLimit = if ( RTS_timeLimit > 0 ) then { RTS_timeLimit } else { nil };
 RTS_objectivesSetupDone = false;
 RTS_objectivesSetupInitial = false;
+
+switch ( RTS_sidePlayer ) do {
+	case west: { 
+		RTS_bluforAIModifier = RTS_friendlySkillModifier;
+	};
+	case east: {
+		RTS_opforAIModifier = RTS_friendlySkillModifier; 
+	};
+	case resistance: {
+		RTS_greenforAIModifier = RTS_friendlySkillModifier; 
+	};
+};
 
 // RTS Specific Commands
 [] call (compile preprocessFileLineNumbers "rts\commands\setup.sqf");
@@ -288,6 +326,32 @@ disableFriendlyFire = {
 
 RTS_radioComms = [] spawn (compile preprocessFileLineNumbers "rts\systems\radio_communications.sqf");
 
+RTS_controlMon = {
+	
+	private _currentMen = 0;
+		
+	{
+		_currentMen = _currentMen + (count (units _x));
+	} forEach RTS_commandingGroups;
+	
+	private _commanderinfo = format
+		["COMBAT OVERVIEW<br/><br/><t align='left'>Initial Strength:</t><t align='right'>%1</t><br/><t align='left'>Initial Weapons:</t><t align='right'>%2</t><br/><t align='left'>Initial Vehicles:</t><t align='right'>%3</t><br/><t align='left'>Casualties:</t><t align='right'>%4</t>", 
+			RTS_initialMen,
+			RTS_initialWeapons,
+			RTS_initialVehicles,
+			RTS_initialMen - _currentMen];
+	
+		
+	if ( RTS_timeLimit > 0 ) then {
+		_commanderinfo = _commanderinfo + (format ["<br/><t align='left'>Time Limit:</t><t align='right'>%1</t>", [RTS_timeLimit, "HH:MM"] call BIS_fnc_secondsToString ]);
+		if ( !(isNil "RTS_missionTimeStarted") ) then {
+			_commanderinfo = _commanderinfo + format ["<br/><t align='left'>Mission Time:</t><t align='right'>%1</t>", [RTS_missionTimeElapsedSoFar + time - RTS_missionTimeStarted] call BIS_fnc_secondsToString ];
+		};
+	};
+
+	hintSilent (parseText (format ["%1", _commanderinfo ]) );
+};
+
 // temporary group monitor
 RTS_groupMon = {
 		private _group = RTS_selectedGroup;
@@ -298,7 +362,7 @@ RTS_groupMon = {
 			_currentMen = _currentMen + (count (units _x));
 		} forEach RTS_commandingGroups;
 		
-		_commanderinfo = format
+		private _commanderinfo = format
 			["COMBAT OVERVIEW<br/><br/><t align='left'>Initial Strength:</t><t align='right'>%1</t><br/><t align='left'>Initial Weapons:</t><t align='right'>%2</t><br/><t align='left'>Initial Vehicles:</t><t align='right'>%3</t><br/><t align='left'>Casualties:</t><t align='right'>%4</t>", 
 				RTS_initialMen,
 				RTS_initialWeapons,
@@ -365,6 +429,6 @@ RTS_groupMon = {
 RTS_ai_system = compile preprocessFileLineNumbers "rts\systems\ai_command_processing.sqf";
 RTS_processingThread = addMissionEventHandler ["Draw3D", { call RTS_ai_system }];
 // Update status info on every frame (for now, will use proper UI eventually)
-RTS_monitorHandler = addMissionEventHandler ["Draw3D", { if ( RTS_commanding ) then { call RTS_groupMon }; }];
+RTS_monitorHandler = addMissionEventHandler ["Draw3D", { if ( RTS_commanding ) then { call RTS_groupMon } else { call RTS_controlMon }; }];
 
 };

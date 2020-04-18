@@ -24,3 +24,7 @@
 #ifndef RTS_godseye
 	#define RTS_godseye false
 #endif
+
+#ifndef RTS_friendlySkillModifier
+	#define RTS_friendlySkillModifier 0
+#endif

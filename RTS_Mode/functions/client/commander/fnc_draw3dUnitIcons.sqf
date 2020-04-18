@@ -88,7 +88,9 @@ if ( RTS_commanding ) then {
 					drawIcon3D ["\A3\ui_f\data\map\markers\handdrawn\dot_CA.paa", RTS_sideColor, _drawpos, 0.6, 0.6,0];
 					
 					// Show us where the unit intends to go
-					// drawIcon3D ["\A3\ui_f\data\map\groupicons\waypoint.paa", RTS_sideColor, (expectedDestination _x) select 0, 0.6, 0.6,0, str _forEachIndex, 2, 0.04];
+					if ( RTS_debug ) then {
+						drawIcon3D ["\A3\ui_f\data\map\groupicons\waypoint.paa", RTS_sideColor, (expectedDestination _x) select 0, 0.6, 0.6,0, str _forEachIndex, 2, 0.04];
+					};
 				};
 			} forEach (units _group);
 			if ( (group (driver (vehicle (leader _group)))) == _group || isNull (driver (vehicle (leader _group))) ) then {
@@ -131,10 +133,23 @@ if ( RTS_commanding ) then {
 	{
 		private ["_pos", "_drawpos"];
 		_pos = getPosATLVisual _x;
-		_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+		
+		private _leaders = [RTS_commandingGroups, { (getPos (leader _x)) distance _pos }] call CBA_fnc_filter;
+		private _nearest = [_leaders, [], {_x}, "ASCEND"] call BIS_fnc_sortBy;
+		private _near = false;
+		
+		if ( (count _nearest) > 0 ) then {
+			if ( (_nearest select 0) < 500 ) then {
+				_drawpos = [(_pos select 0) + (50 - (random 100)), (_pos select 1) + (50 - (random 100)), (_pos select 2) + 0.2]; 
+			};
+		};
+		
 		if ( !( isObjectHidden _x ) ) then {
+			_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+		};
+		if ( _near || !( isObjectHidden _x ) ) then {
 			_selectedgroup = RTS_selectedGroup;
-			_draw = if ( !(isNull _selectedgroup) && !RTS_godseye ) then {
+			_draw = if ( !(isNull _selectedgroup) && !RTS_godseye && !( isObjectHidden _x ) ) then {
 						_tmp = false;
 						{
 							_tmp = _x in (_selectedgroup getVariable ["spotted", []])
@@ -175,10 +190,23 @@ if ( RTS_commanding ) then {
 	{
 		private ["_pos", "_drawpos"];
 		_pos = getPosATLVisual _x;
-		_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+		
+		private _leaders = [RTS_commandingGroups, { (getPos (leader _x)) distance _pos }] call CBA_fnc_filter;
+		private _nearest = [_leaders, [], {_x}, "ASCEND"] call BIS_fnc_sortBy;
+		private _near = false;
+		
+		if ( (count _nearest) > 0 ) then {
+			if ( (_nearest select 0) < 500 ) then {
+				_drawpos = [(_pos select 0) + (50 - (random 100)), (_pos select 1) + (50 - (random 100)), (_pos select 2) + 0.2]; 
+			};
+		};
+		
 		if ( !( isObjectHidden _x ) ) then {
+			_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+		};
+		if ( _near || !( isObjectHidden _x ) ) then {
 			_selectedgroup = RTS_selectedGroup;
-			_draw = if ( !(isNull _selectedgroup) && !RTS_godseye ) then {
+			_draw = if ( !(isNull _selectedgroup) && !RTS_godseye && !( isObjectHidden _x ) ) then {
 						_tmp = false;
 						{
 							_tmp = _x in (_selectedgroup getVariable ["spotted", []])
@@ -189,7 +217,7 @@ if ( RTS_commanding ) then {
 					};
 			if _draw then {
 				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", [0,0,0,1], _drawpos, 0.8, 0.8,0];
-				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", RTS_greenColor, _drawpos, 0.6, 0.6,0];
+				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", RTS_enemyColor, _drawpos, 0.6, 0.6,0];
 			};
 		};
 	} forEach ( RTS_greenfor_vehicles );

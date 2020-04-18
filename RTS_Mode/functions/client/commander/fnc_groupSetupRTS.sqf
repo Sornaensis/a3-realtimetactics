@@ -17,19 +17,16 @@ RTS_commandingGroups pushbackunique _group;
 
 
 // VCOM Stuff
-//_group setVariable ["VCM_NOFLANK",true];
-//_group setVariable ["VCM_DisableForm",true];
-//_group setVariable ["VCM_NORESCUE",true];
-//_group setVariable ["VCM_TOUGHSQUAD",true];
-_group setVariable ["VCM_DISABLE",true];
+_group setVariable ["VCM_NOFLANK",true];
+_group setVariable ["VCM_DisableForm",true];
+_group setVariable ["VCM_NORESCUE",true];
+_group setVariable ["VCM_TOUGHSQUAD",true];
+//_group setVariable ["VCM_DISABLE",true];
 
 if ( (vehicle (leader _group)) == (leader _group) ) then {
-	{ 
-		_x disableAi "AUTOCOMBAT";
-	} forEach (units _group);
+	[_group, true] call RTS_fnc_autoCombat;
 };
 
-_group enableAttack false;
 _group setCombatMode "YELLOW";
 {
 	_x allowFleeing 0;
@@ -37,6 +34,11 @@ _group setCombatMode "YELLOW";
 	addSwitchableUnit _x;
 	_x call RTS_fnc_aiSkill;
 	[_x] call RTS_setupUnit;
+	private _unit = _x;
+	{
+		_x disableCollisionWith _unit;
+		_unit disableCollisionWith _x;
+	} forEach (units _group);
 } forEach (units _group);
 
 // Groups maintain orders in group namespace
@@ -127,7 +129,7 @@ if !(isNil "_veh") then {
 		RTS_casualties = RTS_casualties + 1; 
 		
 		// Morale impact
-		_group setVariable ["morale", -20 max ((_group getVariable ["morale", 0]) - ( (_moralefactor/3) / ( 1 max _living ) )*_casualties - _commandbonus ) ];
+		_group setVariable ["morale", -20 max ((_group getVariable ["morale", 0]) - ( 0 max ( (_moralefactor/6) / ( 1 max _living ) )*1.2*_casualties - _commandbonus ) )];
 		
 		private _newmorale = _group getVariable ["morale", 0];
 		
@@ -140,6 +142,7 @@ if !(isNil "_veh") then {
 			while { count (_group getVariable ["commands",[]]) > 0 } do {
 				[_group] call RTS_fnc_removeCommand;
 			};
+			[_group, true] call RTS_fnc_autoCombat;
 			[_group, [[(getMarkerPos RTS_camStart),300,300,0,false]] call CBA_fnc_randPosArea] call RTS_fnc_addFastMoveCommand;
 			{
 				_x setUnitPos "AUTO";
@@ -148,9 +151,26 @@ if !(isNil "_veh") then {
 				doStop _x;
 				_x doFollow (leader _group);
 			} forEach (units _group);
-			[_group, true] call RTS_fnc_autoCombat;
+		} else {
+			while { count (_group getVariable ["commands",[]]) > 0 } do {
+				[_group] call RTS_fnc_removeCommand;
+			};
+			_group setCombatMode "YELLOW";
 		};
-		
+	}];
+	
+	_x addEventHandler ["Hit", {
+			params ["_unit","_source","_damage","_instigator"];
+			private _group = group _unit;
+			
+			private _side = _unit getVariable ["HandleDamageSide", side _unit];
+			
+			if ( side _instigator != _side && !(_source isEqualTo "") && (_group getVariable ["status","WAITING"]) != "OTM" ) then {	
+				while { count (_group getVariable ["commands",[]]) > 0 } do {
+					[_group] call RTS_fnc_removeCommand;
+				};
+				_group setCombatMode "YELLOW";
+			};
 	}];
 } forEach (units _group);
 
@@ -199,24 +219,6 @@ if !(isNil "_veh") then {
 		if ( count _commands > 0 ) then {
 			private _current = _commands select 0;
 			_type = _current select 1;
-		};
-		
-		if ( _type != "SEARCH" ) then {
-		
-			{
-				_nearest = [getPosATL _x, _units - [_x]] call CBA_fnc_getNearest;
-				if ( ( [_nearest, _x] call CBA_fnc_getDistance ) > 20 && (_x != leader _group) && ( time > (_x getVariable ["returning", time]) ) ) then {
-					_x setVariable ["returning", time + 20];
-					doStop _x;
-					_x doWatch objnull;
-					_x doFollow (leader _group);
-				} else {
-					if ( ( [_nearest, _x] call CBA_fnc_getDistance ) < 20 ) then {
-						_x setVariable ["returning", time + 20];
-					};
-				};
-					
-			} forEach _units;
 		};
 		
 		_group setVariable ["morale", _maxmorale min ( (_group getVariable ["morale",0]) + ( if ( (_group getVariable ["morale",0]) > 0 ) then { 0.1 } else { 0.03 } ) * _commandbonus )];
