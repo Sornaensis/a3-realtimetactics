@@ -28,3 +28,7 @@
 #ifndef RTS_friendlySkillModifier
 	#define RTS_friendlySkillModifier 0
 #endif
+
+#ifndef RTS_enemySkillModifier
+	#define RTS_enemySkillModifier 0
+#endif

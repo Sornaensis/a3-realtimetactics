@@ -139,9 +139,19 @@ if ( RTS_commanding ) then {
 		private _near = false;
 		
 		if ( (count _nearest) > 0 ) then {
-			if ( (_nearest select 0) < 500 ) then {
-				_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+			if ( (isEngineOn _x) && (_nearest select 0) < 150 ) then {
 				_near = true;
+				_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+			} else {
+				if ( (isEngineOn _x) && (_nearest select 0) < 300 && (speed _x) > 6 ) then {
+					_near = true;
+					_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+				} else {
+					if ( (isEngineOn _x) && (_nearest select 0) < 500 && (speed _x) > 9 ) then {
+						_near = true;
+						_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+					};
+				};	
 			};
 		};
 		
@@ -197,8 +207,19 @@ if ( RTS_commanding ) then {
 		private _near = false;
 		
 		if ( (count _nearest) > 0 ) then {
-			if ( (_nearest select 0) < 500 ) then {
-				_drawpos = [(_pos select 0) + (50 - (random 100)), (_pos select 1) + (50 - (random 100)), (_pos select 2) + 0.2]; 
+			if ( (isEngineOn _x) && (_nearest select 0) < 150 ) then {
+				_near = true;
+				_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+			} else {
+				if ( (isEngineOn _x) && (_nearest select 0) < 300 && (speed _x) > 6 ) then {
+					_near = true;
+					_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+				} else {
+					if ( (isEngineOn _x) && (_nearest select 0) < 500 && (speed _x) > 9 ) then {
+						_near = true;
+						_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.2]; 
+					};
+				};	
 			};
 		};
 		
@@ -218,7 +239,7 @@ if ( RTS_commanding ) then {
 					};
 			if _draw then {
 				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", [0,0,0,1], _drawpos, 0.8, 0.8,0];
-				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", RTS_enemyColor, _drawpos, 0.6, 0.6,0];
+				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", RTS_Greenfor_GreenColor, _drawpos, 0.6, 0.6,0];
 			};
 		};
 	} forEach ( RTS_greenfor_vehicles );

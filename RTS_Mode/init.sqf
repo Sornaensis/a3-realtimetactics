@@ -190,6 +190,18 @@ switch ( RTS_sidePlayer ) do {
 	};
 };
 
+switch ( RTS_sideEnemy ) do {
+	case west: { 
+		RTS_bluforAIModifier = RTS_enemySkillModifier;
+	};
+	case east: {
+		RTS_opforAIModifier = RTS_enemySkillModifier; 
+	};
+	case resistance: {
+		RTS_greenforAIModifier = RTS_enemySkillModifier; 
+	};
+};
+
 // RTS Specific Commands
 [] call (compile preprocessFileLineNumbers "rts\commands\setup.sqf");
 [] spawn (compile preprocessFileLineNumbers "rts\systems\commander_sys.sqf");
@@ -197,7 +209,9 @@ switch ( RTS_sidePlayer ) do {
 RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
 RTS_reinforce = [] spawn (compile preprocessFileLineNumbers "rts\systems\reinforcements.sqf");
 [] spawn (compile preprocessFileLineNumbers "rts\systems\objectives_sys.sqf");
-[] spawn (compile preprocessFileLineNumbers "rts\systems\ai_commanding_sys.sqf");
+if ( RTS_singleCommander ) then {
+	[] spawn (compile preprocessFileLineNumbers "rts\systems\ai_commanding_sys.sqf");
+};
 
 // Reveal dead stuff
 {
@@ -298,12 +312,15 @@ disableFriendlyFire = {
 
 [] call RTS_fnc_setupAllGroups;
 
+
+// Ai setup seems to bug out so we can just repeatedly 
+// mess with the AI
 RTS_aiSkillLimiter = [] spawn {
 	while { true } do {
 		{
 			_x call RTS_fnc_aiSkill;
 		} forEach allunits;
-		sleep 4;
+		sleep 10;
 	};
 };
 {
@@ -333,6 +350,7 @@ RTS_aiSkillLimiter = [] spawn {
 
 RTS_radioComms = [] spawn (compile preprocessFileLineNumbers "rts\systems\radio_communications.sqf");
 
+// Info when controlling a unit
 RTS_controlMon = {
 	
 	private _currentMen = 0;
@@ -359,7 +377,7 @@ RTS_controlMon = {
 	hintSilent (parseText (format ["%1", _commanderinfo ]) );
 };
 
-// temporary group monitor
+// Info when commanding
 RTS_groupMon = {
 		private _group = RTS_selectedGroup;
 		
@@ -428,6 +446,7 @@ RTS_groupMon = {
 		"<t align='left' size='1'>C -</t><t align='right'>Select Combat Mode</t>" + "<br/>" +
 		"<t align='left' size='1'>` -</t><t align='right'>Control Unit</t>" + "<br/>" +
 		"<t align='left' size='1'>Backspace -</t><t align='right'>Delete Last Order</t>" + "<br/>" +
+		"<t align='left' size='1'>Delete -</t><t align='right'>Delete Current Order</t>" + "<br/>" +
 		"<t align='left' size='1'>P -</t><t align='right'>Add Wait time to Last Order</t>" + "<br/>" +
 		"<t align='left' size='1'>Tab -</t><t align='right'>Pause</t>";
 		
