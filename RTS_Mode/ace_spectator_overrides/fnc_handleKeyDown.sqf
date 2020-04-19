@@ -8,6 +8,28 @@ if (_key == DIK_M) exitWith {
     [] call FUNC(ui_toggleMap);
 };
 
+if ( _key == DIK_BACKSLASH ) exitWith {
+	if ( !RTS_focusingOnUnit && !isNull RTS_selectedGroup ) then {
+		RTS_focusingOnUnit = true;
+		
+		private _pos = [];
+		
+		if ( ( (getPos ace_spectator_camera) distance (getPos (leader RTS_selectedGroup)) ) > 150 ) then {
+			_pos = [getPos (leader RTS_selectedGroup), 90] call CBA_fnc_randPos;	
+			while { ( _pos distance (getPos (leader RTS_selectedGroup)) ) < 10 } do {
+				_pos = [getPos (leader RTS_selectedGroup), 90] call CBA_fnc_randPos;
+			};		
+		} else {
+			_pos = getPosATL ace_specator_camera;
+		};
+		
+		_pos set [2, 50 min ( (getPos ace_spectator_camera) select 2 )];
+		ace_spectator_camera setPosATL _pos;
+		[leader RTS_selectedGroup] call ace_spectator_fnc_setFocus;
+	};
+	true
+};
+
 // Handle very fast speed
 if (_key == DIK_LALT) exitWith {
     [true] call FUNC(cam_toggleSlow);

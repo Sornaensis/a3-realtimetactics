@@ -228,7 +228,11 @@ RTS_oobTree ctrlSetBackgroundColor [0,0,0,0];
 RTS_oobTree ctrlCommit 0;
 RTS_oobTree ctrlShow false;
 
-//RTS_oobTree ctrlSetEventHandler ["onMouseButtonDblClick", { }];
+RTS_oobTree ctrlAddEventHandler ["MouseButtonDblClick", 
+	{
+		call RTS_OOBselector; 	
+		[leader RTS_selectedGroup] call ace_spectator_fnc_setFocus;
+	}];
 
 RTS_populateOOBTree = {
 	params ["_ctIndex","_data","_control"];
@@ -465,6 +469,6 @@ RTS_OOBSelector = {
 		};
 		
 		
-		sleep 0.1;
+		sleep 0.3;
 	};
 };

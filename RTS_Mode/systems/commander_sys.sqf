@@ -5,12 +5,7 @@ waitUntil { !(isNil "ace_spectator_camdummy") };
 waitUntil { !(isNil "ace_spectator_camera") };
 waitUntil { !(isNil "RTS_setupComplete") };
 waitUntil { RTS_setupComplete };
-private _camstart = getMarkerPos RTS_camStart;
-_camstart set [2,120];
-private _camtarget = getMarkerPos RTS_camTarget;
-ace_spectator_camera setPosATL _camstart;
-RTS_fakeCameraTarget setPosATL _camtarget;
-[RTS_fakeCameraTarget] call RTS_fnc_cam_prepareTarget;
+
 RTS_sound = 1;
 RTS_aoRestriction =
 	addMissionEventHandler ["Draw3D", 

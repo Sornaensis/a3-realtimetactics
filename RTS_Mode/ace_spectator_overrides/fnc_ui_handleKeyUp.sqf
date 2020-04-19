@@ -28,6 +28,11 @@ if (_key == DIK_LALT) exitWith {
     true
 };
 
+if ( _key == DIK_BACKSLASH ) exitWith {
+	RTS_focusingOnUnit = false;
+	true
+};
+
 if (_key == DIK_TAB) exitWith {
 	RTS_pausing = false;
 };

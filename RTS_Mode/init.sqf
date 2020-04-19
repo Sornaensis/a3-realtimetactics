@@ -180,6 +180,7 @@ RTS_showHelp = false;
 RTS_missionFailLimit = if ( RTS_timeLimit > 0 ) then { RTS_timeLimit } else { nil };
 RTS_objectivesSetupDone = false;
 RTS_objectivesSetupInitial = false;
+RTS_focusingOnUnit = false;
 
 switch ( RTS_sidePlayer ) do {
 	case west: { 
@@ -254,6 +255,17 @@ RTS_commandObject addAction ["Begin Commanding",
 		[true] call ace_spectator_fnc_cam;
 		[true] call RTS_fnc_ui;
 		RTS_setupComplete = true;
+		
+		[] spawn {
+			waitUntil { !isNil "ace_spectator_camera" };
+			private _camstart = getMarkerPos RTS_camStart;
+			_camstart set [2,120];
+			private _camtarget = getMarkerPos RTS_camTarget;
+			ace_spectator_camera setPos _camstart;
+			private _target = "camera" createVehicle _camtarget;
+			hideObject _target;
+			[_target] call ace_spectator_fnc_setFocus;
+		};
 		
 		[0,
 		{
@@ -439,6 +451,7 @@ RTS_groupMon = {
 		private _helptext =
 		"<t size='1.1'>Click and Drag, or Double Click on a soldier/vehicle to select a unit<br/><br/>" +
 		"Hold Buttons and double click to assign an order to a unit<br/><br/></t>" +
+		"<t align='left' size='1'>\ -</t><t align='right'>Jump To Unit</t>" + "<br/>" +
 		"<t align='left' size='1'>E -</t><t align='right'>Move</t>" + "<br/>" +
 		"<t align='left' size='1'>Shift+E -</t><t align='right'>Quick Move</t>" + "<br/>" +
 		"<t align='left' size='1'>Ctrl+E -</t><t align='right'>Fast Move</t>" + "<br/>" +
