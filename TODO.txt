@@ -7,11 +7,11 @@ Interface:
 
 Missions:
 	- Generate dynamic objectives
-	- Add points system
-	- Add enemy commander AI (counterattacks etc)
+	- Add points system for objectives
 
 Mechanics:
-	- Add more morale handling
+	- Casualty system and remove casualties
+	- Surrender system for cutoff units (and allow certain units to never surrender)
 	- Make morale impact skills
 	- Add morale degradation for hits and suppression
 	- Make command bonus impact skills
