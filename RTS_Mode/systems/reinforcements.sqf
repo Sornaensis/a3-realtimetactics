@@ -147,7 +147,6 @@ spawnReinforcements = {
 				_x enableSimulationGlobal true;
 				(vehicle _x) enableSimulationGlobal true;
 			} forEach (units _group);
-			_setup call RTS_fnc_groupSetupRTS;
 		} else {
 			{
 				_x hideObjectGlobal false;
@@ -172,9 +171,8 @@ spawnReinforcements = {
 			RTS_enemyTotalStrength = RTS_enemyTotalStrength + (count (units _group));
 		};
 	} forEach _unitData;
-
 		
-	call disableFriendlyFire;
+	[] call RTS_fnc_setupAllGroups;
 };
 
 reinforcementsTimeLoop = {

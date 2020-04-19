@@ -1,6 +1,8 @@
 #include "..\..\..\RTS_defines.hpp"
 params ["_group", "_description", "_commandelement", "_grouptexture", "_icon", "_exp", "_leaderfactor" ];
 
+if ( _group in RTS_commandingGroups ) exitWith {};
+
 clearGroupIcons _group;
 
 RTS_commandingGroups pushbackunique _group;

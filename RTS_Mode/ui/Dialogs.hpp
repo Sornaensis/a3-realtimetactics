@@ -8,7 +8,7 @@ class UnitOverViewPanel: IGUIBack
 	x = 0.0064056 * safezoneW + safezoneX;
 	y = 0.105035 * safezoneH + safezoneY;
 	w = 0.163062 * safezoneW;
-	h = 0.441985 * safezoneH;
+	h = 0.471985 * safezoneH;
 	colorBackground[] = {0,0,0,0.85};
 	colorActive[] = {0,0,0,0.85};
 };
@@ -208,6 +208,16 @@ class ControlBtn: RscButton
 	text = "Take Control"; //--- ToDo: Localize;
 	x = 0.116583 * safezoneW + safezoneX;
 	y = 0.5 * safezoneH + safezoneY;
+	w = 0.0440709 * safezoneW;
+	h = 0.0282118 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class OOBBtn: RscButton
+{
+	idc = 1601;
+	text = "Show OOB"; //--- ToDo: Localize;
+	x = 0.116583 * safezoneW + safezoneX;
+	y = 0.54 * safezoneH + safezoneY;
 	w = 0.0440709 * safezoneW;
 	h = 0.0282118 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";

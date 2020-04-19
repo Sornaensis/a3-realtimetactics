@@ -75,6 +75,7 @@ RTS_setupUnit = {
 	params ["_unit"];
 	_unit removeAllEventHandlers "HandleDamage";
 	_unit removeAllEventHandlers "Hit";
+	_unit removeAllEventHandlers "HitPart";
 };
 
 [] call (compile preprocessFileLineNumbers "rts\functions\shared\setup.sqf");
@@ -287,11 +288,15 @@ noFriendlyFireHandler = {
 	private _side = _unit getVariable "handleDamageSide";
 	private _ret = _damage;
 	
-	if ( side _source == _side) then {
+	if ( side _source == _side ) then {
 		_ret = 0;
 	};
 	if ( side _instigator == _side ) then {
 		_ret = 0;
+	};
+	
+	if ( isPlayer _instigator ) then {
+		_ret = _damage;
 	};
 	
 	_ret

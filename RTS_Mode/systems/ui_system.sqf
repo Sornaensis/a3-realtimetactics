@@ -1,4 +1,5 @@
 #include "\z\ace\addons\spectator\script_component.hpp"
+#include "../RTS_Defines.hpp"
 
 waitUntil { ! (isNull SPEC_DISPLAY) };
 
@@ -87,18 +88,31 @@ RTS_targetPhase = RTS_phase;
 
 // Setup Unit Info Screen
 
-SPEC_DISPLAY ctrlCreate ["UnitOverViewPanel", -1];
-SPEC_DISPLAY ctrlCreate ["StatusLabel", -1];
-SPEC_DISPLAY ctrlCreate ["CombatModeLabel", -1];
-SPEC_DISPLAY ctrlCreate ["MoraleLabel", -1];
-SPEC_DISPLAY ctrlCreate ["StanceLabel", -1];
-SPEC_DISPLAY ctrlCreate ["CommandEffectLabel", -1];
-SPEC_DISPLAY ctrlCreate ["CombatVictoriesLabel", -1];
-SPEC_DISPLAY ctrlCreate ["CasualtyLabel", -1];
-SPEC_DISPLAY ctrlCreate ["FormationLabel", -1];
-SPEC_DISPLAY ctrlCreate ["HasRadioLabel", -1];
-SPEC_DISPLAY ctrlCreate ["AmmoLevelLabel", -1];
-SPEC_DISPLAY ctrlCreate ["PassengerInfoLabel", -1];
+RTS_showingUnitData = true;
+RTS_showingEquipment = false;
+RTS_showingOptions = false;
+RTS_showingOOB = false;
+
+RTS_unitDataControls = [];
+RTS_unitInfoControls = [];
+
+RTS_overViewPanel = SPEC_DISPLAY ctrlCreate ["UnitOverViewPanel", -1];
+
+{
+	RTS_unitDataControls pushback (SPEC_DISPLAY ctrlCreate [ _x, -1]);
+} forEach
+ [	"StatusLabel",
+ 	"CombatModeLabel",
+	"MoraleLabel",
+	"StanceLabel",
+	"CommandEffectLabel",
+	"CombatVictoriesLabel",
+	"CasualtyLabel",
+	"FormationLabel",
+	"HasRadioLabel",
+	"AmmoLevelLabel",
+	"PassengerInfoLabel"
+];
 
 RTS_statusText = SPEC_DISPLAY ctrlCreate ["StatusText", -1];
 RTS_moraleText = SPEC_DISPLAY ctrlCreate ["MoraleText", -1];
@@ -121,9 +135,216 @@ RTS_controlUnitBtn buttonSetAction "if ( RTS_phase == ""MAIN"" ) then { call RTS
 RTS_unitNameText = SPEC_DISPLAY ctrlCreate ["UnitNameText", -1];
 RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 
+
+{
+	RTS_unitDataControls pushback _x;
+} forEach [ RTS_passengerInfoText,RTS_statusText,RTS_moraleText,RTS_commandEffectText,RTS_combatVictoryText,RTS_combatModeText,RTS_casualtyText,RTS_formationText,RTS_stanceText,RTS_hasRadioText,RTS_ammoLevelText];
+
+{
+	RTS_unitInfoControls pushback _x;
+} forEach [ RTS_unitCallsignText, RTS_controlUnitBtn, RTS_selectCommanderBtn ];
+
+
+// General ui controls
+
+RTS_showOOBBtn = SPEC_DISPLAY ctrlCreate ["OOBBtn", -1];
+RTS_showOOBBtn buttonSetAction " RTS_showingUnitData = !RTS_showingUnitData; RTS_showingOOB = !RTS_showingOOB; ";
+
+RTS_oobTree = SPEC_DISPLAY ctrlCreate ["RscTree", -1];
+RTS_oobTree ctrlSetFont "EtelkaMonospacePro"; 
+RTS_oobTree ctrlSetFontHeight 0.04; 
+RTS_oobTree ctrlSetPosition [0.0104056 * safezoneW + safezoneX,
+					 0.148035 * safezoneH + safezoneY,
+					 0.155062 * safezoneW,
+					 0.381985 * safezoneH];
+
+findCommander = {
+	params ["_group","_target","_subgroups"];
+		
+	private _ret = false;
+	
+	for "_j" from 0 to ((count _subgroups) - 1) do {
+		(_subgroups select _j) params ["_cmd","_subsubgroups"];
+		if ( _cmd == _target ) then {
+			_subsubgroups pushback [_group,[]];
+			_ret = true;
+		} else {
+			_ret = _ret || [_group,_target,_subsubgroups] call findCommander;
+		};
+	};
+	
+	_ret
+};
+
+RTS_getOOBData = {
+
+	private _oobData = [];
+	private _activegroups = (RTS_commandingGroups select { (count (units _x)) > 0 });
+	private _commanders = _activegroups select { isNull (_x getVariable "command_element") };
+	private _subordinates = _activegroups select { !(isNull (_x getVariable "command_element")) };
+	// get commanding units
+	{	
+		_oobData pushback [_x,[]];
+	} forEach _commanders;
+	
+	private _leftovers = _subordinates;
+	
+	while { count _leftovers > 0 } do {
+		private _array = [];
+
+		{
+			private _group = _x;
+			private _cmdfound = false;
+			private _commander = _x getVariable "command_element";
+	
+			if ( count (units _commander) > 0 ) then {
+				
+				_cmdfound = _cmdfound || [_group,_commander, _oobData] call findCommander;				
+								
+				if ( !_cmdfound ) then {
+					_array pushback _group;
+				};
+				
+			} else {
+				_group setVariable ["command_element", grpnull];
+				_oobData pushback [_group,[]];
+			};
+			
+		} forEach _leftovers;	
+		_leftovers = +_array;
+	};
+	
+	_oobData
+};
+
+RTS_oobData = call RTS_getOOBData;
+RTS_groupsSize = count (RTS_commandingGroups select { count (units _x) > 0 });
+RTS_newOOB = true;
+
+RTS_oobSelection = [];
+RTS_oobSelectedGroup = grpnull;
+
+RTS_oobTree ctrlSetBackgroundColor [0,0,0,0];
+RTS_oobTree ctrlCommit 0;
+RTS_oobTree ctrlShow false;
+
+//RTS_oobTree ctrlSetEventHandler ["onMouseButtonDblClick", { }];
+
+RTS_populateOOBTree = {
+	params ["_ctIndex","_data","_control"];
+	
+	for "_i" from 0 to ((count _data) - 1) do {
+		(_data select _i) params ["_grp","_subgroups"];
+		private _tv = _control tvAdd [_ctIndex, _grp getVariable ["desc","Unknown"]];
+		private _index = +_ctIndex;
+		_index pushback _i;
+		_control tvSetPicture [ _index, _grp getVariable ["texture", ""] ];
+		_control tvSetPictureColor [ _index, RTS_sideColor ];
+		
+		if ( _grp == RTS_selectedGroup ) then {
+			_control tvSetCurSel _index;
+		};
+	};
+	
+	for "_i" from 0 to ((count _data) - 1) do {
+		(_data select _i) params ["_grp","_subgroups"];
+		private _index = +_ctIndex;
+		_index pushback _i;
+		[_index,_subgroups,_control] call RTS_populateOOBTree;
+	};
+
+};
+
+RTS_findSelectedGroup = {
+	params ["_ctIndex","_data"];
+	
+	private _found = false;
+	
+	for "_i" from 0 to ((count _data) - 1) do {
+		(_data select _i) params ["_grp","_subgroups"];
+		if ( RTS_selectedGroup == _grp ) then {
+			_found = true;
+			_ctIndex pushback _i;
+		};
+	};
+	
+	if ( _found ) exitWith { _ctIndex };
+	
+	for "_i" from 0 to ((count _data) - 1) do {
+		(_data select _i) params ["_grp","_subgroups"];
+		private _index = +_ctIndex;
+		_index pushback _i;
+		private _search = [_index,_subgroups] call RTS_findSelectedGroup;
+		if ( !isNil "_search" ) then {
+			_found = true;
+			_ctIndex = _search;
+		};
+	};
+	
+	if ( _found ) exitWith { _ctIndex };
+};
+
+RTS_OOBSelector = {
+	if ( RTS_oobSelectedGroup != RTS_selectedGroup && !(isNull RTS_selectedGroup) ) then {
+		RTS_oobSelectedGroup = RTS_selectedGroup;
+		private _index = [[],RTS_oobData] call RTS_findSelectedGroup;
+		if ( !isNil "_index" ) then {
+			RTS_oobTree tvSetCurSel _index;
+			RTS_oobSelection = _index;
+		};
+	};
+
+	private _selection = tvCurSel RTS_oobTree;
+	
+	if ( !(_selection isEqualTo RTS_oobSelection) ) then {
+		RTS_oobSelection = _selection;
+		if ( count _selection > 0 ) then {
+			if ( _selection select 0 != -1 ) then { 
+				private _selected = [];
+				{
+					if ( count _selected > 0 ) then {
+						_selected = _selected select 1;
+						_selected = _selected select _x;	
+					} else {
+						_selected = RTS_oobData select _x;
+					};
+				} forEach _selection;
+		
+				private _selected = _selected select 0;
+				RTS_oobSelectedGroup = _selected;
+				RTS_selectedGroup = _selected;
+			};
+		};
+		ctrlSetFocus RTS_showOOBBtn;
+	};
+};
+
 [] spawn {
 	while { RTS_commanding } do {
-		if ( !(isNull RTS_selectedGroup) ) then {
+		
+		if ( RTS_groupsSize != (count (RTS_commandingGroups select { count (units _x) > 0 })) ) then {
+			RTS_groupsSize = count (RTS_commandingGroups select { count (units _x) > 0 });
+			RTS_newOOB = true;
+			RTS_oobData = call RTS_getOOBData;
+		};
+	
+		// hide and show stuff
+		{
+			_x ctrlShow (!RTS_showingEquipment && RTS_showingUnitData);
+		} forEach RTS_unitDataControls;
+		{
+			_x ctrlShow RTS_showingUnitData;
+		} forEach RTS_unitInfoControls;
+		
+		if ( RTS_showingOOB ) then {
+			RTS_showOOBBtn ctrlSetText "Close OOB";
+			RTS_unitNameText ctrlSetText "OOB";
+		} else {
+			RTS_showOOBBtn ctrlSetText "Show OOB";
+		};
+	
+		// display stuff
+		if ( !(isNull RTS_selectedGroup) && RTS_showingUnitData ) then {
 			if ( !(isNull (RTS_selectedGroup getVariable ["command_element", grpnull])) ) then {
 				RTS_selectCommanderBtn ctrlEnable true;
 			} else {
@@ -202,24 +423,48 @@ RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 			RTS_passengerInfoText ctrlSetText _vehicleinfo;
 			
 		} else {
-			RTS_selectCommanderBtn ctrlEnable false;
-			RTS_controlUnitBtn ctrlEnable false;
-			RTS_unitNameText ctrlSetText "Select Unit";
-			RTS_unitCallsignText ctrlSetText "-";
-			RTS_stanceText ctrlSetText "-";
-			RTS_statusText ctrlSetText "-";
-			RTS_combatModeText ctrlSetText "-";
-			RTS_formationText ctrlSetText "-";
-			RTS_combatVictoryText ctrlSetText "-";
-			RTS_casualtyText ctrlSetText "-";
-			RTS_hasRadioText ctrlSetText "-";
-			RTS_commandEffectText ctrlSetText "-";
-			
-			RTS_moraleText ctrlSetText "-";
-			RTS_moraleText ctrlSetTextColor [1,1,1,1];			
-			RTS_ammoLevelText ctrlSetText "-";
-			RTS_passengerInfoText ctrlSetText "-";
+			if ( RTS_showingUnitData ) then {
+				RTS_selectCommanderBtn ctrlEnable false;
+				RTS_controlUnitBtn ctrlEnable false;
+				RTS_unitNameText ctrlSetText "Select Unit";
+				RTS_unitCallsignText ctrlSetText "-";
+				RTS_stanceText ctrlSetText "-";
+				RTS_statusText ctrlSetText "-";
+				RTS_combatModeText ctrlSetText "-";
+				RTS_formationText ctrlSetText "-";
+				RTS_combatVictoryText ctrlSetText "-";
+				RTS_casualtyText ctrlSetText "-";
+				RTS_hasRadioText ctrlSetText "-";
+				RTS_commandEffectText ctrlSetText "-";
+				
+				RTS_moraleText ctrlSetText "-";
+				RTS_moraleText ctrlSetTextColor [1,1,1,1];			
+				RTS_ammoLevelText ctrlSetText "-";
+				RTS_passengerInfoText ctrlSetText "-";
+			};
 		};
-		sleep 0.5;
+		
+		// OOB controls
+		RTS_oobTree ctrlShow RTS_showingOOB;
+		if ( RTS_showingOOB && RTS_newOOB ) then {
+			RTS_newOOB = false;
+			
+			RTS_oobTree tvSetCurSel [-1];
+			tvClear RTS_oobTree;
+			
+			private _indexArray = [];
+			
+			[[],RTS_oobData,RTS_oobTree] call RTS_populateOOBTree;
+			
+			tvExpandAll RTS_oobTree;
+			
+		};
+		
+		if ( RTS_showingOOB ) then {
+			call RTS_OOBSelector;
+		};
+		
+		
+		sleep 0.1;
 	};
 };
