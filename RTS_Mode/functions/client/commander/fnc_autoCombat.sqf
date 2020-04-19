@@ -3,18 +3,18 @@ params ["_group","_off"];
 {
 	if ( !isNil "_off" ) then {
 		_x disableAI "AUTOCOMBAT";
-		_x disableAI "COVER";
 		_x disableAI "AUTOTARGET";
 	} else {
 		_x enableAI "AUTOCOMBAT";
-		_x enableAI "COVER";
 		_x enableAI "AUTOTARGET";
 	};
 } forEach (units _group);
 
 if ( !isNil "_off" ) then {
 	_group enableAttack false;
-	_group setCombatMode "YELLOW";
+	if ( combatMode _group == "RED" ) then {
+		_group setCombatMode "YELLOW";
+	};
 } else {
 	_group enableAttack true;
 	_group setCombatMode "RED";

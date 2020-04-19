@@ -41,6 +41,7 @@ VCM_AISNIPERS = false;
 VCM_AISUPPRESS = true; 
 Vcm_DrivingActivated = true;
 Vcm_PlayerAISkills = false; 
+VCM_fnc_sniperEngage = { true };
 
 // Skill increase or decrease as a percentage
 RTS_bluforAIModifier = 0;
@@ -155,6 +156,7 @@ RTS_casualties = 0;
 RTS_phase = "DEPLOY";
 RTS_selecting = false;
 RTS_selectStart = [];
+RTS_enemyGroups = [];
 RTS_delete = false;
 RTS_backspace = false;
 RTS_formationChoose = false;
@@ -209,7 +211,7 @@ switch ( RTS_sideEnemy ) do {
 RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
 RTS_reinforce = [] spawn (compile preprocessFileLineNumbers "rts\systems\reinforcements.sqf");
 [] spawn (compile preprocessFileLineNumbers "rts\systems\objectives_sys.sqf");
-if ( RTS_singleCommander ) then {
+if ( RTS_SingleCommander ) then {
 	[] spawn (compile preprocessFileLineNumbers "rts\systems\ai_commanding_sys.sqf");
 };
 
@@ -407,9 +409,10 @@ RTS_groupMon = {
 				private _unitStatus = "<br/>";
 				
 				{
-					_unitStatus = format ["%1<t align='left'>%2</t><br/><t align='right'>%3</t><br/>", _unitStatus, _x, [ (_x skillFinal "aimingAccuracy") toFixed 2, 
-																													 (_x skillFinal "aimingShake") toFixed 2, 	
-																													 (_x skillFinal "aimingSpeed") toFixed 2,
+					_unitStatus = format ["%1<t align='left'>%2</t><br/><t align='right'>%3</t><br/>", _unitStatus, _x, [ canMove _x,
+																													 speedMode _x,
+																													 stance _x,
+																													 unitPos _x,
 																													 (_x skillFinal "spotDistance") toFixed 2,
 																													 (_x skillFinal "spotTime") toFixed 2,
 																													 (_x getVariable ["SoftFactor", 0]) toFixed 3

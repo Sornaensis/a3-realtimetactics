@@ -40,6 +40,8 @@ _group setCombatMode "YELLOW";
 	_x allowFleeing 0;
 	_x disableAi "FSM";
 	addSwitchableUnit _x;
+	_x setUnitPos "AUTO";
+	_x setSpeedMOde "AUTO";
 	[_x] call RTS_setupUnit;
 	private _unit = _x;
 	{
