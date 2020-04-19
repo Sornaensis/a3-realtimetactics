@@ -208,7 +208,7 @@
 					{
 						_x doWatch objnull;
 						if ( _x != (leader _group) ) then {
-							[_x] doFollow (leader _group);
+							_x doFollow (leader _group);
 						};
 					} forEach (units _group);
 					[_group, _pos, _behaviour, _combat, _speed, _form, _pausetime] spawn {
@@ -220,7 +220,7 @@
 							{
 								_x doWatch objnull;
 								if ( _x != (leader _group) ) then {
-									[_x] doFollow (leader _group);
+									_x doFollow (leader _group);
 								};
 							} forEach (units _group);
 							waitUntil { (_group getVariable ["waypoint_canceled", false]) || ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 10 || !((count (_group getVariable ["commands", []])) > 0) || !(alive (leader _group) ) };

@@ -200,11 +200,32 @@ if !(isNil "_veh") then {
 				[_group, getPos _leader] call RTS_fnc_addMountOrDismountCommand;
 			};
 		};
+		
 	
 		_units = (units _group) select { [_x] call CBA_fnc_isAlive };
 		private _maxmorale = (count _units) / (_group getVariable ["initial_strength", 1]) * 100;
 		private _commandbonus = _group getVariable ["command_bonus", 0];
 		_commandbonus = (if ( _commandbonus > 1 ) then { _commandbonus } else { 1 });
+		
+		private _distancefactor = ( count _units ) * 8.3;
+		
+		{
+			private _unit = _x;
+			private _returning = _unit getVariable ["returning", false];
+			
+			// return if we are too far from the leader
+			if ( _unit != (leader _group) ) then {
+				private _toofar =  ((getPos (leader _group)) distance (getPos _unit)) > _distancefactor;
+				if ( _toofar && !_returning ) then {
+					_unit doMove ( (getPos (leader _group)) findEmptyPosition [2,15,"MAN"] );
+					_unit setVariable ["returning", true];
+				} else {
+					if ( !_toofar ) then {
+						_unit setVariable ["returning", false];
+					};
+				};
+			};
+		} forEach _units;
 		
 		private _commander = _group getVariable ["command_element", grpnull];
 		private _gotCommandBoost = false;

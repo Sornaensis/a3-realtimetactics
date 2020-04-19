@@ -409,12 +409,11 @@ RTS_groupMon = {
 				private _unitStatus = "<br/>";
 				
 				{
-					_unitStatus = format ["%1<t align='left'>%2</t><br/><t align='right'>%3</t><br/>", _unitStatus, _x, [ canMove _x,
-																													 speedMode _x,
+					_unitStatus = format ["%1<t align='left'>%2</t><br/><t align='right'>%3</t><br/>", _unitStatus, _x, [ 
+																													 (getDammage _x) toFixed 2,
 																													 stance _x,
-																													 unitPos _x,
-																													 (_x skillFinal "spotDistance") toFixed 2,
-																													 (_x skillFinal "spotTime") toFixed 2,
+																													 (getFatigue _x) toFixed 2,
+																													 (getStamina _x) toFixed 2,
 																													 (_x getVariable ["SoftFactor", 0]) toFixed 3
 																													]];
 				} forEach (units RTS_selectedGroup);
