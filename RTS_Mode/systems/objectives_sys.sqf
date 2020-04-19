@@ -85,6 +85,12 @@ while { _i < 10 } do {
 				_newMark setMarkerDir (markerDir _mark);
 				_newMark setMarkerColor ([(side player)] call objectiveInitialColor);
 				
+				private _text = createMarker ["obj_text_"+_newmark, getMarkerPos _mark];
+				_text setMarkerText (markerText _mark);
+				_text setMarkerShape "ICON";
+				_text setMarkerType "hd_dot";
+				_text setMarkerColor "ColorBlack";
+				
 				_objectives pushBack ( [_x, _newMark, _objText, false] );			
 			};	
 		} forEach [ "occupy", "clear" ];
@@ -124,6 +130,12 @@ while { _i < 10 } do {
 				_newMark setMarkerSize (markerSize _mark);
 				_newMark setMarkerDir (markerDir _mark);
 				_newMark setMarkerColor ([(side player)] call objectiveInitialColor);
+				
+				private _text = createMarker ["obj_text_"+_newmark, getMarkerPos _mark];
+				_text setMarkerText (markerText _mark);
+				_text setMarkerShape "ICON";
+				_text setMarkerType "hd_dot";
+				_text setMarkerColor "ColorBlack";
 				
 				RTS_playerSideObjectives pushBack ( [_x, _newMark, _objText, false] );
 				_objectives pushBack ( [_x, _newMark, _objText, false] );

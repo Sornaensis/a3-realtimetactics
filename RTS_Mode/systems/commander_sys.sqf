@@ -5,6 +5,14 @@ waitUntil { !(isNil "ace_spectator_camdummy") };
 waitUntil { !(isNil "ace_spectator_camera") };
 waitUntil { !(isNil "RTS_setupComplete") };
 waitUntil { RTS_setupComplete };
+		
+private _camstart = getMarkerPos RTS_camStart;
+_camstart set [2,120];
+private _camtarget = getMarkerPos RTS_camTarget;
+ace_spectator_camera setPos _camstart;
+private _target = "camera" createVehicle _camtarget;
+hideObject _target;
+[_target] call ace_spectator_fnc_setFocus;
 
 RTS_sound = 1;
 RTS_aoRestriction =

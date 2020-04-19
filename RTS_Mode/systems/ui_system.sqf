@@ -456,8 +456,6 @@ RTS_OOBSelector = {
 			RTS_oobTree tvSetCurSel [-1];
 			tvClear RTS_oobTree;
 			
-			private _indexArray = [];
-			
 			[[],RTS_oobData,RTS_oobTree] call RTS_populateOOBTree;
 			
 			tvExpandAll RTS_oobTree;

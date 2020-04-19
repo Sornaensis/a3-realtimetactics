@@ -256,17 +256,6 @@ RTS_commandObject addAction ["Begin Commanding",
 		[true] call RTS_fnc_ui;
 		RTS_setupComplete = true;
 		
-		[] spawn {
-			waitUntil { !isNil "ace_spectator_camera" };
-			private _camstart = getMarkerPos RTS_camStart;
-			_camstart set [2,120];
-			private _camtarget = getMarkerPos RTS_camTarget;
-			ace_spectator_camera setPos _camstart;
-			private _target = "camera" createVehicle _camtarget;
-			hideObject _target;
-			[_target] call ace_spectator_fnc_setFocus;
-		};
-		
 		[0,
 		{
 			_this call RTS_fnc_setupCommander
