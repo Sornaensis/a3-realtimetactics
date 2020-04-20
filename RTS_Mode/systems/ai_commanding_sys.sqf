@@ -81,7 +81,7 @@ RTS_enemyTotalStrength = 0;
 
 {
 	if ( count (_x getVariable ["RTS_setup", []]) > 0 ) then {
-		RTS_enemyGroups pushback _x;
+		RTS_enemyGroups pushbackunique _x;
 		RTS_enemyTotalStrength = RTS_enemyTotalStrength + (count (units _x));
 	};
 } forEach ( allGroups select { side _x == RTS_sideEnemy } );

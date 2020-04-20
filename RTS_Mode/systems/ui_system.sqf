@@ -86,6 +86,8 @@ RTS_targetPhase = RTS_phase;
 	ctrlDelete RTS_phaseBox;
 };
 
+waitUntil { RTS_groupSetupComplete };
+
 // Setup Unit Info Screen
 
 RTS_showingUnitData = true;

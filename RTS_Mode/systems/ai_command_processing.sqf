@@ -16,7 +16,9 @@
 		};
 		{
 			_x doWatch objnull;
-			[_x] doFollow leader _group;
+			if ( _x != (leader _group) ) then {
+				[_x] doFollow leader _group;
+			};	
 		} forEach (units _group);
 		_group setFormDir ((leader _group) getDir _pos);
 		if ( (vehicle (leader _group)) != (leader _group) && ( (group (driver (vehicle (leader _group)))) == _group ) ) then {
@@ -26,8 +28,8 @@
 				private _commands = (group _unit) getVariable ["commands", []];
 				private _complete = false;
 				private _group = group _unit;
+				_unit doMove _pos;
 				while { alive _unit && ((count _commands) > 0) && !_complete} do {
-					waitUntil { speed (vehicle _unit) == 0 };
 					_unit doMove _pos;
 					(group _unit) setSpeedMode _speed;
 					(group _unit) setBehaviour _behaviour;
@@ -223,7 +225,7 @@
 									_x doFollow (leader _group);
 								};
 							} forEach (units _group);
-							waitUntil { (_group getVariable ["waypoint_canceled", false]) || ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 10 || !((count (_group getVariable ["commands", []])) > 0) || !(alive (leader _group) ) };
+							waitUntil { (_group getVariable ["waypoint_canceled", false]) || unitReady (leader _group) || ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 10 || !((count (_group getVariable ["commands", []])) > 0) || !(alive (leader _group) ) };
 							if ( _group getVariable ["waypoint_canceled", false] ) then { 
 								_complete = true;
 							};

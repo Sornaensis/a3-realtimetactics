@@ -181,6 +181,8 @@ RTS_missionFailLimit = if ( RTS_timeLimit > 0 ) then { RTS_timeLimit } else { ni
 RTS_objectivesSetupDone = false;
 RTS_objectivesSetupInitial = false;
 RTS_focusingOnUnit = false;
+RTS_groupSetupComplete = false;
+
 
 switch ( RTS_sidePlayer ) do {
 	case west: { 
@@ -241,48 +243,6 @@ if ( !RTS_skipBriefing ) then {
 [] spawn {
 
 
-if ( isNil "RTS_commandObject" ) then {
-	RTS_commandObject = player;
-};
-
-RTS_commandObject addAction ["Begin Commanding", 
-	{
-		if ( scriptDone RTS_ui ) then {
-			RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
-		};
-		
-		RTS_commanderUnit = player;
-		[true] call ace_spectator_fnc_cam;
-		[true] call RTS_fnc_ui;
-		RTS_setupComplete = true;
-		
-		[0,
-		{
-			_this call RTS_fnc_setupCommander
-		},[player]] call CBA_fnc_globalExecute;
-	}];
-
-waitUntil { RTS_setupComplete };
-
-RTS_mapHandling = [] spawn (compile preprocessFileLineNumbers "rts\systems\map_handling.sqf");
-
-RTS_killedEH = player addEventHandler ["killed", {
-	private _pos = getPosATL player;
-	private _dir = getDir player;
-	_pos set [2, 5];
-	private _leader = ((units (group player)) select { alive _x }) select 0;
-	(group player) selectLeader _leader;
-	(units (group player)) doFollow _leader;
-	RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
-	player removeAction RTS_commandAction;
-	player removeEventHandler ["killed", RTS_killedEH];
-	selectPlayer RTS_commanderUnit;
-	[true] call ace_spectator_fnc_cam;
-	[true] call RTS_fnc_ui;
-	ace_spectator_camera setPosATL _pos;
-	ace_spectator_camera setDir _dir;
-}];
-
 noFriendlyFireHandler = {
 	params ["_unit", "_selection", "_damage", "_source", "_projectile", "_hitIndex", "_instigator", "_hitPoint"];
 	
@@ -318,9 +278,6 @@ disableFriendlyFire = {
 	} forEach allUnits;
 };
 
-[] call RTS_fnc_setupAllGroups;
-
-
 // Ai setup seems to bug out so we can just repeatedly 
 // mess with the AI
 RTS_aiSkillLimiter = [] spawn {
@@ -331,29 +288,51 @@ RTS_aiSkillLimiter = [] spawn {
 		sleep 10;
 	};
 };
-{
 
-	_group = _x;
-	
-	// VCOM Stuff
-	_group setVariable ["VCM_NOFLANK",true];
-	_group setVariable ["VCM_DisableForm",true];
-	_group setVariable ["VCM_NORESCUE",true];
-	_group setVariable ["VCM_TOUGHSQUAD",true];
-	
-	if ( (vehicle (leader _group)) == (leader _group) ) then {
-		{ 
-			_x disableAi "AUTOCOMBAT";
-		} forEach (units _group);
-	};
-	
-	_group enableAttack false;
+
+if ( isNil "RTS_commandObject" ) then {
+	RTS_commandObject = player;
+};
+
+RTS_commandObject addAction ["Begin Commanding", 
 	{
-		_x allowFleeing 0;
-		_x disableAi "FSM";
-		addSwitchableUnit _x;
-	} forEach (units _group);
-} forEach RTS_commandingGroups;
+		if ( scriptDone RTS_ui ) then {
+			RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
+		};
+		
+		RTS_commanderUnit = player;
+		[true] call ace_spectator_fnc_cam;
+		[true] call RTS_fnc_ui;
+		RTS_setupComplete = true;
+		
+		[0,
+		{
+			_this call RTS_fnc_setupCommander
+		},[player]] call CBA_fnc_globalExecute;
+	}];
+
+waitUntil { RTS_setupComplete };
+
+[] call RTS_fnc_setupAllGroups;
+
+RTS_mapHandling = [] spawn (compile preprocessFileLineNumbers "rts\systems\map_handling.sqf");
+
+RTS_killedEH = player addEventHandler ["killed", {
+	private _pos = getPosATL player;
+	private _dir = getDir player;
+	_pos set [2, 5];
+	private _leader = ((units (group player)) select { alive _x }) select 0;
+	(group player) selectLeader _leader;
+	(units (group player)) doFollow _leader;
+	RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
+	player removeAction RTS_commandAction;
+	player removeEventHandler ["killed", RTS_killedEH];
+	selectPlayer RTS_commanderUnit;
+	[true] call ace_spectator_fnc_cam;
+	[true] call RTS_fnc_ui;
+	ace_spectator_camera setPosATL _pos;
+	ace_spectator_camera setDir _dir;
+}];
 
 
 RTS_radioComms = [] spawn (compile preprocessFileLineNumbers "rts\systems\radio_communications.sqf");
@@ -364,7 +343,7 @@ RTS_controlMon = {
 	private _currentMen = 0;
 		
 	{
-		_currentMen = _currentMen + (count (units _x));
+		_currentMen = _currentMen + (count ((units _x) select { alive _x }));
 	} forEach RTS_commandingGroups;
 	
 	private _commanderinfo = format
@@ -392,7 +371,7 @@ RTS_groupMon = {
 		private _currentMen = 0;
 		
 		{
-			_currentMen = _currentMen + (count (units _x));
+			_currentMen = _currentMen + (count ((units _x) select { alive _x }));
 		} forEach RTS_commandingGroups;
 		
 		private _commanderinfo = format

@@ -154,19 +154,24 @@ if !(isNil "_veh") then {
 				[_group] call RTS_fnc_removeCommand;
 			};
 			[_group, true] call RTS_fnc_autoCombat;
-			[_group, [[(getMarkerPos RTS_camStart),300,300,0,false]] call CBA_fnc_randPosArea] call RTS_fnc_addFastMoveCommand;
-			{
-				_x setUnitPos "AUTO";
-			} forEach (units _group);
-			{
-				doStop _x;
-				_x doFollow (leader _group);
-			} forEach (units _group);
+			
+			if ( (_group getVariable ["command_bonus", 0]) < 1 ) then {
+				[_group, [[(getMarkerPos RTS_camStart),300,300,0,false]] call CBA_fnc_randPosArea] call RTS_fnc_addFastMoveCommand;
+				{
+					_x setUnitPos "AUTO";
+				} forEach (units _group);
+				{
+					doStop _x;
+					_x doFollow (leader _group);
+				} forEach (units _group);
+			};
 		} else {
 			while { count (_group getVariable ["commands",[]]) > 0 } do {
 				[_group] call RTS_fnc_removeCommand;
 			};
-			_group setCombatMode "YELLOW";
+			if ( combatMode _group != "RED" ) then {
+				_group setCombatMode "YELLOW";
+			};
 		};
 	}];
 	
@@ -180,7 +185,9 @@ if !(isNil "_veh") then {
 				while { count (_group getVariable ["commands",[]]) > 0 } do {
 					[_group] call RTS_fnc_removeCommand;
 				};
-				_group setCombatMode "YELLOW";
+				if ( combatMode _group != "RED" ) then {
+					_group setCombatMode "YELLOW";
+				};
 			};
 	}];
 } forEach (units _group);
@@ -217,7 +224,7 @@ if !(isNil "_veh") then {
 			
 			// return if we are too far from the leader
 			if ( _unit != (leader _group) ) then {
-				private _toofar =  ((getPos (leader _group)) distance (getPos _unit)) > _distancefactor;
+				private _toofar =  ((getPos (leader _group)) distance (getPos _unit)) > _distancefactor*0.8;
 				if ( _toofar && !_returning ) then {
 					_unit doMove ( (getPos (leader _group)) findEmptyPosition [2,15,"MAN"] );
 					_unit setVariable ["returning", true];
@@ -233,8 +240,9 @@ if !(isNil "_veh") then {
 		private _gotCommandBoost = false;
 		
 		if ( !isNull _commander ) then {
-			private _dist = (getPosATL (leader _group)) distance (getPosATL (leader _commander));
-			private _commandboost = 150 / (if ( _dist > 1 ) then { _dist } else { 1 });
+			private _nearbyUnit = [leader _group, units _commander] call CBA_fnc_getNearest;
+			private _dist = ( (getPos (leader _group)) distance (getPos _nearbyUnit) ) max 25;
+			private _commandboost = 275 / _dist;
 			_group setVariable ["command_bonus", floor _commandboost];
 			_gotCommandBoost = true;
 		};	
