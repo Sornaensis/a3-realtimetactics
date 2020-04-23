@@ -140,6 +140,10 @@
 					    };
 					
 					    // Search while there are still available positions
+					    if ( !(isNull _leader) ) then {
+					    	_leader disableAI "COVER";
+					    	doStop _leader;
+					    };
 					    private _positions = _building buildingPos -1;
 					    while {!(_positions isEqualTo []) && !(_group getVariable ["waypoint_canceled", false])} do {
 					        // Update units in case of death
@@ -162,6 +166,7 @@
 					    waitUntil { (_group getVariable ["waypoint_canceled", false]) || [_group,"PARTIAL"] call RTS_fnc_allUnitsReady };
 						_group lockWP false;
 						(leader _group) doMove (getPos (leader _group));
+						(leader _group) enableAI "COVER";
 						{
 							_x doWatch objnull;
 							if ( _x != (leader _group) ) then {
