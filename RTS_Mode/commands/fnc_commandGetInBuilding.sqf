@@ -18,7 +18,7 @@ private _pos = _positions select _i;
 
 _commands = _group getVariable ["commands", []];
 
-private _newcommand = [_pos,"MOVE", if ( (vehicle (leader _group)) == (leader _group) ) then {"AWARE"} else {"SAFE"},"","","NORMAL"];
+private _newcommand = [getPos RTS_selectedBuilding,"GARRISON", "","","","NORMAL", nil, RTS_selectedBuilding ];
 
 _commands set [count _commands, _newcommand];
 
