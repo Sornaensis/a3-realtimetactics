@@ -17,7 +17,6 @@ if ( _group in RTS_commandingGroups ) then {
 				} forEach (units _group);
 			};
 			{
-				//_x disableAI "AUTOCOMBAT";
 				if (_type == "DISMOUNT") then {
 					_x enableAI "MOVE";
 				};

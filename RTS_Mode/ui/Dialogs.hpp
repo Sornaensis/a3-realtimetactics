@@ -145,7 +145,7 @@ class PassengerInfoLabel: RscText
 class SelectCommanderBtn: RscButton
 {
 	idc = 1600;
-	text = "Commanding Element"; //--- ToDo: Localize;
+	text = "View C/O"; //--- ToDo: Localize;
 	x = 0.0152198 * safezoneW + safezoneX;
 	y = 0.5 * safezoneH + safezoneY;
 	w = 0.0705135 * safezoneW;

@@ -225,7 +225,7 @@ if !(isNil "_veh") then {
 			// return if we are too far from the leader
 			if ( _unit != (leader _group) ) then {
 				private _toofar =  ((getPos (leader _group)) distance (getPos _unit)) > _distancefactor*0.8;
-				if ( _toofar && !_returning ) then {
+				if ( _toofar && !_returning && !(_unit getVariable ["subtasking", false]) ) then {
 					_unit doMove ( (getPos (leader _group)) findEmptyPosition [2,15,"MAN"] );
 					_unit setVariable ["returning", true];
 				} else {

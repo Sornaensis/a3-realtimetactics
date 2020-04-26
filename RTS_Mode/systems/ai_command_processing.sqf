@@ -122,32 +122,21 @@
 					    private _leader = leader _group;
 					    [_group] call CBA_fnc_clearWaypoints;
 					
-					    // Add a waypoint to regroup after the search
-					    _group lockWP true;
-					    private _wp = _group addWaypoint [getPos _leader, -1, currentWaypoint _group];
-					    private _cond = "({unitReady _x || !(alive _x)} count thisList) == count thisList";
-					    private _comp = format ["this setFormation '%1'; this setBehaviour '%2'; deleteWaypoint [group this, currentWaypoint (group this)];", formation _group, behaviour _leader];
-					    _wp setWaypointStatements [_cond, _comp];
+						{
+							_x disableAI "COVER";
+							_x setVariable ["subtasking", true];
+							if ( _x !=  leader _group ) then {
+								doStop _x;
+							};
+						} forEach (units _group);
 					
 					    // Prepare group to search
-					    _group setBehaviour "Combat";
 					    _group setFormDir ([_leader, _building] call BIS_fnc_dirTo);
-					
-					    // Leader will only wait outside if group larger than 2
-					    if (count (units _group) <= 2) then {
-					        doStop _leader;
-					        _leader = objNull;
-					    };
-					
-					    // Search while there are still available positions
-					    if ( !(isNull _leader) ) then {
-					    	_leader disableAI "COVER";
-					    	doStop _leader;
-					    };
+					    
 					    private _positions = _building buildingPos -1;
 					    while {!(_positions isEqualTo []) && !(_group getVariable ["waypoint_canceled", false])} do {
 					        // Update units in case of death
-					        private _units = (units _group) - [_leader];
+					        private _units = (units _group) - [leader _group];
 							
 					        // Abort search if the group has no units left
 					        if (_units isEqualTo []) exitWith {};
@@ -155,20 +144,64 @@
 					        // Send all available units to the next available position
 					        {
 					            if (_positions isEqualTo []) exitWith {};
-					            if (unitReady _x) then {
-					                private _pos = _positions deleteAt 0;
-					                _x commandMove _pos;
-					                sleep 5;
-					            };
+			            		private _upos = _x getVariable ["searchPos", []];
+			            		private _pos = _positions deleteAt 0;
+				                _upos pushback _pos;
+				                _x setVariable ["searchPos", _upos];
 					        } forEach _units;
-					        waitUntil { (_group getVariable ["waypoint_canceled", false]) || [_group,"PARTIAL"] call RTS_fnc_allUnitsReady };
+					        
 					    };
+					    
+					    private _scripts = [];
+					    {
+						    private _script = [ _x, _x getVariable ["searchPos", []] ] spawn {
+				    			params ["_unit", "_poses"];
+				    			
+				    			while { alive _unit && count _poses > 0 } do { 
+					    			private _pos = _poses deleteAt 0;
+					    			_unit moveTo _pos;
+					    			private _ct = 0;
+					    			private _done = false;
+					    			while { alive _unit && !_done && _ct < 10 } do {
+						    			_unit moveTo _pos;
+						    			waitUntil { !(alive _unit) || speed _unit > 0 };
+						    			sleep 3;
+					    				waitUntil { !(alive _unit) || speed _unit == 0 || moveToCompleted _unit || moveToFailed _unit || unitReady _unit || ( (getPosATL _unit) distance _pos ) < 2 };
+					    				if ( ( (getPosATL _unit) distance _pos ) > 2 ) then {
+					    					_ct = _ct + 1;
+					    				} else {
+					    					if ( ( (getPosATL _unit) distance _pos ) < 2 ) then {
+					    					 	_done = true;
+					    					};
+					    				};
+					    				
+					    				sleep 3;
+					    				if ( ( !(moveToCompleted _unit) && !(moveToFailed _unit) ) && !_done && alive _unit && speed _unit == 0 ) then {
+					    					private _newpos = (getPos _unit) findEmptyPosition [ 3, 6, "MAN"];
+					    					_unit setPosATL _newpos;
+					    				};
+					    			};
+					    		};
+				    			_unit doFollow (leader (group _unit));
+				    		};
+			    			_scripts pushback _script;
+				    		sleep 1;
+				    	} forEach ( (units _group) - [leader _group]);
+					    
 					    waitUntil { (_group getVariable ["waypoint_canceled", false]) || [_group,"PARTIAL"] call RTS_fnc_allUnitsReady };
-						_group lockWP false;
+						
+						{
+							terminate _x;
+						} forEach _scripts;
+						
+						_group setBehaviour "AWARE";
 						(leader _group) doMove (getPos (leader _group));
 						(leader _group) enableAI "COVER";
 						{
 							_x doWatch objnull;
+							_x enableAI "COVER";
+							_x setVariable ["subtasking", false];
+							_x setVariable ["searchPos", nil];
 							if ( _x != (leader _group) ) then {
 								[_x] doFollow (leader _group);
 							};
@@ -196,31 +229,78 @@
 						[_group, (_commands select 0) select 7,_pausetime] spawn {
 						    params ["_group", "_building","_pausetime"];
 						    private _leader = leader _group;
-						    [_group] call CBA_fnc_clearWaypoints;
-						    
+						    [_group] call CBA_fnc_clearWaypoints;				    
 						    {
+						    	_x doMove (getPos _x);
 								_x doWatch objnull;
+								_x disableAI "COVER";
+								_x setVariable ["subtasking", true];
 								if ( _x != (leader _group) ) then {
-									[_x] doFollow (leader _group);
+									doStop _x;
 								};
 							} forEach (units _group);
 							    
 						    
 						    private _positions = _building buildingPos -1;
-						    private _inBuilding = [];
-						    private _units = units _group;
+						    private _units = units _group - [leader _group];
+						    private _inbuilding = [];
+						    private _scripts = [];
+						    private _idx = 0;
 						    
 						    while { !(_units isEqualTo []) && !(_positions isEqualTo []) } do {
-						    	private _unit = selectRandom _units;
-						    	_units = _units - [_unit];
-						    	_inBuilding pushback _unit;
+						    	private _unit = _units deleteAt 0;
+						    	private _pos = _positions deleteAt _idx;
 						    	
-						    	private _pos = selectRandom _positions;
-						    	_positions = _positions - [_pos];
-						    	_unit doMove _pos;
+						    	_inbuilding pushback _unit;
+
+					    		_unit moveTo _pos;
+					    		// Gotta do everything the hard way
+					    		private _script = [_unit,_pos] spawn {
+					    			params ["_unit", "_pos"];
+					    			_unit moveTo _pos;
+					    			private _ct = 0;
+					    			private _done = false;
+					    			while { alive _unit && !_done && _ct < 10 } do {
+						    			_unit moveTo _pos;
+						    			waitUntil { !(alive _unit) || speed _unit > 0 };
+						    			sleep 3;
+					    				waitUntil { !(alive _unit) || speed _unit == 0 || moveToCompleted _unit || moveToFailed _unit || unitReady _unit || ( (getPosATL _unit) distance _pos ) < 2 };
+					    				if ( ( (getPosATL _unit) distance _pos ) > 2 ) then {
+					    					_ct = _ct + 1;
+					    				} else {
+					    					if ( ( (getPosATL _unit) distance _pos ) < 2 ) then {
+					    					 	_done = true;
+					    					};
+					    				};
+					    				
+					    				if ( !_done && alive _unit ) then {
+					    					private _newpos = (getPos _unit) findEmptyPosition [ 3, 6, "MAN"];
+					    					titleText [format ["Set %1 to pos %2", _unit, _newpos], "PLAIN"];
+					    					_unit setPosATL _newpos;
+					    					
+					    				};
+					    			};
+					    		};
+					    		
+					    		_scripts pushback _script;
+					    		
+						    	_idx = (
+						    		if ( _idx == 0 ) then {
+						    			(count _positions) - 1
+						    		} else {
+						    			( (count _positions) * 0.25 * ( (count _inbuilding) - 1) ) % (count _positions)
+						    		}
+						    	);
 						    	sleep 1;
 						    };
-						    waitUntil { (_group getVariable ["waypoint_canceled", false]) || [_group, "PARTIAL"] call RTS_fnc_allUnitsReady };
+						    
+						    if ( !(_positions isEqualTo []) ) then {
+						    	_group move (selectRandom _positions);
+						    };
+						    
+							(_group getVariable ["commands", []]) deleteAt 0;
+							_group setVariable ["status", "GARRISONED" ]; 
+						    waitUntil { (_group getVariable ["waypoint_canceled", false]) || ! ( (_group getVariable ["commands", []]) isEqualTo [] ) };
 						    if ( _group getVariable ["waypoint_canceled", false] ) then { 
 								_group setVariable ["waypoint_canceled", false ]; 
 								_group setVariable ["status", "WAITING" ]; 
@@ -235,11 +315,27 @@
 									waitUntil { !RTS_paused };						
 								};
 								_group setVariable ["pause_remaining", 0];
-								[_group] call RTS_fnc_removeCommand;
+								
+								{
+									terminate _x;
+								} forEach _scripts;
+								
+								[_group] call CBA_fnc_clearWaypoints;
+								(leader _group) doMove (getPos (leader _group));
+								{
+									_x doWatch objnull;
+									_x enableAI "COVER";
+									_x setVariable ["subtasking", false];
+									if ( _x != (leader _group) ) then {
+										[_x] doFollow (leader _group);
+									};
+								} forEach (units _group);
+								_group setVariable ["status", "WAITING" ]; 
 							};
+														
 						};
 					} else {
-						(leader _group) doMove _pos;
+						_group move _pos;
 						if ( _speed != "" ) then {
 							_group setSpeedMode _speed;
 						};
@@ -270,18 +366,19 @@
 							private _commands = _group getVariable ["commands", []];
 							private _complete = false;
 							while { ( ( count ((units _group) select { alive _x }) ) > 0 ) && ((count _commands) > 0) && !_complete} do {
-								(leader _group) doMove _pos;
+								_group move _pos;
 								{
 									_x doWatch objnull;
 									if ( _x != (leader _group) ) then {
 										_x doFollow (leader _group);
 									};
 								} forEach (units _group);
-								waitUntil { (_group getVariable ["waypoint_canceled", false]) || unitReady (leader _group) || ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 10 || !((count (_group getVariable ["commands", []])) > 0) || !(alive (leader _group) ) };
+								sleep 3;
+								waitUntil { speed (leader _group) < 0.1; (_group getVariable ["waypoint_canceled", false]) || unitReady (leader _group) || ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 5 || !((count (_group getVariable ["commands", []])) > 0) || !(alive (leader _group) ) };
 								if ( _group getVariable ["waypoint_canceled", false] ) then { 
 									_complete = true;
 								};
-								if ( ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 10 ) then {
+								if ( alive (leader _group) && ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 5 ) then {
 									_complete = true;
 								};
 								_commands = _group getVariable ["commands", []];

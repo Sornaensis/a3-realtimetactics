@@ -86,11 +86,10 @@ if ( RTS_commanding ) then {
 				if ( ( _x != leader _group ) && (vehicle _x == _x) ) then {
 					drawIcon3D ["\A3\ui_f\data\map\markers\handdrawn\dot_CA.paa", [0,0,0,1], _drawpos, 0.8, 0.8,0];
 					drawIcon3D ["\A3\ui_f\data\map\markers\handdrawn\dot_CA.paa", RTS_sideColor, _drawpos, 0.6, 0.6,0];
-					
-					// Show us where the unit intends to go
-					if ( RTS_debug ) then {
-						drawIcon3D ["\A3\ui_f\data\map\groupicons\waypoint.paa", RTS_sideColor, (expectedDestination _x) select 0, 0.6, 0.6,0, str _forEachIndex, 2, 0.04];
-					};
+				};
+				// Show us where the unit intends to go
+				if ( RTS_debug ) then {
+					drawIcon3D ["\A3\ui_f\data\map\groupicons\waypoint.paa", RTS_sideColor, (expectedDestination _x) select 0, 0.6, 0.6,0, str (_forEachIndex + 1), 2, 0.04];
 				};
 			} forEach (units _group);
 			if ( (group (driver (vehicle (leader _group)))) == _group || isNull (driver (vehicle (leader _group))) ) then {

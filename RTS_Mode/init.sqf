@@ -395,10 +395,10 @@ RTS_groupMon = {
 				
 				{
 					_unitStatus = format ["%1<t align='left'>%2</t><br/><t align='right'>%3</t><br/>", _unitStatus, _x, [ 
+																													 (if ( unitReady _x ) then { "READY" } else { "NOT READY" }),
+																													 (if ( moveToCompleted _x ) then { "COMPLETE" } else { "NOT COMPLETE" }),
+																													 (if ( moveToFailed _x ) then { "FAILED" } else { "NOT FAILED" }),
 																													 (getDammage _x) toFixed 2,
-																													 stance _x,
-																													 (getFatigue _x) toFixed 2,
-																													 (getStamina _x) toFixed 2,
 																													 (_x getVariable ["SoftFactor", 0]) toFixed 3
 																													]];
 				} forEach (units RTS_selectedGroup);

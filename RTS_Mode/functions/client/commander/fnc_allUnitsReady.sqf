@@ -13,10 +13,7 @@ if ( !isNil "_mode" ) then {
 			if ( _x == leader _group ) then {
 				_ready = true;
 			} else {
-				_ready = _ready && alive _x && unitReady _x;
-				if ( !_ready && speed _x < 0.01 ) then {
-					_x commandFollow (leader _group);
-				};	
+				_ready = _ready && ( moveToCompleted _x || moveToFailed _x || unitReady _x);	
 			};
 						
 		} forEach _units;
@@ -39,7 +36,7 @@ if ( !isNil "_mode" ) then {
 				_unready = _unready + 1;
 			};
 			
-			if ( !(unitReady _x) && speed _x == 0 ) then {
+			if ( !(unitReady _x) && speed _x < 0.1 ) then {
 				_x commandFollow (leader _group);
 			};
 			
@@ -50,7 +47,7 @@ if ( !isNil "_mode" ) then {
 
 private _total = count _units;
 
-if ( !_ready && _unready < ( ceil (_total/2) ) && _tightform ) then {
+if ( !_ready && _unready < ( ceil (_total/2) ) && _tightform && isNil "_mode" ) then {
 	true
 } else {
 	_ready
