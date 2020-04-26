@@ -31,6 +31,7 @@ _group setVariable ["VCM_NOFLANK",true];
 _group setVariable ["VCM_DisableForm",true];
 _group setVariable ["VCM_NORESCUE",true];
 _group setVariable ["VCM_TOUGHSQUAD",true];
+_group setVariable ["VCM_SkillDisable",true];
 //_group setVariable ["VCM_DISABLE",true];
 
 if ( (vehicle (leader _group)) == (leader _group) ) then {
@@ -38,6 +39,7 @@ if ( (vehicle (leader _group)) == (leader _group) ) then {
 };
 
 _group setCombatMode "YELLOW";
+_group enableAttack false;
 {
 	_x allowFleeing 0;
 	_x disableAi "FSM";

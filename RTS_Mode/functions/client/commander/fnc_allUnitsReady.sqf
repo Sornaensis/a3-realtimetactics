@@ -20,10 +20,10 @@ if ( !isNil "_mode" ) then {
 	};
 } else {
 	{
+		private _unit = _x;
 		if ( _x == leader _group ) then {
 			_ready = true;
 		} else {
-			private _unit = _x;
 			private _unitready = unitReady _x && ( ((getPos _x) distance ((expectedDestination _x) select 0)) < 7);
 			private _others = [ _units, [], { (getPos _x) distance (getPos _unit) }, "DESCEND"] call BIS_fnc_sortBy;
 			
@@ -36,12 +36,31 @@ if ( !isNil "_mode" ) then {
 				_unready = _unready + 1;
 			};
 			
-			if ( !(unitReady _x) && speed _x < 0.1 ) then {
-				_x commandFollow (leader _group);
+			if ( unitReady _x || speed _x > 0 ) then {
+				_x setVariable ["unreadyTime", nil];
 			};
 			
 			_ready = _ready && _unitready;
 		};
+		
+					
+		if ( ((getPos _unit) distance ((expectedDestination _unit) select 0)) > 3 && speed _x == 0 ) then {
+			private _time = _x getVariable "unreadyTime";
+			
+			if ( isNil "_time" ) then {
+				_x setVariable ["unreadyTime", time];
+			} else {
+				if ( time - _time > 15 ) then {
+					_x setVariable ["unreadyTime", nil];
+					private _newpos = (getPos _unit) findEmptyPosition [ 20, 50, "MAN"];
+					if ( !(_newpos isEqualTo []) ) then {
+						_unit setPosATL _newpos;
+					};
+					_x doMove ( (getPosATL (leader _group)) findEmptyPosition [5, 30, "MAN"]);
+				};
+			};
+		};
+		
 	} forEach _units;
 };
 

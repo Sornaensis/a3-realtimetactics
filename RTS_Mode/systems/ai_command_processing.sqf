@@ -123,6 +123,7 @@
 					    [_group] call CBA_fnc_clearWaypoints;
 					
 						{
+							_x doWatch objnull;
 							_x disableAI "COVER";
 							_x setVariable ["subtasking", true];
 							if ( _x !=  leader _group ) then {
@@ -167,7 +168,7 @@
 						    			waitUntil { !(alive _unit) || speed _unit > 0 };
 						    			sleep 3;
 					    				waitUntil { !(alive _unit) || speed _unit == 0 || moveToCompleted _unit || moveToFailed _unit || unitReady _unit || ( (getPosATL _unit) distance _pos ) < 2 };
-					    				if ( ( (getPosATL _unit) distance _pos ) > 2 ) then {
+					    				if ( speed _unit > 0 && ( (getPosATL _unit) distance _pos ) > 2 ) then {
 					    					_ct = _ct + 1;
 					    				} else {
 					    					if ( ( (getPosATL _unit) distance _pos ) < 2 ) then {
@@ -175,10 +176,17 @@
 					    					};
 					    				};
 					    				
-					    				sleep 3;
-					    				if ( ( !(moveToCompleted _unit) && !(moveToFailed _unit) ) && !_done && alive _unit && speed _unit == 0 ) then {
+					    				private _time = 0;
+					    				if ( speed _unit == 0 && alive _unit && !_done ) then {
+					    					private _ct = time;
+					    					waitUntil { speed _unit > 0 || time - _ct > 20 };
+					    				};
+					    				
+					    				if ( ( !(moveToCompleted _unit) && !(moveToFailed _unit) ) && !_done && alive _unit && ( speed _unit == 0 && (time - _time > 20) ) ) then {
 					    					private _newpos = (getPos _unit) findEmptyPosition [ 3, 6, "MAN"];
-					    					_unit setPosATL _newpos;
+					    					if ( !(_newpos isEqualTo []) ) then {
+					    						_unit setPosATL _newpos;
+					    					};
 					    				};
 					    			};
 					    		};
@@ -245,52 +253,51 @@
 						    private _units = units _group - [leader _group];
 						    private _inbuilding = [];
 						    private _scripts = [];
-						    private _idx = 0;
 						    
 						    while { !(_units isEqualTo []) && !(_positions isEqualTo []) } do {
 						    	private _unit = _units deleteAt 0;
-						    	private _pos = _positions deleteAt _idx;
+						    	private _pos = _positions deleteAt ((count _positions) - 1);
 						    	
-						    	_inbuilding pushback _unit;
-
-					    		_unit moveTo _pos;
-					    		// Gotta do everything the hard way
-					    		private _script = [_unit,_pos] spawn {
-					    			params ["_unit", "_pos"];
-					    			_unit moveTo _pos;
-					    			private _ct = 0;
-					    			private _done = false;
-					    			while { alive _unit && !_done && _ct < 10 } do {
+						    	if ( !(isNil "_pos") ) then {
+							    	_inbuilding pushback _unit;
+	
+						    		_unit moveTo _pos;
+						    		// Gotta do everything the hard way
+						    		private _script = [_unit,_pos] spawn {
+						    			params ["_unit", "_pos"];
 						    			_unit moveTo _pos;
-						    			waitUntil { !(alive _unit) || speed _unit > 0 };
-						    			sleep 3;
-					    				waitUntil { !(alive _unit) || speed _unit == 0 || moveToCompleted _unit || moveToFailed _unit || unitReady _unit || ( (getPosATL _unit) distance _pos ) < 2 };
-					    				if ( ( (getPosATL _unit) distance _pos ) > 2 ) then {
-					    					_ct = _ct + 1;
-					    				} else {
-					    					if ( ( (getPosATL _unit) distance _pos ) < 2 ) then {
-					    					 	_done = true;
-					    					};
-					    				};
-					    				
-					    				if ( !_done && alive _unit ) then {
-					    					private _newpos = (getPos _unit) findEmptyPosition [ 3, 6, "MAN"];
-					    					titleText [format ["Set %1 to pos %2", _unit, _newpos], "PLAIN"];
-					    					_unit setPosATL _newpos;
-					    					
-					    				};
-					    			};
+						    			private _ct = 0;
+						    			private _done = false;
+						    			while { alive _unit && !_done && _ct < 10 } do {
+							    			_unit moveTo _pos;
+							    			waitUntil { !(alive _unit) || speed _unit > 0 };
+							    			sleep 3;
+						    				waitUntil { !(alive _unit) || speed _unit == 0 || moveToCompleted _unit || moveToFailed _unit || unitReady _unit || ( (getPosATL _unit) distance _pos ) < 2 };
+						    				if ( speed _unit > 0 && ( (getPosATL _unit) distance _pos ) > 2 ) then {
+						    					_ct = _ct + 1;
+						    				} else {
+						    					if ( ( (getPosATL _unit) distance _pos ) < 2 ) then {
+						    					 	_done = true;
+						    					};
+						    				};
+						    				
+						    				private _time = 0;
+						    				if ( speed _unit == 0 && alive _unit && !_done ) then {
+						    					private _ct = time;
+						    					waitUntil { speed _unit > 0 || time - _ct > 20 };
+						    				};
+						    				
+						    				if ( ( !(moveToCompleted _unit) && !(moveToFailed _unit) ) && !_done && alive _unit && ( speed _unit == 0 && (time - _time > 20) ) ) then {
+						    					private _newpos = (getPos _unit) findEmptyPosition [ 3, 6, "MAN"];
+						    					if ( !(_newpos isEqualTo []) ) then {
+						    						_unit setPosATL _newpos;
+						    					};
+						    				};
+						    			};
+						    		};
+						    		
+						    		_scripts pushback _script;
 					    		};
-					    		
-					    		_scripts pushback _script;
-					    		
-						    	_idx = (
-						    		if ( _idx == 0 ) then {
-						    			(count _positions) - 1
-						    		} else {
-						    			( (count _positions) * 0.25 * ( (count _inbuilding) - 1) ) % (count _positions)
-						    		}
-						    	);
 						    	sleep 1;
 						    };
 						    
@@ -367,6 +374,25 @@
 							private _complete = false;
 							while { ( ( count ((units _group) select { alive _x }) ) > 0 ) && ((count _commands) > 0) && !_complete} do {
 								_group move _pos;
+								if ( _speed != "" ) then {
+									_group setSpeedMode _speed;
+								};
+								if ( _combat == "" ) then {
+									_combat = combatMode _group;
+								};
+								if ( _combat !=  "RED" ) then {
+									_group setCombatMode _combat;
+								} else {
+									_group setCombatMode "YELLOW";
+								};
+								[_group, true] call RTS_fnc_autoCombat;
+								_group enableAttack false;
+								if ( _form != "" ) then {
+									_group setFormation _form;
+								};
+								if ( _behaviour != "" ) then {
+									_group setBehaviour _behaviour;
+								};
 								{
 									_x doWatch objnull;
 									if ( _x != (leader _group) ) then {
@@ -374,12 +400,15 @@
 									};
 								} forEach (units _group);
 								sleep 3;
-								waitUntil { speed (leader _group) < 0.1; (_group getVariable ["waypoint_canceled", false]) || unitReady (leader _group) || ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 5 || !((count (_group getVariable ["commands", []])) > 0) || !(alive (leader _group) ) };
+								waitUntil { speed (leader _group) == 0 || (_group getVariable ["waypoint_canceled", false]) || unitReady (leader _group) || ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 5 || !((count (_group getVariable ["commands", []])) > 0) || !(alive (leader _group) ) };
 								if ( _group getVariable ["waypoint_canceled", false] ) then { 
 									_complete = true;
 								};
 								if ( alive (leader _group) && ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 5 ) then {
 									_complete = true;
+								};
+								if ( !_complete ) then {
+									(leader _group) doMove (getPos (leader _group));
 								};
 								_commands = _group getVariable ["commands", []];
 							};
