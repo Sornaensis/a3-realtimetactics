@@ -43,6 +43,7 @@ _group enableAttack false;
 {
 	_x allowFleeing 0;
 	_x disableAi "FSM";
+	_x disableAi "AUTOCOMBAT";
 	addSwitchableUnit _x;
 	_x setUnitPos "AUTO";
 	_x setSpeedMOde "AUTO";
@@ -168,12 +169,13 @@ if !(isNil "_veh") then {
 				} forEach (units _group);
 			};
 		} else {
-			while { count (_group getVariable ["commands",[]]) > 0 } do {
-				[_group] call RTS_fnc_removeCommand;
-			};
-			if ( combatMode _group != "RED" ) then {
-				_group setCombatMode "YELLOW";
-			};
+			_group setCombatMode "RED";
+			_group setBehaviour "COMBAT";
+			{
+				if ( random 2 > 0.85 ) then {
+					_x suppressFor ( 5 + random 12 );
+				};
+			} forEach (units _group);
 		};
 	}];
 	
@@ -183,97 +185,17 @@ if !(isNil "_veh") then {
 			
 			private _side = _unit getVariable ["HandleDamageSide", side _unit];
 			
-			if ( side _instigator != _side && !(_source isEqualTo "") && (_group getVariable ["status","WAITING"]) != "OTM" ) then {	
-				while { count (_group getVariable ["commands",[]]) > 0 } do {
-					[_group] call RTS_fnc_removeCommand;
-				};
-				if ( combatMode _group != "RED" ) then {
-					_group setCombatMode "YELLOW";
-				};
+			if ( side _instigator != _side && !(_source isEqualTo "") ) then {	
+				_group setCombatMode "RED";
+				{
+					if ( random 2 > 0.25 ) then {
+						_x doSuppressiveFire _source;
+					};
+				} forEach (units _group);
 			};
 	}];
 } forEach (units _group);
 
-
-// Formation & morale manager + command bonuses
-[_group] spawn {
-	params ["_group"];
-	while { (count ((units _group) select { [_x] call CBA_fnc_isAlive })) > 0 } do {
-		private _leader = leader _group;
-		
-		if ( (vehicle _leader) != _leader && !(canMove (vehicle _leader)) ) then {
-			{
-				_x enableAI "MOVE";
-			} forEach (units _group);
-			private _veh = vehicle _leader;
-			if ( group (driver _veh) == _group ) then {
-				[_group, getPos _leader] call RTS_fnc_addUnloadOrLoadCommand;				
-				[_group, getPos _leader] call RTS_fnc_addMountOrDismountCommand;
-			};
-		};
-		
-	
-		_units = (units _group) select { [_x] call CBA_fnc_isAlive };
-		private _maxmorale = (count _units) / (_group getVariable ["initial_strength", 1]) * 100;
-		private _commandbonus = _group getVariable ["command_bonus", 0];
-		_commandbonus = (if ( _commandbonus > 1 ) then { _commandbonus } else { 1 });
-		
-		private _distancefactor = ( count _units ) * 8.3;
-		
-		{
-			private _unit = _x;
-			private _returning = _unit getVariable ["returning", false];
-			
-			// return if we are too far from the leader
-			if ( _unit != (leader _group) ) then {
-				private _toofar =  ((getPos (leader _group)) distance (getPos _unit)) > _distancefactor*0.8;
-				if ( _toofar && !_returning && !(_unit getVariable ["subtasking", false]) ) then {
-					_unit doMove ( (getPos (leader _group)) findEmptyPosition [2,15,"MAN"] );
-					_unit setVariable ["returning", true];
-				} else {
-					if ( !_toofar ) then {
-						_unit setVariable ["returning", false];
-					};
-				};
-			};
-		} forEach _units;
-		
-		private _commander = _group getVariable ["command_element", grpnull];
-		private _gotCommandBoost = false;
-		
-		if ( !isNull _commander ) then {
-			private _nearbyUnit = [leader _group, units _commander] call CBA_fnc_getNearest;
-			private _dist = ( (getPos (leader _group)) distance (getPos _nearbyUnit) ) max 25;
-			private _commandboost = 275 / _dist;
-			_group setVariable ["command_bonus", floor _commandboost];
-			_gotCommandBoost = true;
-		};	
-				
-		if ( !_gotCommandBoost ) then {
-			_group setVariable ["command_bonus", 1];
-		};
-		
-		private _commands = _group getVariable ["commands", []];
-		private _type = "WAIT";
-		
-		if ( count _commands > 0 ) then {
-			private _current = _commands select 0;
-			_type = _current select 1;
-		};
-		
-		_group setVariable ["morale", _maxmorale min ( (_group getVariable ["morale",0]) + ( if ( (_group getVariable ["morale",0]) > 0 ) then { 0.1 } else { 0.03 } ) * _commandbonus )];
-		
-		if ( (_group getVariable ["morale",0]) > 0 ) then {
-			_group setVariable ["commandable", true];
-			{
-				_x allowFleeing 0;
-			} forEach (units _group);
-		};
-		
-		
-		sleep 2;
-	};
-};
 
 if RTS_SingleCommander then {
 	_group setVariable ["RTS_setup", [], false];

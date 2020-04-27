@@ -2,9 +2,9 @@ params ["_group","_off"];
 
 {
 	if ( !isNil "_off" ) then {
-		_x disableAI "AUTOCOMBAT";
+		//_x disableAI "AUTOCOMBAT";
 	} else {
-		_x enableAI "AUTOCOMBAT";
+		//_x enableAI "AUTOCOMBAT";
 	};
 } forEach (units _group);
 

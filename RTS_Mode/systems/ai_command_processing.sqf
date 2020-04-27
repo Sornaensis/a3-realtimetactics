@@ -190,6 +190,7 @@
 					    				};
 					    			};
 					    		};
+					    		_unit enableAI "COVER";
 				    			_unit doFollow (leader (group _unit));
 				    		};
 			    			_scripts pushback _script;
@@ -237,7 +238,8 @@
 						[_group, (_commands select 0) select 7,_pausetime] spawn {
 						    params ["_group", "_building","_pausetime"];
 						    private _leader = leader _group;
-						    [_group] call CBA_fnc_clearWaypoints;				    
+						    [_group] call CBA_fnc_clearWaypoints;
+							_group setBehaviour "AWARE";						    
 						    {
 						    	_x doMove (getPos _x);
 								_x doWatch objnull;
@@ -294,6 +296,7 @@
 						    					};
 						    				};
 						    			};
+						    			_unit enableAI "COVER";
 						    		};
 						    		
 						    		_scripts pushback _script;
@@ -361,6 +364,10 @@
 						};
 						if ( _behaviour != "" ) then {
 							_group setBehaviour _behaviour;
+						} else {
+							if ( behaviour (leader _group) == "COMBAT" ) then {
+								_group setBehaviour "AWARE";
+							};
 						};
 						{
 							_x doWatch objnull;
@@ -392,6 +399,10 @@
 								};
 								if ( _behaviour != "" ) then {
 									_group setBehaviour _behaviour;
+								} else {
+									if ( behaviour (leader _group) == "COMBAT" ) then {
+										_group setBehaviour "AWARE";
+									};
 								};
 								{
 									_x doWatch objnull;
@@ -406,9 +417,6 @@
 								};
 								if ( alive (leader _group) && ([getPosAtl (leader _group), _pos] call CBA_fnc_getDistance) < 5 ) then {
 									_complete = true;
-								};
-								if ( !_complete ) then {
-									(leader _group) doMove (getPos (leader _group));
 								};
 								_commands = _group getVariable ["commands", []];
 							};
@@ -448,5 +456,71 @@
 				};
 			};
 		};
+	};
+	
+	if ( (count ((units _group) select { [_x] call CBA_fnc_isAlive })) > 0 ) then {
+		private _leader = leader _group;
+		
+		if ( (vehicle _leader) != _leader && ( !(canMove (vehicle _leader)) && !((vehicle _leader) isKindOf "TANK") ) ) then {
+			{
+				_x enableAI "MOVE";
+			} forEach (units _group);
+			private _veh = vehicle _leader;
+			if ( group (driver _veh) == _group ) then {
+				[_group, getPos _leader] call RTS_fnc_addUnloadOrLoadCommand;				
+				[_group, getPos _leader] call RTS_fnc_addMountOrDismountCommand;
+			};
+		};
+		
+	
+		_units = (units _group) select { [_x] call CBA_fnc_isAlive };
+		private _maxmorale = (count _units) / (_group getVariable ["initial_strength", 1]) * 100;
+		private _commandbonus = _group getVariable ["command_bonus", 0];
+		_commandbonus = (if ( _commandbonus > 1 ) then { _commandbonus } else { 1 });
+		
+		private _distancefactor = ( count _units ) * 8.3;
+		
+		{
+			private _unit = _x;
+			private _returning = _unit getVariable ["returning", false];
+			
+			// return if we are too far from the leader
+			if ( _unit != (leader _group) ) then {
+				private _toofar =  ((getPos (leader _group)) distance (getPos _unit)) > _distancefactor*0.8;
+				if ( _toofar && !_returning && !(_unit getVariable ["subtasking", false]) ) then {
+					_unit doMove ( (getPos (leader _group)) findEmptyPosition [5,30,"MAN"] );
+					_unit setVariable ["returning", true];
+				} else {
+					if ( !_toofar ) then {
+						_unit setVariable ["returning", false];
+					};
+				};
+			};
+		} forEach _units;
+		
+		private _commander = _group getVariable ["command_element", grpnull];
+		private _gotCommandBoost = false;
+		
+		if ( !isNull _commander ) then {
+			private _nearbyUnit = [leader _group, units _commander] call CBA_fnc_getNearest;
+			private _dist = ( (getPos (leader _group)) distance (getPos _nearbyUnit) ) max 25;
+			private _commandboost = 275 / _dist;
+			_group setVariable ["command_bonus", floor _commandboost];
+			_gotCommandBoost = true;
+		};	
+				
+		if ( !_gotCommandBoost ) then {
+			_group setVariable ["command_bonus", 1];
+		};
+		
+		_group setVariable ["morale", _maxmorale min ( (_group getVariable ["morale",0]) + ( if ( (_group getVariable ["morale",0]) > 0 ) then { 0.1 } else { 0.03 } ) * _commandbonus )];
+		
+		if ( (_group getVariable ["morale",0]) > 0 ) then {
+			_group setVariable ["commandable", true];
+			{
+				_x allowFleeing 0;
+			} forEach (units _group);
+		};
+		
 	};
 } forEach RTS_commandingGroups;
