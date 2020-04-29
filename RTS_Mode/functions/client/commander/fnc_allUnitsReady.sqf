@@ -41,25 +41,27 @@ if ( !isNil "_mode" ) then {
 			};
 			
 			_ready = _ready && _unitready;
+		
+			// dont teleport leaders around that's weird
+			if ( ((getPos _unit) distance ((expectedDestination _unit) select 0)) > 3 && speed _x == 0 ) then {
+				private _time = _x getVariable "unreadyTime";
+				
+				if ( isNil "_time" ) then {
+					_x setVariable ["unreadyTime", time];
+				} else {
+					if ( time - _time > 15 ) then {
+						_x setVariable ["unreadyTime", nil];
+						private _newpos = (getPos _unit) findEmptyPosition [ 20, 50, "MAN"];
+						if ( !(_newpos isEqualTo []) ) then {
+							_unit setPosATL _newpos;
+						};
+						_x doMove ( (getPosATL (leader _group)) findEmptyPosition [5, 30, "MAN"]);
+					};
+				};
+			};		
+			
 		};
 		
-					
-		if ( ((getPos _unit) distance ((expectedDestination _unit) select 0)) > 3 && speed _x == 0 ) then {
-			private _time = _x getVariable "unreadyTime";
-			
-			if ( isNil "_time" ) then {
-				_x setVariable ["unreadyTime", time];
-			} else {
-				if ( time - _time > 15 ) then {
-					_x setVariable ["unreadyTime", nil];
-					private _newpos = (getPos _unit) findEmptyPosition [ 20, 50, "MAN"];
-					if ( !(_newpos isEqualTo []) ) then {
-						_unit setPosATL _newpos;
-					};
-					_x doMove ( (getPosATL (leader _group)) findEmptyPosition [5, 30, "MAN"]);
-				};
-			};
-		};
 		
 	} forEach _units;
 };

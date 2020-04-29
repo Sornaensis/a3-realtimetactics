@@ -458,6 +458,12 @@
 		};
 	};
 	
+	if ( vehicle (leader _group) != (leader _group) ) then {
+		if ( ! (isEngineOn (vehicle (leader _group))) ) then {
+			(vehicle (leader _group)) engineOn true;
+		};
+	};
+	
 	if ( (count ((units _group) select { [_x] call CBA_fnc_isAlive })) > 0 ) then {
 		private _leader = leader _group;
 		
@@ -523,4 +529,33 @@
 		};
 		
 	};
+	
+	// Assign Targets
+	if ( combatMode _group != "GREEN" ) then {
+		private _lead = leader _group;
+		private _targets = ( [ _group getVariable ["spotted",[]], [], { (getPos _x) distance (getPos _lead)  }, "ASCEND"] call BIS_fnc_sortBy );
+		
+		if ( count _targets > 0 ) then {
+			private _units = (units _group) select { ! ( (_x getVariable ["assigned_target", objnull]) in _targets ) };
+			private _mainTarget = _targets deleteAt 0;
+			
+			{
+				_x setVariable ["assigned_target", objnull];
+			} forEach _units;
+			
+			{
+				private _enemy = _x;
+				{
+					_x setVariable ["assigned_target", _enemy];
+					_x doTarget _enemy;
+					_x doFire _enemy;
+				} forEach ( _units select { isNull (_x getVariable "assigned_target") } );
+			} forEach ( _targets select { (getPos _x) distance (getPos _mainTarget) < 100 } );
+		};
+	} else {
+		{
+			_x setVariable ["assigned_target", objnull];
+		} forEach _units;
+	};
+	
 } forEach RTS_commandingGroups;

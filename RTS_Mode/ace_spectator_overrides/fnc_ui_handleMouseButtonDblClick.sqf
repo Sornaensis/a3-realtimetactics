@@ -50,7 +50,13 @@ if (_button == 0 && {!isNull GVAR(cursorObject)} && !_shift && !_alt  && (isNil 
 					};
 				};
 			} else {
-				if ( _pos inArea RTS_aoMarker ) then {
+				if ( !((getMarkerPos RTS_aoMarker) isEqualTo [0,0,0]) ) then {
+					if ( _pos inArea RTS_aoMarker ) then {
+						if !(isNull _group) then {
+							[_group, _pos] call (RTS_command select 1);
+						};
+					};
+				} else {
 					if !(isNull _group) then {
 						[_group, _pos] call (RTS_command select 1);
 					};

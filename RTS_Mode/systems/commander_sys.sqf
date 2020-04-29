@@ -19,36 +19,39 @@ RTS_aoRestriction =
 	addMissionEventHandler ["Draw3D", 
 	{
 		if ( RTS_commanding ) then {
-			(getMarkerPos RTS_aoMarker) params ["_aoX","_aoY"];
-			(getMarkerSize RTS_aoMarker) params ["_width","_height"];
-			private _aoMaxX = _aoX + _width;
-			private _aoMinX = _aoX - _width;
-			private _aoMaxY = _aoY + _height;
-			private _aoMinY = _aoY - _height;
 		
-			/// AREA OF OPERATIONS RESTRICTION
-			(getPosATL ace_spectator_camera) params ["_camX","_camY","_camZ"];
-			_setpos = false;
-			if ( _camX > _aoMaxX ) then {
-				_camX = _aoMaxX;
-				_setpos = true;
+			if ( !((getMarkerPos RTS_aoMarker) isEqualTo [0,0,0]) ) then {
+				(getMarkerPos RTS_aoMarker) params ["_aoX","_aoY"];
+				(getMarkerSize RTS_aoMarker) params ["_width","_height"];
+				private _aoMaxX = _aoX + _width;
+				private _aoMinX = _aoX - _width;
+				private _aoMaxY = _aoY + _height;
+				private _aoMinY = _aoY - _height;
+			
+				/// AREA OF OPERATIONS RESTRICTION
+				(getPosATL ace_spectator_camera) params ["_camX","_camY","_camZ"];
+				_setpos = false;
+				if ( _camX > _aoMaxX ) then {
+					_camX = _aoMaxX;
+					_setpos = true;
+				};
+				if ( _camX < _aoMinX ) then {
+					_camX = _aoMinX;
+					_setpos = true;
+				};
+				if ( _camY > _aoMaxY ) then {
+					_camY = _aoMaxY;
+					_setpos = true;
+				};
+				if ( _camY < _aoMinY ) then {
+					_camY = _aoMinY;
+					_setpos = true;
+				};
+				if _setpos then {
+					ace_spectator_camera setPosATL [_camX,_camY,_camZ];
+				};
+				///////////////////
 			};
-			if ( _camX < _aoMinX ) then {
-				_camX = _aoMinX;
-				_setpos = true;
-			};
-			if ( _camY > _aoMaxY ) then {
-				_camY = _aoMaxY;
-				_setpos = true;
-			};
-			if ( _camY < _aoMinY ) then {
-				_camY = _aoMinY;
-				_setpos = true;
-			};
-			if _setpos then {
-				ace_spectator_camera setPosATL [_camX,_camY,_camZ];
-			};
-			///////////////////
 			
 			/// SOUND CONTROL
 			_allunits = [RTS_commandingGroups, { units _x }] call CBA_fnc_filter;

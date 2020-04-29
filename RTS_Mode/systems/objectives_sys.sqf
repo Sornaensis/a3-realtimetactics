@@ -31,7 +31,7 @@ objectiveInitialColor = {
 objectiveDescription = {
 	params ["_type"];
 	
-	private _desc = [];
+	private _desc = "";
 	
 	switch ( _type )  do {
 		case "occupy": {
@@ -50,6 +50,8 @@ objectiveDescription = {
 			_desc = "Remove all enemy presence from the location.";
 		};
 	};
+	
+	_desc
 };
 
 RTS_missionFinished = false;
@@ -115,7 +117,7 @@ _j = 1;
 while { _i < 10 } do {	
 	while { _j < 20 } do {	
 		{
-			private _mark = format ["%1_%2_objective_%2_%3", _side, _x, _i, _j];
+			private _mark = format ["%1_%2_objective_%3_%4", _side, _x, _i, _j];
 			(getMarkerSize _mark) params ["_mx", "_my"];
 			if ( _mx + _my != 0 ) then {
 				_mark setMarkerAlphaLocal 0;	
@@ -161,7 +163,7 @@ _j = 1;
 while { _i < 10 } do {	
 	while { _j < 20 } do {	
 		{
-			private _mark = format ["%1_%2_objective_%2_%3", _side, _x, _i, _j];
+			private _mark = format ["%1_%2_objective_%3_%4", _side, _x, _i, _j];
 			(getMarkerSize _mark) params ["_mx", "_my"];
 			if ( _mx + _my != 0 ) then {
 				_mark setMarkerAlphaLocal 0;	

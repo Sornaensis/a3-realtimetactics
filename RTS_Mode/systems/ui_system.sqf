@@ -467,8 +467,5 @@ RTS_OOBSelector = {
 		if ( RTS_showingOOB ) then {
 			call RTS_OOBSelector;
 		};
-		
-		
-		sleep 0.3;
 	};
 };

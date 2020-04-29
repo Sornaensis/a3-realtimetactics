@@ -392,15 +392,17 @@ RTS_groupMon = {
 			_commanderinfo = _commanderinfo + (format ["<br/><t align='left'>Opfor Strength:</t><t align='right'>%1</t>", count _opforUnits ]);
 			if ( !(isNull RTS_selectedGroup) ) then {
 				
-				private _unitStatus = "<br/>";
+				private _unitStatus = format ["%1<br/>", _group getVariable ["spotted",[]] ];
 				
 				{
+					private _target = _x getVariable ["assigned_target", objnull];
+					if ( _target isEqualTo objnull ) then {
+						_target = "No Target";
+					};
 					_unitStatus = format ["%1<t align='left'>%2</t><br/><t align='right'>%3</t><br/>", _unitStatus, _x, [ 
-																													 (if ( unitReady _x ) then { "READY" } else { "NOT READY" }),
-																													 (if ( moveToCompleted _x ) then { "COMPLETE" } else { "NOT COMPLETE" }),
-																													 (if ( moveToFailed _x ) then { "FAILED" } else { "NOT FAILED" }),
 																													 (getDammage _x) toFixed 2,
-																													 (_x getVariable ["SoftFactor", 0]) toFixed 3
+																													 (_x getVariable ["SoftFactor", 0]) toFixed 3,
+																													 _target
 																													]];
 				} forEach (units RTS_selectedGroup);
 				

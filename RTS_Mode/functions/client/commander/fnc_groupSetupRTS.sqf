@@ -44,6 +44,8 @@ _group enableAttack false;
 	_x allowFleeing 0;
 	_x disableAi "FSM";
 	_x disableAi "AUTOCOMBAT";
+	// disable suppression for performance saving
+	_x disableAi "SUPPRESSION";
 	addSwitchableUnit _x;
 	_x setUnitPos "AUTO";
 	_x setSpeedMOde "AUTO";
@@ -170,10 +172,9 @@ if !(isNil "_veh") then {
 			};
 		} else {
 			_group setCombatMode "RED";
-			_group setBehaviour "COMBAT";
 			{
 				if ( random 2 > 0.85 ) then {
-					_x suppressFor ( 5 + random 12 );
+					_x suppressFor ( 5 + random 5 );
 				};
 			} forEach (units _group);
 		};
@@ -186,9 +187,11 @@ if !(isNil "_veh") then {
 			private _side = _unit getVariable ["HandleDamageSide", side _unit];
 			
 			if ( side _instigator != _side && !(_source isEqualTo "") ) then {	
-				_group setCombatMode "RED";
+				if ( ( (getPos _instigator) distance (getPos _unit) ) < 175 ) then {
+					_group setCombatMode "RED";
+				};
 				{
-					if ( random 2 > 0.25 ) then {
+					if ( random 2 > 0.4 ) then {
 						_x doSuppressiveFire _source;
 					};
 				} forEach (units _group);
