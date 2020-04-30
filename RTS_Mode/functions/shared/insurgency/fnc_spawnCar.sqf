@@ -1,15 +1,14 @@
 params ["_pos"];
 
 
-_soldier = (createGroup east) createUnit [INS_soldierClasses call BIS_fnc_selectRandom, _pos, [], 0, "NONE"];
-_soldier setUnitLoadout (INS_soldierLoadouts call BIS_fnc_selectRandom);
+private _soldier = [_pos] call INS_fnc_spawnRandomSoldier;
 
-_grp = group _soldier;
-_type = (INS_carClasses call BIS_fnc_selectRandom);
-_carpos = (_pos findEmptyPosition [0,50,_type]);
-_car = _type createVehicle _carpos;
+private _type = (INS_carClasses call BIS_fnc_selectRandom);
+private _carpos = (_pos findEmptyPosition [0,50,_type]);
+private _car = _type createVehicle _carpos;
 _car setVectorUp (surfaceNormal _carpos);
 
+private _grp = group _soldier;
 [units _grp] allowGetIn true;
 _soldier assignAsDriver _car;
 _soldier moveInDriver _car;

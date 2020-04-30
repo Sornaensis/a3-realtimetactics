@@ -8,22 +8,45 @@ RTS_revealSpotted = {
 		private _spots = _x;
 		{
 			_x hideObject false;
+			(vehicle _x) hideObject false;
 			_opfor = _opfor - [_x];
 		} forEach _spots;
 	} forEach (RTS_commandingGroups apply { _x getVariable ["spotted",[]] });
 	
 	{
+		(vehicle _x) hideObject true;
 		_x hideObject true;
 	} forEach _opfor;
+	
+	_opfor_vehicles = [];
+	{
+		if ( count ((crew _x) select { alive _x } ) == 0 ) then {
+			_x hideObject false;
+		} else {
+			_opfor_vehicles pushback _x;
+		};
+	} forEach RTS_opfor_vehicles;
+	RTS_opfor_vehicles = _opfor_vehicles;
+	_greenfor_vehicles = [];
+	{
+		if ( count ((crew _x) select { alive _x } ) == 0 ) then {
+			_x hideObject false;
+		} else {
+			_greenfor_vehicles pushback _x;
+		};
+	} forEach RTS_greenfor_vehicles;
+	RTS_greenfor_vehicles = _greenfor_vehicles; 
+	
 };
 
 // OPFOR check if they are spotted
 RTS_spottingLoop = [] spawn { 
 	while {true} do {
 		if ( RTS_commanding && !RTS_godseye ) then {
-			private _spotters = allUnits select { (group _x) in RTS_commandingGroups };
+			private _enemies = allUnits select { side _x == RTS_sideEnemy || side _x == RTS_sideGreen };
 			{
 				private _group = _x;
+				private _units = units _group;
 				{
 					private _enemy = _x;
 					if ( ((vehicle _enemy) != _enemy) ) then {
@@ -36,29 +59,13 @@ RTS_spottingLoop = [] spawn {
 						};
 					};
 		
-					(vehicle _enemy) setVariable ["spottedbyselectedgroup", grpnull];
-					[_enemy, _spotters select { ((getPos _x) distance (getPos _enemy)) < 2000 && !(terrainIntersect [eyePos _x, eyePos _enemy]) }] call RTS_fnc_spotting;
-				} forEach (units _group);
-	
-			} forEach ( allGroups select { (side _x == RTS_sideEnemy) || (side _x == RTS_sideGreen) } );
-			_opfor_vehicles = [];
-			{
-				if ( count ((crew _x) select { alive _x } ) == 0 ) then {
-					_x hideObject false;
-				} else {
-					_opfor_vehicles pushback _x;
-				};
-			} forEach RTS_opfor_vehicles;
-			RTS_opfor_vehicles = _opfor_vehicles;
-			_greenfor_vehicles = [];
-			{
-				if ( count ((crew _x) select { alive _x } ) == 0 ) then {
-					_x hideObject false;
-				} else {
-					_greenfor_vehicles pushback _x;
-				};
-			} forEach RTS_greenfor_vehicles;
-			RTS_greenfor_vehicles = _greenfor_vehicles; 
+					private _near = _units select { ((getPos _x) distance (getPos _enemy)) < 2000 && !(terrainIntersect [eyePos _x, eyePos _enemy]) };
+					if ( count _near > 0 ) then {
+						(vehicle _enemy) setVariable ["spottedbyselectedgroup", grpnull];
+						[_enemy, _near] call RTS_fnc_spotting;
+					};
+				} forEach _enemies;
+			} forEach RTS_commandingGroups;
 		} else {
 			{
 				(vehicle _x) hideObject false;
@@ -123,10 +130,6 @@ RTS_fnc_spotting = {
 						}
 					}
 				} ); 
-			
-			if ( _infrontOf && !_terrainBlocked && _distance < _spotDistMax && _visibility > _spottingThreshold ) then {
-				(group _x) reveal [_enemy, ( _knowsAbout + 0.1 ) max 4 ];
-			};
 			
 			private _weSpotted = false;
 			

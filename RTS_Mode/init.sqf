@@ -76,7 +76,6 @@ RTS_setupUnit = {
 	_unit removeAllEventHandlers "HandleDamage";
 	_unit removeAllEventHandlers "Hit";
 	_unit removeAllEventHandlers "HitPart";
-	_group setVariable ["VCM_SkillDisable",true];
 };
 
 [] call (compile preprocessFileLineNumbers "rts\functions\shared\setup.sqf");

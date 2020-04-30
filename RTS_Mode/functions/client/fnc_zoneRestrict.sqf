@@ -1,8 +1,10 @@
 params ["_minx","_miny","_maxx","_maxy","_mark"];
 
+if ( _minx == _maxx || _miny == _maxy ) exitWith {};
+
 (getPosATL player) params ["_px","_py","_pz"];
 
-_set = false;
+private _set = false;
 
 if ( _px > _maxx ) then {
 	_px = _maxx;
@@ -21,6 +23,6 @@ if ( _py < _miny ) then {
 	_set = true;
 };
 
-if _set then {
+if ( _set ) then {
 	player setPosATL [_px,_py,_pz];
 };

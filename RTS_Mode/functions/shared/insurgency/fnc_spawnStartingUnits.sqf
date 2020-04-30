@@ -28,11 +28,23 @@ for "_i" from 1 to _carcount do {
 // Spawn Units
 
 _squadcount = floor (random [INS_squadMin, INS_squadMid, INS_squadMax]);
+_mgcount = floor (random [INS_mgMin, INS_mgMid, INS_mgMax]);
+_snipercount = floor (random [INS_sniperMin, INS_sniperMid, INS_sniperMax]);
 _spycount = floor (random [INS_spyMin, INS_spyMid, INS_spyMax]);
 
 for "_i" from 1 to _squadcount do {
 	private _pos = (getPosATL (_buildings1 call BIS_fnc_selectRandom)) findEmptyPosition [0,50,"MAN"];
-	[_pos] call INS_fnc_spawnLeader;
+	[_pos] call INS_fnc_spawnSquad;
+};
+
+for "_i" from 1 to _mgcount do {
+	private _pos = (getPosATL (_buildings1 call BIS_fnc_selectRandom)) findEmptyPosition [0,50,"MAN"];
+	[_pos] call INS_fnc_spawnMG;
+};
+
+for "_i" from 1 to _snipercount do {
+	private _pos = (getPosATL (_buildings1 call BIS_fnc_selectRandom)) findEmptyPosition [0,50,"MAN"];
+	[_pos] call INS_fnc_spawnMG;
 };
 
 for "_i" from 1 to _spycount do {

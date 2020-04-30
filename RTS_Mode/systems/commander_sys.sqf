@@ -20,7 +20,7 @@ RTS_aoRestriction =
 	{
 		if ( RTS_commanding ) then {
 		
-			if ( !((getMarkerPos RTS_aoMarker) isEqualTo [0,0,0]) ) then {
+			if ( !((getMarkerSize RTS_aoMarker) isEqualTo [0,0]) ) then {
 				(getMarkerPos RTS_aoMarker) params ["_aoX","_aoY"];
 				(getMarkerSize RTS_aoMarker) params ["_width","_height"];
 				private _aoMaxX = _aoX + _width;

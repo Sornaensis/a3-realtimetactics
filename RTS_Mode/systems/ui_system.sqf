@@ -26,6 +26,9 @@ if ( isNil "RTS_missionTimeElapsedSoFar" ) then {
 	if ( isNil "RTS_missionTimeStarted" && RTS_missionTimeElapsedSoFar == 0 ) then {
 		waitUntil { RTS_phase == "MAIN" };
 		RTS_missionTimeStarted = time;
+		{
+			_x setMarkerAlphaLocal 0;
+		} forEach RTS_deploymentMarks;
 	};
 };
 
@@ -396,7 +399,7 @@ RTS_OOBSelector = {
 			private _ammo = [RTS_selectedGroup] call RTS_fnc_getAmmoLevel;
 			private _initialAmmo = RTS_selectedGroup getVariable ["initial_ammo", 1];
 			
-			private _ammolevel = round (((_ammo / _initialammo) min 1.0) * 100);
+			private _ammolevel = round ((_ammo / (_initialammo max 1.0)) * 100);
 			
 			RTS_ammoLevelText ctrlSetText (format ["%1%2", _ammolevel, "%"]);
 			

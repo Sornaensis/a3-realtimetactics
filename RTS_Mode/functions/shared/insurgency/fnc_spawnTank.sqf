@@ -1,21 +1,16 @@
 params ["_pos"];
 
 
-_soldier = (createGroup east) createUnit [INS_soldierClasses call BIS_fnc_selectRandom, _pos, [], 0, "NONE"];
-_soldier setUnitLoadout (INS_soldierLoadouts call BIS_fnc_selectRandom);
-
-_grp = group _soldier;
-_cmdr = _grp createUnit [INS_soldierClasses call BIS_fnc_selectRandom, _pos, [], 0, "NONE"];
-_cmdr setUnitLoadout (INS_soldierLoadouts call BIS_fnc_selectRandom);
-
-_gunner = _grp createUnit [INS_soldierClasses call BIS_fnc_selectRandom, _pos, [], 0, "NONE"];
-_gunner setUnitLoadout (INS_soldierLoadouts call BIS_fnc_selectRandom);
+_soldier = [_pos] call INS_fnc_spawnRandomSoldier;
+_gunner = [_pos,group _soldier] call INS_fnc_spawnRandomSoldier;
+_cmdr = [_pos,group _soldier] call INS_fnc_spawnRandomSoldier;
 
 _type = (INS_tankClasses call BIS_fnc_selectRandom);
 _carpos = (_pos findEmptyPosition [0,20,_type]);
 _car = _type createVehicle _carpos;
 _car setVectorUp (surfaceNormal _carpos);
 
+_grp = group _soldier;
 [units _grp] allowGetIn true;
 _soldier assignAsDriver _car;
 _soldier moveInDriver _car;
