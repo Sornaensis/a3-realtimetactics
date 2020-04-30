@@ -53,7 +53,9 @@ if (_button == 0 && {!isNull GVAR(cursorObject)} && !_shift && !_alt  && (isNil 
 				private _restricted = false;
 				
 				{
-					_restricted = _restricted || (_pos inArea _x);
+					if (_pos inArea _x) then {
+						_restricted = true;
+					};
 				} forEach RTS_restrictionZone;
 				
 				if ( !((getMarkerSize RTS_aoMarker) isEqualTo [0,0]) ) then {					

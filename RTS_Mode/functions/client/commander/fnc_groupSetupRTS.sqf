@@ -198,8 +198,3 @@ if !(isNil "_veh") then {
 			};
 	}];
 } forEach (units _group);
-
-
-if RTS_SingleCommander then {
-	_group setVariable ["RTS_setup", [], false];
-};

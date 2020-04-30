@@ -26,9 +26,6 @@ if ( isNil "RTS_missionTimeElapsedSoFar" ) then {
 	if ( isNil "RTS_missionTimeStarted" && RTS_missionTimeElapsedSoFar == 0 ) then {
 		waitUntil { RTS_phase == "MAIN" };
 		RTS_missionTimeStarted = time;
-		{
-			_x setMarkerAlphaLocal 0;
-		} forEach RTS_deploymentMarks;
 	};
 };
 

@@ -11,7 +11,10 @@ INS_cacheMarker1 = [format ["__cache___%1-%2", text _cachecity,time], [position 
 private _buildings1 = (nearestObjects [ position _cachecity, ["House"], 3000] select { ( count ([_x] call BIS_fnc_buildingPositions)) > 0 }) select { !((position _x) inArea "opfor_restriction") };
 private _buildingPos = ([_buildings1 call BIS_fnc_selectRandom] call BIS_fnc_buildingPositions) call BIS_fnc_selectRandom;
 INS_cache1 = "CUP_GuerillaCacheBox" createVehicle [0,0,0];
-INS_cache1 setPosATL _buildingPos;
+INS_cache1 setPos _buildingPos;
+INS_cacheBuildings = _buildings1;
+INS_currentCache = INS_cache1;
+
 
 // CACHE 2
 private _cities = (nearestLocations [ getMarkerPos "map_center", ["NameCityCapital","NameCity","NameVillage"], 13000]) select { !((position _x) inArea "opfor_restriction") };
@@ -26,7 +29,9 @@ INS_cacheMarker2 setMarkerAlpha 0;
 private _buildings = (nearestObjects [ position _cachecity, ["House"], 3000] select { ( count ([_x] call BIS_fnc_buildingPositions)) > 0 }) select { !((position _x) inArea "opfor_restriction") };
 private _buildingPos = ([_buildings call BIS_fnc_selectRandom] call BIS_fnc_buildingPositions) call BIS_fnc_selectRandom;
 INS_cache2 = "CUP_GuerillaCacheBox" createVehicle [0,0,0];
-INS_cache2 setPosATL _buildingPos;
+INS_cache2 setPos _buildingPos;
+
+INS_cacheBuildings2 = _buildings;
 
 INS_cache1 addEventHandler [ "killed", 
 { 
@@ -56,6 +61,8 @@ INS_cache2 addEventHandler [ "killed",
 { 
 	INS_caches = INS_caches - 1; 
 	publicVariable "INS_caches";
+	INS_cacheBuildings = INS_cacheBuildings2;
+	INS_currentCache = INS_cache2;
 }];
 
 private _camPos = [getPos INS_cache1,200] call CBA_fnc_randPos;
@@ -67,7 +74,7 @@ while { (_camPos distance (getPos INS_cache1)) < 100 } do {
 RTS_camTarget setMarkerPos (getPos INS_cache1);
 RTS_camStart setMarkerPos _camPos;
 
-private _commandbuildings = _buildings1 select { ((position _x) distance (position INS_cache1)) > 100 };
+private _commandbuildings = INS_cacheBuildings select { ((position _x) distance (position INS_cache1)) > 100 };
 
 opforCommander setPosATL ( ([_commandbuildings call BIS_fnc_selectRandom] call BIS_fnc_buildingPositions) call BIS_fnc_selectRandom );
 

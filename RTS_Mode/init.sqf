@@ -142,7 +142,7 @@ if ( side player == west ) then {
 	};
 };
 
-RTS_canPause = if ( isServer ) then { true } else { false };
+RTS_canPause = if ( isServer && !isMultiplayer ) then { true } else { false };
 RTS_casualtyColor = [0.8,0.8,0,1];
 RTS_brokenColor = [0.3,0.3,0.3,0.8];
 RTS_commandAction = -1;
@@ -301,6 +301,16 @@ RTS_commandObject addAction ["Begin Commanding",
 	{
 		if ( scriptDone RTS_ui ) then {
 			RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
+		};
+		
+		if ( RTS_skipDeployment ) then {
+			RTS_phase = "MAIN";
+			{
+				_x setMarkerAlpha 0;
+			} forEach RTS_deploymentMarks;
+			{
+				_x setVariable ["status","WAITING"];
+			} forEach RTS_commandingGroups;
 		};
 		
 		RTS_commanderUnit = player;

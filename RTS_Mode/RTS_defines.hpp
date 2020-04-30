@@ -32,3 +32,7 @@
 #ifndef RTS_enemySkillModifier
 	#define RTS_enemySkillModifier 0
 #endif
+
+#ifndef RTS_skipDeployment
+	#define RTS_skipDeployment false
+#endif
