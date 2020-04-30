@@ -36,11 +36,12 @@
 					(group _unit) setSpeedMode _speed;
 					(group _unit) setBehaviour _behaviour;
 					private _future = time + 15;
-					waitUntil { (_group getVariable ["waypoint_canceled", false]) || speed (vehicle _unit) > 0 || (time > _future && !RTS_paused) };
+					waitUntil { (_group getVariable ["waypoint_canceled", false]) || speed (vehicle _unit) > 0 || (time > _future && !RTS_paused) || ([_unit, _pos] call CBA_fnc_getDistance) < 9 || !(alive _unit) };
 					sleep 3;
 					waitUntil { (_group getVariable ["waypoint_canceled", false]) || (speed (vehicle _unit) == 0 && !RTS_paused) || ([_unit, _pos] call CBA_fnc_getDistance) < 9 || !(alive _unit) };
 					if ( ([_unit, _pos] call CBA_fnc_getDistance) < 9 || (_group getVariable ["waypoint_canceled", false]) ) then {
 						_complete = true;
+						_unit doMove (getPos _unit);
 					};
 					_commands = (group _unit) getVariable ["commands", []];
 				};
