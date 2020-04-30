@@ -154,6 +154,9 @@ RTS_initialVehicles = 0;
 RTS_casualties = 0;
 
 // Start in the deployment phase
+if ( isNil "RTS_restrictionZone" ) then {
+	RTS_restrictionZone = [];
+};
 RTS_phase = "DEPLOY";
 RTS_selecting = false;
 RTS_selectStart = [];
