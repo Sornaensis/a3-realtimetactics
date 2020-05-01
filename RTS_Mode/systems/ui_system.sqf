@@ -31,7 +31,7 @@ if ( isNil "RTS_missionTimeElapsedSoFar" ) then {
 
 RTS_targetPhase = RTS_phase;
 [] spawn {
-	while { RTS_commanding } do {
+	while { RTS_commanding && !RTS_skipDeployment } do {
 		if ( RTS_phase == "MAIN" && RTS_paused && !(isNil "RTS_missionTimeStarted") ) then {
 			RTS_missionTimeElapsedSoFar = RTS_missionTimeElapsedSoFar + time - RTS_missionTimeStarted;
 			RTS_missionTimeStarted = nil;

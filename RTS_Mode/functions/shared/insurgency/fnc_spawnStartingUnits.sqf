@@ -1,6 +1,18 @@
 params ["_locpos"];
-// Spawn tank, apc, car
-_buildings1 = nearestObjects [ _locpos, ["House"], 1100] select { ( count ([_x] call BIS_fnc_buildingPositions)) > 0 };
+
+private _buildings1 = [];
+if ( !isNil "_locpos" ) then {
+	_buildings1 = nearestObjects [ _locpos, ["House"], 1100] select { ( count ([_x] call BIS_fnc_buildingPositions)) > 0 };
+} else {
+	{
+		private _loc = _x;
+		_loc params ["_name","_marker"];
+		(getMarkerSize _marker) params ["_mx","_my"];
+		{
+			_buildings1 pushbackUnique _x;
+		} forEach (nearestObjects [ getMarkerPos _marker, ["House"], _mx max _my] select { ((position _x) inArea _marker) && ( count ([_x] call BIS_fnc_buildingPositions)) > 0 });
+	} forEach (INS_controlAreas select { ((_x select 2) select 0) < -24 });
+};
 
 _tankcount = floor (random [INS_tankMin, INS_tankMid, INS_tankMax]);
 _apccount = floor (random [INS_apcMin, INS_apcMid, INS_apcMax]);

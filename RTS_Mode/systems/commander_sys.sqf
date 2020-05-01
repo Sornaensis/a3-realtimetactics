@@ -53,6 +53,17 @@ RTS_aoRestriction =
 				///////////////////
 			};
 			
+			{
+				private _marker = _x;
+				private _pos = getMarkerPos _marker;
+				while { (getPos ace_spectator_camera ) inArea _marker } do {
+					private _campos = (getPos ace_spectator_camera);
+					private _normal = vectorNormalized (_pos vectorFromTo _campos);
+					ace_spectator_camera setPos (_campos vectorAdd _normal);
+				};
+			} forEach RTS_restrictionZone;
+			
+			
 			/// SOUND CONTROL
 			_allunits = [RTS_commandingGroups, { units _x }] call CBA_fnc_filter;
 			_allunits2 = [];
