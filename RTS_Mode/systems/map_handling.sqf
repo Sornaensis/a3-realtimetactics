@@ -20,17 +20,13 @@
 				};
 			};
 			
-			[-1, 
-			{
-				params ["_group", "_icon", "_color"	];
-				clearGroupIcons _group;
-				if ( _icon != "" && (side (leader _group)) == (side player) ) then {
-					_group addGroupIcon [ _icon, [0,0] ];
-					_group setGroupIconParams [ _color, "", 1, true ];
-				};
-			}, [_group, _icon, _color] ] call CBA_fnc_globalExecute;
+			clearGroupIcons _group;
+			_group addGroupIcon [ _icon, [0,0] ];
+			_group setGroupIconParams [ _color, "", 1, true ];
+			if ( _group == RTS_selectedGroup ) then {
+				_group addGroupIcon ["Empty", [-1,-1]];
+				_group setGroupIconParams [ [0,1,0,1], _group getVariable ["desc","Unknown"], 1, true ];
+			};
 		} forEach allGroups;
-		
-		sleep 2;
 	};
 };

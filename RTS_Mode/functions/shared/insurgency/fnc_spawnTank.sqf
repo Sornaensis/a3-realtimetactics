@@ -1,7 +1,14 @@
-params ["_pos"];
+params ["_pos","_side"];
 
+private _nosetup = false;
 
-_soldier = [_pos] call INS_fnc_spawnRandomSoldier;
+if ( isNil "_side" ) then {
+	_side = east;
+} else {
+	_nosetup = true;
+};
+
+_soldier = [_pos,nil,_side] call INS_fnc_spawnRandomSoldier;
 _gunner = [_pos,group _soldier] call INS_fnc_spawnRandomSoldier;
 _cmdr = [_pos,group _soldier] call INS_fnc_spawnRandomSoldier;
 
@@ -21,4 +28,8 @@ _cmdr moveInCommander _car;
 _gunner assignAsGunner _car;
 _gunner moveInGunner _car;
 
-_grp setVariable ["RTS_setup", [_grp, getText (configFile >> "CfgVehicles" >> _type >> "displayName"), grpnull, "\A3\ui_f\data\map\markers\nato\o_armor.paa", "o_armor"],true];
+if ( !_nosetup ) then {
+	_grp setVariable ["RTS_setup", [_grp, getText (configFile >> "CfgVehicles" >> _type >> "displayName"), grpnull, "\A3\ui_f\data\map\markers\nato\o_armor.paa", "o_armor"],true];
+};
+
+_soldier

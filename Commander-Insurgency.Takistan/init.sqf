@@ -39,6 +39,7 @@ if ( !isNil "opforCommander" || isServer ) then {
 								 	titleText [ format ["Travelling to %1...", _c], "PLAIN"];
 								 	private _pos = (getPos _f) findEmptyPosition [2,25,"MAN"];
 								 	player setPosATL _pos;
+								 	player setDir ((getPos player) getDir (getPos _f));
 								 },_dest,1.5,true,true,"","true",5,false,"",""];
 			} forEach (_flags select { (_x select 0) != _flag });
 			
@@ -50,6 +51,7 @@ if ( !isNil "opforCommander" || isServer ) then {
 	INS_tankClasses = [];
 	INS_apcClasses = [];
 	INS_squadSetups = [];
+	INS_greenforSquadSetups = [];
 	INS_mgSetups = [];
 	INS_sniperSetups = [];
 	INS_spySetups = [];
@@ -176,16 +178,19 @@ if ( isServer && isNil "INS_caches" ) then {
 			sleep 2;
 		};
 	};
+	
+	// Serverside AI controller
+	[] spawn (compile preprocessFileLineNumbers "rts\systems\insurgency\ai_controller.sqf");
 };
 
 if ( isDedicated || !hasInterface ) exitWith {};
 
+{
+	_x setMarkerColorLocal "ColorBlue";
+} forEach RTS_restrictionZone;
+
 // Setup Blufor Player
 if ( side player == west ) then {
-	
-	{
-		_x setMarkerColorLocal "ColorBlue";
-	} forEach RTS_restrictionZone;
 	
 	[] spawn {
 		waitUntil { !isNil "INS_spies" };
@@ -198,7 +203,6 @@ if ( side player == west ) then {
 					_x hideObject false;
 				};
 			} forEach INS_spies;
-			sleep 0.01;
 		};		
 	};
 
