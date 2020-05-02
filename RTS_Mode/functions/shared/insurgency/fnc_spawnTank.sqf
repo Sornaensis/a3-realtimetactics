@@ -8,6 +8,16 @@ if ( isNil "_side" ) then {
 	_nosetup = true;
 };
 
+private _radius = 50;
+while { !(isOnRoad _pos) } do {
+	private _roads = _pos nearRoads 500;
+	if ( count _roads > 0 ) then {
+		_pos = (getPos (selectRandom _roads));
+	} else {
+		_radius = _radius + 50;
+	};
+};
+
 _soldier = [_pos,nil,_side] call INS_fnc_spawnRandomSoldier;
 _gunner = [_pos,group _soldier] call INS_fnc_spawnRandomSoldier;
 _cmdr = [_pos,group _soldier] call INS_fnc_spawnRandomSoldier;

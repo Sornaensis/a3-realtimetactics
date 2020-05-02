@@ -31,9 +31,9 @@ INS_controlAreas = []; // format:
 						 */
 
 private _areas = count INS_areaMarkers;
-private _greenforLight = floor (_areas * 0.5);
-private _greenforHeavy = floor (_areas * 0.1);
-private _opforLight = floor (_areas * 0.3);
+private _greenforLight = floor (_areas * 0.2);
+private _greenforHeavy = floor (_areas * 0.5);
+private _opforLight = floor (_areas * 0.2);
 private _opforHeavy = floor (_areas * 0.1);
 
 private _leftover = _areas - (_greenforLight + _greenforHeavy + _opforLight + _opforHeavy);
@@ -111,10 +111,10 @@ INS_fastTravelFlags = [];
 	private _area = getMarkerPos _marker;
 	(getMarkerSize _marker) params ["_mx","_my"];
 	private _buildings = (_area nearObjects [ "HOUSE", _mx max _my ]) select { (position _x) inArea _marker };
-	private _pos = (getPos (selectRandom _buildings)) findEmptyPosition [ 5, 30, "lop_Flag_isis_F"];
+	private _pos = (getPos (selectRandom _buildings)) findEmptyPosition [ 5, 40, "lop_Flag_isis_F"];
 	
-	while { count (_pos nearRoads 20) > 0 && !(_pos isEqualTo []) } do {
-		_pos = (getPos (selectRandom _buildings)) findEmptyPosition [ 5, 30, "lop_Flag_isis_F"]
+	while { isOnRoad _pos || (_pos isEqualTo []) || (_pos isEqualTo [0,0,0]) } do {
+		_pos = (getPos (selectRandom _buildings)) findEmptyPosition [ 5, 40, "lop_Flag_isis_F"]
 	};
 	
 	private _flag = "lop_Flag_isis_F" createVehicle _pos;

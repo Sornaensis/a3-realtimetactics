@@ -8,11 +8,21 @@ if ( isNil "_side" ) then {
 	_nosetup = true;
 };
 
+private _radius = 50;
+while { !(isOnRoad _pos) } do {
+	private _roads = _pos nearRoads 500;
+	if ( count _roads > 0 ) then {
+		_pos = (getPos (selectRandom _roads));
+	} else {
+		_radius = _radius + 50;
+	};
+};
+
 _soldier = [_pos,nil,_side] call INS_fnc_spawnRandomSoldier;
 _gunner = [_pos,group _soldier] call INS_fnc_spawnRandomSoldier;
 
 _type = (INS_apcClasses call BIS_fnc_selectRandom);
-_carpos = (_pos findEmptyPosition [0,20,_type]);
+_carpos = (_pos findEmptyPosition [0,50,_type]);
 _car = _type createVehicle _carpos;
 _car setVectorUp (surfaceNormal _carpos);
 

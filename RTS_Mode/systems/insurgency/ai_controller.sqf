@@ -2,7 +2,7 @@ setupAsGarrison = {
 	params ["_group", "_pos", "_radius","_city"];
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["ai_status", "GARRISON"];
-	_group setVariable ["ai_ciy", _city];
+	_group setVariable ["ai_city", _city];
 	[_group, _pos, _radius, 2, 0.7, 0 ] call CBA_fnc_taskDefend;
 };
 
@@ -10,7 +10,7 @@ setupAsPatrol = {
 	params ["_group", "_pos", "_radius","_city"];
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["ai_status", "PATROL"];
-	_group setVariable ["ai_ciy", _city];
+	_group setVariable ["ai_city", _city];
 	[_group, _pos, _radius, 7, "MOVE", "SAFE", "RED", "NORMAL"] call CBA_fnc_taskPatrol;
 };
 
@@ -18,7 +18,7 @@ doCounterAttack = {
 	params ["_group", "_pos", "_radius","_city"];
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["ai_status", "COUNTER-ATTACK"];
-	_group setVariable ["ai_ciy", _city];
+	_group setVariable ["ai_city", _city];
 	if ( vehicle (leader _group) != leader _group ) then {
 		[_group, _pos, _radius, 7, "MOVE", "COMBAT", "RED", "FULL"] call CBA_fnc_taskPatrol;
 	} else {
@@ -37,31 +37,29 @@ getNearestControlZone = {
 		};
 	} forEach RTS_restrictionZone;
 	
-	if ( _inrestricted ) exitWith { nil };
-	
+	if ( _inrestricted ) exitWith {  };
 	
 	private _marker = [_pos, INS_controlAreas apply { _x select 1 }] call CBA_fnc_getNearest;
 	
-	private _location = (INS_controlAreas select { _x select 1 == _nearest });
+	private _location = (INS_controlAreas select { (_x select 1) == _marker });
 	
-	_location select 0
+	(_location select 0) select 0
 };
 
 INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 	{
 		private _humanPlayers = call INS_allPlayers;
-		// Spawn AI due to blufor player activity
 		{
 			private _unit = _x;
-			if ( !isPlayer _unit && !((_unit getVariable ["rts_setup",objnull]) isEqualTo objnull) ) then {
+			if ( !isPlayer _unit && ((_unit getVariable ["rts_setup",objnull]) isEqualTo objnull) ) then {
 			
 				private _canBeSeen = false;
-				private _unitPos = eyePos _unit;
+				private _unitPos = _unit;
 				
 				{
-					private _playerPos = eyePos _x;
-					if ( (_unitPos distance _playerPos) > 1200 ) then {
-						if ( ([vehicle _x, vehicle _unit] call BIS_fnc_isInFrontOf) && !(terrainIntersect [_playerPos,_unitPos]) ) then {
+					private _playerPos = getPos _x;
+					if ( (_unitPos distance _playerPos) > 1500 ) then {
+						if ( ([vehicle _x, vehicle _unit] call BIS_fnc_isInFrontOf) && !(terrainIntersect [eyePos _x,eyePos _unit]) ) then {
 							_canBeSeen = true;		
 						};
 					} else {
@@ -69,17 +67,54 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 					};
 				} forEach _humanPlayers;
 				
-				if ( !_canBeSeen ) then {
+				if ( !_canBeSeen ) then {		
+					deleteVehicle (vehicle _unit);
 					deleteVehicle _unit;
 				};
 				
 			};
-		} forEach allUnits;
+		} forEach allUnits + allDeadMen;
+		
+		{
+			private _veh = _x;
+			private _vehpos = getPos _x;
+			if ( _veh getVariable ["spawned_vehicle", false] ) then {
+				private _canBeSeen = false;
+				
+				{
+					private _playerPos = getPos _x;
+					if ( (_vehpos distance _playerPos) > 1500 ) then {
+						if ( ([_veh, vehicle _x] call BIS_fnc_isInFrontOf) && !(terrainIntersect [eyePos _x,_vehpos]) ) then {
+							_canBeSeen = true;		
+						};
+					} else {
+						_canBeSeen = true;
+					};
+				} forEach _humanPlayers;
+				
+				if ( !_canBeSeen ) then {		
+					deleteVehicle _veh;
+				};
+			};
+		} forEach vehicles + allDead;
+		
+		// infinite fuel
+		{
+			private _veh = _x;
+			if ( (_veh getVariable ["spawned_vehicle", false]) || side (driver _veh) != west ) then {
+				_veh setFuel 1;
+			};
+		} forEach vehicles;
 	}];
 
 
 INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 	{
+		hintSilent format ["Opfor Groups: %1\nBlufor Groups: %2\nGreenfor Groups: %3\nZone Disposition %4", 
+					count (allGroups select { !( (_x getVariable ["ai_city",objnull]) isEqualTo objnull) && side _x == east }),
+					count (allGroups select { !( (_x getVariable ["ai_city",objnull]) isEqualTo objnull) && side _x == west }),
+					count (allGroups select { !( (_x getVariable ["ai_city",objnull]) isEqualTo objnull) && side _x == resistance }),
+					(if ( !((player getVariable ["insurgency_zone",objnull]) isEqualTo objnull) ) then { [player getVariable ["insurgency_zone",objnull]] call INS_zoneDisposition } else { "N/A" })];
 		private _humanPlayers = call INS_allPlayers;
 		// Spawn AI due to blufor player activity
 		if ( (call getSpawnedSoldierCount) < INS_spawnedUnitCap ) then {
@@ -96,10 +131,12 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 					
 					if ( !isNil "_zone" ) then {
 						if ( [_zone] call INS_canZoneSpawnAndUpdate ) then {
-							if ( ([_zone] call getZoneDensity) < INS_populationDensity ) then {
+							if ( ([_zone] call INS_getZoneDensity) < INS_populationDensity ) then {
 								private _soldier = [_pos,_zone] call INS_spawnUnits;
-								private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsPatrol,0.65];
-								[(group _soldier), [(getPos _soldier), 75] call CBA_fnc_randPos, 400, _zone] call _task;
+								if ( !isNull _soldier ) then {
+									private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsPatrol,0.65];
+									[(group _soldier), [(getPos _soldier), 75] call CBA_fnc_randPos, 400, _zone] call _task;
+								};
 							};
 						};
 					};

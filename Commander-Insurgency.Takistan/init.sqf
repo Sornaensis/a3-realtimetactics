@@ -15,11 +15,9 @@ waitUntil { scriptDone _rtsinit };
 
 private _runsetup = false;
 
-if ( !isNil "opforCommander" ) then {
+if ( !isNil "opforCommander" || isServer ) then {
 	if ( !isDedicated ) then {
-		if ( player == opforCommander ) then {
-			_runsetup = true;
-		};
+		_runsetup = true;
 	};
 };
 
@@ -217,7 +215,7 @@ if ( side player == west ) then {
 		while { true } do {
 			{
 				private _nearhouses = _x nearObjects ["House", 150];
-				if ( ((getPos _x) distance (getPos _player)) > 350 && (count _nearhouses) > 4 ) then {
+				if ( ((getPos _x) distance (getPos player)) > 350 && (count _nearhouses) > 4 ) then {
 					_x hideObject true;
 				} else {
 					_x hideObject false;
