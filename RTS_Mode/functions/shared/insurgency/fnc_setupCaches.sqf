@@ -133,20 +133,25 @@ INS_fastTravelFlags = [];
 publicVariable "INS_fastTravelFlags";
 publicVariable "INS_controlAreas";
 
-[-2, { 
+[-1, { 
+		if ( isNil "opforCommander" ) exitWith {};
 		if ( player == opforCommander ) then {
 			[] spawn INS_setupFastTravel;
 		};
 	 }] call CBA_fnc_globalExecute;
 
-private _city = (selectRandom (INS_controlAreas select { ((_x select 2) select 0) < -24 })) select 0;
-private _flags = INS_fastTravelFlags select { (_x select 1) == _city };
-private _flag = _flags select 0;
-
-// Random starting city
-opforCommander setPosATL ( (getPos (_flag select 0)) findEmptyPosition [5,20,"MAN"] );
-
 [] call INS_fnc_spawnStartingUnits;
+
+// initial commander location
+[] spawn {
+	waitUntil { !isNil "opforCommander" };
+	private _city = (selectRandom (INS_controlAreas select { ((_x select 2) select 0) < -24 })) select 0;
+	private _flags = INS_fastTravelFlags select { (_x select 1) == _city };
+	private _flag = _flags select 0;
+	
+	// Random starting city
+	opforCommander setPosATL ( (getPos (_flag select 0)) findEmptyPosition [5,20,"MAN"] );
+};
 
 INS_setupFinished = true;
 
@@ -227,8 +232,6 @@ while { (_camPos distance (getPos INS_cache1)) < 100 } do {
 "opfor_target" setMarkerPos _camPos;
 
 private _commandbuildings = INS_cacheBuildings select { ((position _x) distance (position INS_cache1)) > 100 };
-
-opforCommander setPosATL ( ([_commandbuildings call BIS_fnc_selectRandom] call BIS_fnc_buildingPositions) call BIS_fnc_selectRandom );
 
 [-1, {
 	params ["_cache1","_cache2"];

@@ -12,7 +12,18 @@ _rtsinit = [] spawn (compile preprocessFileLinenumbers "rts\init.sqf");
 waitUntil { scriptDone _rtsinit };
 
 // Setup insurgency functions
-if ( !isNil "opforCommander" || isServer ) then {
+
+private _runsetup = false;
+
+if ( !isNil "opforCommander" ) then {
+	if ( !isDedicated ) then {
+		if ( player == opforCommander ) then {
+			_runsetup = true;
+		};
+	};
+};
+
+if ( isDedicated || _runsetup ) then {
 	
 	INS_setupFastTravel = {
 		waitUntil { !isNil "INS_fastTravelFlags" };
@@ -64,9 +75,9 @@ if ( !isNil "opforCommander" || isServer ) then {
 	INS_spyMin = 3; INS_spyMid = 5; INS_spyMax = 6;
 	INS_spies = [];
 	publicVariable "INS_spies";
-	[] spawn (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
+	[] call (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
 	
-	if ( isMultiplayer ) then {
+	if ( !isNil "opforCommander" ) then {
 		opforCommander addMPEventHandler ["MPRespawn", {
 			if ( !isNil "INS_cacheBuildings" ) then {
 				private _commandbuildings = INS_cacheBuildings select { ((position _x) distance (position INS_currentCache)) > 100 };
