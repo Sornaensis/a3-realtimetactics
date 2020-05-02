@@ -1,29 +1,28 @@
-
 setupAsGarrison = {
-	params ["_group", "_marker", "_radius","_city"];
+	params ["_group", "_pos", "_radius","_city"];
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["ai_status", "GARRISON"];
 	_group setVariable ["ai_ciy", _city];
-	[_group, getMarkerPos _marker, _radius, 2, 0.7, 0.6 ] call CBA_fnc_taskDefend;
+	[_group, _pos, _radius, 2, 0.7, 0 ] call CBA_fnc_taskDefend;
 };
 
 setupAsPatrol = {
-	params ["_group", "_marker", "_radius","_city"];
+	params ["_group", "_pos", "_radius","_city"];
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["ai_status", "PATROL"];
 	_group setVariable ["ai_ciy", _city];
-	[_group, getMarkerPos _marker, _radius, 7, "MOVE", "SAFE", "RED", "NORMAL"] call CBA_fnc_taskPatrol;
+	[_group, _pos, _radius, 7, "MOVE", "SAFE", "RED", "NORMAL"] call CBA_fnc_taskPatrol;
 };
 
 doCounterAttack = {
-	params ["_group", "_marker", "_radius","_city"];
+	params ["_group", "_pos", "_radius","_city"];
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["ai_status", "COUNTER-ATTACK"];
 	_group setVariable ["ai_ciy", _city];
 	if ( vehicle (leader _group) != leader _group ) then {
-		[_group, getMarkerPos _marker, _radius, 7, "MOVE", "COMBAT", "RED", "FULL"] call CBA_fnc_taskPatrol;
+		[_group, _pos, _radius, 7, "MOVE", "COMBAT", "RED", "FULL"] call CBA_fnc_taskPatrol;
 	} else {
-		[_group, getMarkerPos _marker, _radius] call CBA_fnc_taskAttack;
+		[_group, _pos, _radius] call CBA_fnc_taskAttack;
 	};
 };
 
@@ -48,42 +47,63 @@ getNearestControlZone = {
 	_location select 0
 };
 
-waitUntil { INS_setupFinished };
-
-INS_spawnedGreenfor = []; // greenfor hostile to all sides
-INS_spawnedOpfor = [];    
-INS_spawnedBlufor = [];   // greenfor hostile to east
-INS_spawnedCivilians = [];
-
-INS_spawnedUnitCap = 100; // maximum spawned soldiers
-INS_civilianCap = 50;
-INS_spawnDist = 800; // distance in meters from buildings a player shall be when we begin spawning units.
-INS_despawn = 1200; // despawn units
-INS_spawnPulse = 60; // seconds to pulse spawns
-INS_initialSquads = 3; // spawn this many squads
-INS_populationDensity = 15; // 15 men per square kilometer
-							// units from adjacent control zones may assist one another
-							// spontaneous reinforcing is also a possibility
-
-
-
-getSpawnedSoldierCount = {
-	(count INS_spawnedGreenfor) + (count INS_spawnedOpfor) + (count INS_spawnedBlufor)
-};
-
-INS_aiSpawner = addMissionEventHandler [ "EachFrame",
+INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 	{
-		private _headlessClients = entities "HeadlessClient_F";
-		private _humanPlayers = allPlayers - _headlessClients;
+		private _humanPlayers = call INS_allPlayers;
+		// Spawn AI due to blufor player activity
+		{
+			private _unit = _x;
+			if ( !isPlayer _unit && !((_unit getVariable ["rts_setup",objnull]) isEqualTo objnull) ) then {
+			
+				private _canBeSeen = false;
+				private _unitPos = eyePos _unit;
+				
+				{
+					private _playerPos = eyePos _x;
+					if ( (_unitPos distance _playerPos) > 1200 ) then {
+						if ( ([vehicle _x, vehicle _unit] call BIS_fnc_isInFrontOf) && !(terrainIntersect [_playerPos,_unitPos]) ) then {
+							_canBeSeen = true;		
+						};
+					} else {
+						_canBeSeen = true;
+					};
+				} forEach _humanPlayers;
+				
+				if ( !_canBeSeen ) then {
+					deleteVehicle _unit;
+				};
+				
+			};
+		} forEach allUnits;
+	}];
+
+
+INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
+	{
+		private _humanPlayers = call INS_allPlayers;
 		// Spawn AI due to blufor player activity
 		if ( (call getSpawnedSoldierCount) < INS_spawnedUnitCap ) then {
 			{
 				private _player = _x;
-				private _zone = [getPos _player] call getNearestControlZone;
 				
-				if ( !isNil "_zone" ) then {
+				if ( vehicle _player == _player || ( (getPosATL (vehicle _player)) select 2 ) < 25 ) then {
+				
+					private _pos = getPos _player;
+					private _zone = [_pos] call getNearestControlZone;
 					
+					// record zone
+					_player setVariable ["insurgency_zone", _zone];
+					
+					if ( !isNil "_zone" ) then {
+						if ( [_zone] call INS_canZoneSpawnAndUpdate ) then {
+							if ( ([_zone] call getZoneDensity) < INS_populationDensity ) then {
+								private _soldier = [_pos,_zone] call INS_spawnUnits;
+								private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsPatrol,0.65];
+								[(group _soldier), [(getPos _soldier), 75] call CBA_fnc_randPos, 400, _zone] call _task;
+							};
+						};
+					};
 				};
-			} forEach (_humanPlayers select { side _x == east });
+			} forEach (_humanPlayers select { side _x == west });
 		};
 	}];

@@ -64,7 +64,7 @@ if ( !isNil "opforCommander" || isServer ) then {
 	INS_spyMin = 3; INS_spyMid = 5; INS_spyMax = 6;
 	INS_spies = [];
 	publicVariable "INS_spies";
-	[] call (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
+	[] spawn (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
 	
 	if ( isMultiplayer ) then {
 		opforCommander addMPEventHandler ["MPRespawn", {
@@ -111,6 +111,12 @@ if ( isServer && isNil "INS_caches" ) then {
 	publicVariable "INS_maxCasualties";
 	INS_caches = 2;
 	publicVariable "INS_caches";
+	
+	INS_allPlayers = {
+		private _headlessClients = entities "HeadlessClient_F";
+	 	(allPlayers - _headlessClients)
+	};
+	
 	// Setup everything by group
 	{
 		_setupfnc = (leader _x) getVariable ["opfor_setup", nil];
@@ -179,6 +185,9 @@ if ( isServer && isNil "INS_caches" ) then {
 		};
 	};
 	
+	// Mission coordinator
+	private _insmon = [] spawn (compile preprocessFileLineNumbers "rts\systems\insurgency\insurgency.sqf");
+	waitUntil { scriptDone _insmon };
 	// Serverside AI controller
 	[] spawn (compile preprocessFileLineNumbers "rts\systems\insurgency\ai_controller.sqf");
 };

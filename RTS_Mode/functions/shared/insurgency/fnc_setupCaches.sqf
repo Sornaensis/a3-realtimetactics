@@ -26,7 +26,7 @@ INS_controlAreas = []; // format:
 						 *  [-50,-25]  = east forces may move freely but do not get manpower or material benefits | text: "Insurgent forces present amongst friendly (and unfriendly) militia."
 						 *  [-24,0]    = east forces may not move freely, militia are more likely to be hostile to east forces | text: "Local militias strongly contesting the area."
 						 *  [1,24]     = east forces may not move freely, militia are twice as likely to be hostile to east forces | text: "Local militias control the area."
-						 *  [25,50]    = Milita are always friendly to blufor | text: "Friendly militia control the area."
+						 *  [25,50]    = Milita are almost always friendly to blufor | text: "Friendly militia control the area."
 						 *  [51,100]   = Area pacified, nearby opfor areas take manpower and materiel penalties | text: "Area is friendly controlled, local militias are exerting control into nearby territories".
 						 */
 
