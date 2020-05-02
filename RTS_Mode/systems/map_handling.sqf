@@ -10,7 +10,7 @@
 			if ( _group in RTS_commandingGroups ) then {	
 				private _units = units _group;
 				private _living = count ((units _group) select { alive _x });
-				private _maxmorale = (count _units) / (_group getVariable ["initial_strength", 1]) * 100;
+				private _maxmorale = (count _units) / ((_group getVariable ["initial_strength", 1]) max 1) * 100;
 				private _morale = _group getVariable ["morale", 0];
 				if ( _living < (_group getVariable ["initial_strength",-1]) ) then {
 					_unitcolor = RTS_casualtyColor;
@@ -27,6 +27,6 @@
 				_group addGroupIcon ["Empty", [-1,-1]];
 				_group setGroupIconParams [ [0,1,0,1], _group getVariable ["desc","Unknown"], 1, true ];
 			};
-		} forEach allGroups;
+		} forEach RTS_commandingGroups;
 	};
 };

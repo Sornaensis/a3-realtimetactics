@@ -31,7 +31,7 @@ if ( isDedicated || _runsetup ) then {
 			_x params ["_flag","_city","_marker"];
 			
 			while { count (_flag nearRoads 20) > 0 } do {
-				_flag setPosATL (_flag findEmptyPosition [5,20,"MAN"]);
+				_flag setPosATL ((getPos _flag) findEmptyPosition [5,20,"MAN"]);
 			};
 			
 			_flag hideObject false;
@@ -58,27 +58,41 @@ if ( isDedicated || _runsetup ) then {
 			
 		} forEach _flags;			
 	};
-
-	INS_intelLevel = 0;
-	INS_carClasses = [];
-	INS_tankClasses = [];
-	INS_apcClasses = [];
-	INS_squadSetups = [];
-	INS_civilianSetups = [];
-	INS_bluforSquadSetups = [];
-	INS_greenforSquadSetups = [];
-	INS_mgSetups = [];
-	INS_sniperSetups = [];
-	INS_spySetups = [];
-	INS_tankMin = 1; INS_tankMid = 2; INS_tankMax = 3.4;
-	INS_apcMin = 3; INS_apcMid = 4; INS_apcMax = 6;
-	INS_carMin = 4; INS_carMid = 4; INS_carMax = 5;
-	INS_squadMin = 5; INS_squadMid = 6; INS_squadMax = 7;
+	
+	if ( isNil "INS_squadSetups" ) then {
+		INS_intelLevel = 0;	
+		publicVariable "INS_intelLevel";
+		INS_carClasses = [];
+		publicVariable "INS_carClasses";
+		INS_tankClasses = [];
+		publicVariable "INS_tankClasses";
+		INS_apcClasses = [];
+		publicVariable "INS_apcClasses";
+		INS_squadSetups = [];
+		publicVariable "INS_squadSetups";
+		INS_civilianSetups = [];
+		publicVariable "INS_civilianSetups";
+		INS_bluforSquadSetups = [];
+		publicVariable "INS_bluforSquadSetups";
+		INS_greenforSquadSetups = [];
+		publicVariable "INS_greenforSquadSetups";
+		INS_mgSetups = [];
+		publicVariable "INS_mgSetups";
+		INS_sniperSetups = [];
+		publicVariable "INS_sniperSetups";
+		INS_spySetups = [];
+		publicVariable "INS_spySetups";
+		INS_spies = [];
+		publicVariable "INS_spies";
+	};
+	INS_tankMin = 1; INS_tankMid = 2; INS_tankMax = 2;
+	INS_apcMin = 1; INS_apcMid = 2; INS_apcMax = 6;
+	INS_carMin = 3; INS_carMid = 3; INS_carMax = 5;
+	INS_squadMin = 4; INS_squadMid = 4; INS_squadMax = 6;
 	INS_mgMin = 2; INS_mgMid = 3; INS_mgMax = 4;
-	INS_sniperMin = 4; INS_sniperMid = 4; INS_sniperMax = 5;
-	INS_spyMin = 3; INS_spyMid = 5; INS_spyMax = 6;
-	INS_spies = [];
-	publicVariable "INS_spies";
+	INS_sniperMin = 3; INS_sniperMid = 4; INS_sniperMax = 5;
+	INS_spyMin = 5; INS_spyMid = 6; INS_spyMax = 8;
+	
 	[] call (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
 	
 	if ( !isNil "opforCommander" ) then {

@@ -51,7 +51,7 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 		private _humanPlayers = call INS_allPlayers;
 		{
 			private _unit = _x;
-			if ( !isPlayer _unit && ((_unit getVariable ["rts_setup",objnull]) isEqualTo objnull) ) then {
+			if ( !isPlayer _unit && !((_unit getVariable ["ins_side",objnull]) isEqualTo objnull) ) then {
 			
 				private _canBeSeen = false;
 				private _unitPos = _unit;
@@ -118,12 +118,6 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 
 INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 	{
-		hintSilent format ["Spawned Civilians: %1\nSpawned Opfor: %2\nSpawned Blufor: %3\nSpawned Greenfor: %4", 
-							call getSpawnedCiviliansCount,
-							count ((call getSpawnedSoldiers) select { side (group _x) == east }),
-							count ((call getSpawnedSoldiers) select { side (group _x) == west }),
-							count ((call getSpawnedSoldiers) select { side (group _x) == resistance })
-							];
 		private _humanPlayers = call INS_allPlayers;
 		// Spawn AI due to blufor player activity
 		if ( (call getSpawnedSoldierCount) < INS_spawnedUnitCap ) then {

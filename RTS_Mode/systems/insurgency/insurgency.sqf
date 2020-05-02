@@ -299,7 +299,7 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 			private _city = (group _unit) getVariable ["ai_city",""];
 			if ( _city != "" ) then {
 				private _zone = [_city] call INS_getZone;
-				private _zoneparams = zone select 2;
+				private _zoneparams = _zone select 2;
 				private _aggression = _zoneparams select 3;
 				private _disp = _zoneparams select 0;
 				_zoneparams set [3, _aggression + 10];
@@ -315,6 +315,30 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 		};
 	};
 	
+}];
+
+addMissionEventHandler ["BuildingChanged", {
+	params ["_previousObject", "_newObject", "_isRuin"];
+	
+	if ( _isRuin ) then {
+		private _zones = INS_controlAreas select { (position _newObject) inArea (_x select 1) };
+		
+		if ( count _zones > 0 ) then {
+			private _zone = _zones select 0;
+			private _zoneparams = _zone select 2;
+			private _aggression = _zoneparams select 3;
+			private _disp = _zoneparams select 0;
+			_zoneparams set [3, _aggression + 5];
+			_zoneparams set [0, _disp - 5];
+			
+			[-1,
+			{
+				params ["_city"];
+				sleep 4;
+				titleText [format ["HUMINT Reports: Collateral damage has damaged coalition efforts in the town of %1",_city], "PLAIN"];
+			}, [_city]] call CBA_fnc_globalExecute;
+		};
+	};
 }];
 
 INS_missionMonitor= addMissionEventHandler [ "EachFrame",

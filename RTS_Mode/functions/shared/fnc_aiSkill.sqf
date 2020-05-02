@@ -11,7 +11,8 @@ private _side = side _group;
 private _sideModifier = (switch (_side) do {
 						case west: { RTS_bluforAIModifier };
 						case east: { RTS_opforAIModifier }; 
-						case resistance: { RTS_greenforAIModifier }; 
+						case resistance: { RTS_greenforAIModifier };
+						case civilian: { RTS_bluforAIModifier };
 						});
 
 _group setVariable ["LeaderFactor", _group getVariable ["LeaderFactor", 3 - (floor (random 5.5)) ] ];
@@ -34,7 +35,6 @@ private _softFactor = (0.05 * (_leaderFactor + 1) * ( if ( _isLeader ) then { 1.
 _unit setVariable ["SoftFactor", _unit getVariable ["SoftFactor", _softFactor]];
 
 _softFactor = _unit getVariable "SoftFactor";
-
 
 private _unitSoftFactors = _softFactor * ( _sideModifier / 100 + 1 );
 
