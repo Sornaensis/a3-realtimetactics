@@ -77,7 +77,7 @@ INS_greenforDisposition = {
 						_retSide = selectRandomWeighted [east,0.2,resistance,0.55,west,0.4];
 					} else {
 						if ( _zoneDisp < 51 ) then {
-							_retSide = selectRandomWeighted [resistance 0.2,west 0.8];
+							_retSide = selectRandomWeighted [resistance,0.2,west,0.8];
 						};
 					};
 				};
@@ -141,7 +141,7 @@ INS_canZoneSpawnAndUpdate = {
 
 INS_activeZones = {
 	private _players = (call INS_allPlayers) select { (_x getVariable ["insurgency_zone",""]) != "" };
-	private _zones = []
+	private _zones = [];
 	
 	{
 		_zones pushbackUnique _x;
@@ -169,6 +169,8 @@ INS_spawnUnits = {
 	
 	private _leader = [getPos _building,_side] call _spawnfunc;
 	(group _leader) setVariable ["ai_ciy", _zoneName];
+	
+	diag_log (format ["Spawned group of %1 soldiers at %2", _side, _zoneName]);
 	
 	_leader
 };
