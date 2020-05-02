@@ -8,7 +8,12 @@ if ( isNil "_side" ) then {
 	_nosetup = true;
 };
 
-private _setups = selectRandom INS_squadSetups;
+private _setups = selectRandom (
+	switch ( _side ) do {
+		case east: { INS_squadSetups };
+		case resistance: { INS_greenforSquadSetups };
+		case west: { INS_bluforSquadSetups };
+	});
 
 private _group = grpnull;
 

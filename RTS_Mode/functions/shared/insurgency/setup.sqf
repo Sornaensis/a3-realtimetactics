@@ -5,6 +5,8 @@
 [ "rts\functions\shared\insurgency",
 	[Q(INS_fnc_setupSquad),
 	 Q(INS_fnc_setupGreenSquad),
+     Q(INS_fnc_setupBlueSquad),
+     Q(INS_fnc_setupCivilian),
 	 Q(INS_fnc_setupSpy),
 	 Q(INS_fnc_setupMG),
 	 Q(INS_fnc_setupSniper),

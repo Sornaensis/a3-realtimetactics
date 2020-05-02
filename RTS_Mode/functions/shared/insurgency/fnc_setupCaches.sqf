@@ -31,10 +31,10 @@ INS_controlAreas = []; // format:
 						 */
 
 private _areas = count INS_areaMarkers;
-private _greenforLight = floor (_areas * 0.2);
-private _greenforHeavy = floor (_areas * 0.5);
-private _opforLight = floor (_areas * 0.2);
-private _opforHeavy = floor (_areas * 0.1);
+private _greenforLight = floor (_areas * 0.5);
+private _greenforHeavy = floor (_areas * 0.2);
+private _opforLight = floor (_areas * 0.1);
+private _opforHeavy = floor (_areas * 0.2);
 
 private _leftover = _areas - (_greenforLight + _greenforHeavy + _opforLight + _opforHeavy);
 

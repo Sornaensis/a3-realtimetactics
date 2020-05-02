@@ -73,14 +73,13 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 				};
 				
 			};
-		} forEach allUnits + allDeadMen;
+		} forEach (allUnits + allDeadMen);
 		
 		{
 			private _veh = _x;
 			private _vehpos = getPos _x;
 			if ( _veh getVariable ["spawned_vehicle", false] ) then {
 				private _canBeSeen = false;
-				
 				{
 					private _playerPos = getPos _x;
 					if ( (_vehpos distance _playerPos) > 1500 ) then {
@@ -96,25 +95,35 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 					deleteVehicle _veh;
 				};
 			};
-		} forEach vehicles + allDead;
+		} forEach (vehicles + allDead);
 		
 		// infinite fuel
 		{
 			private _veh = _x;
-			if ( (_veh getVariable ["spawned_vehicle", false]) || side (driver _veh) != west ) then {
+			private _driver = driver _veh;
+			if ( (_veh getVariable ["spawned_vehicle", false]) || ( !(isNull _driver) && side _driver != west ) ) then {
 				_veh setFuel 1;
 			};
 		} forEach vehicles;
+		
+		{
+			if ( !((_x getVariable ["ai_city",objnull]) isEqualTo objnull) ) then {
+				if ( count ( (units _x) select { alive _x } ) == 0 ) then {
+					deleteGroup _x;
+				};
+			};
+		} forEach allGroups;
 	}];
 
 
 INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 	{
-		hintSilent format ["Opfor Groups: %1\nBlufor Groups: %2\nGreenfor Groups: %3\nZone Disposition %4", 
-					count (allGroups select { !( (_x getVariable ["ai_city",objnull]) isEqualTo objnull) && side _x == east }),
-					count (allGroups select { !( (_x getVariable ["ai_city",objnull]) isEqualTo objnull) && side _x == west }),
-					count (allGroups select { !( (_x getVariable ["ai_city",objnull]) isEqualTo objnull) && side _x == resistance }),
-					(if ( !((player getVariable ["insurgency_zone",objnull]) isEqualTo objnull) ) then { [player getVariable ["insurgency_zone",objnull]] call INS_zoneDisposition } else { "N/A" })];
+		hintSilent format ["Spawned Civilians: %1\nSpawned Opfor: %2\nSpawned Blufor: %3\nSpawned Greenfor: %4", 
+							call getSpawnedCiviliansCount,
+							count ((call getSpawnedSoldiers) select { side (group _x) == east }),
+							count ((call getSpawnedSoldiers) select { side (group _x) == west }),
+							count ((call getSpawnedSoldiers) select { side (group _x) == resistance })
+							];
 		private _humanPlayers = call INS_allPlayers;
 		// Spawn AI due to blufor player activity
 		if ( (call getSpawnedSoldierCount) < INS_spawnedUnitCap ) then {
@@ -135,6 +144,32 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 								private _soldier = [_pos,_zone] call INS_spawnUnits;
 								if ( !isNull _soldier ) then {
 									private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsPatrol,0.65];
+									[(group _soldier), [(getPos _soldier), 75] call CBA_fnc_randPos, 400, _zone] call _task;
+								};
+							};
+						};
+					};
+				};
+			} forEach (_humanPlayers select { side _x == west });
+		};
+		if ( (call getSpawnedCiviliansCount) < INS_civilianCap ) then {
+			{
+				private _player = _x;
+				
+				if ( vehicle _player == _player || ( (getPosATL (vehicle _player)) select 2 ) < 25 ) then {
+				
+					private _pos = getPos _player;
+					private _zone = [_pos] call getNearestControlZone;
+					
+					// record zone
+					_player setVariable ["insurgency_zone", _zone];
+					
+					if ( !isNil "_zone" ) then {
+						if ( [_zone] call INS_canZoneSpawnCiviliansAndUpdate ) then {
+							if ( ([_zone] call INS_getZoneCivilianDensity) < INS_civilianDensity ) then {
+								private _soldier = [_pos,_zone] call INS_spawnCivilian;
+								if ( !isNull _soldier ) then {
+									private _task = selectRandomWeighted [setupAsGarrison,0.3,setupAsPatrol,0.9];
 									[(group _soldier), [(getPos _soldier), 75] call CBA_fnc_randPos, 400, _zone] call _task;
 								};
 							};

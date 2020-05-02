@@ -45,10 +45,14 @@ if ( isDedicated || _runsetup ) then {
 								 {
 								 	params ["","","","_arguments"];
 								 	_arguments params ["_f","_c"];
-								 	titleText [ format ["Travelling to %1...", _c], "PLAIN"];
-								 	private _pos = (getPos _f) findEmptyPosition [2,25,"MAN"];
-								 	player setPosATL _pos;
-								 	player setDir ((getPos player) getDir (getPos _f));
+								 	[_f,_c] spawn {
+								 		params ["_f","_c"];
+									 	titleText [ format ["Travelling to %1...", _c], "PLAIN"];
+								 		sleep 3;
+								 		private _pos = (getPos _f) findEmptyPosition [2,25,"MAN"];
+								 		player setPosATL _pos;
+								 		player setDir ((getPos player) getDir (getPos _f));
+								 	};
 								 },_dest,1.5,true,true,"","true",5,false,"",""];
 			} forEach (_flags select { (_x select 0) != _flag });
 			
@@ -60,6 +64,8 @@ if ( isDedicated || _runsetup ) then {
 	INS_tankClasses = [];
 	INS_apcClasses = [];
 	INS_squadSetups = [];
+	INS_civilianSetups = [];
+	INS_bluforSquadSetups = [];
 	INS_greenforSquadSetups = [];
 	INS_mgSetups = [];
 	INS_sniperSetups = [];
@@ -163,6 +169,7 @@ if ( isServer && isNil "INS_caches" ) then {
 	};
 	
 	[] spawn {
+		waitUntil { !isNil "INS_cache1" };
 		while {true} do {	
 			{
 				if ( !(_x getVariable ["intel_handling", false]) ) then {
