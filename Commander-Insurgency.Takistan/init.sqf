@@ -22,7 +22,6 @@ if ( !isNil "opforCommander" || isServer ) then {
 };
 
 if ( isDedicated || _runsetup ) then {
-	
 	INS_setupFastTravel = {
 		waitUntil { !isNil "INS_fastTravelFlags" };
 		waitUntil { !isNil "INS_controlAreas" };
@@ -128,7 +127,23 @@ if ( isDedicated || _runsetup ) then {
 					},[player]] call CBA_fnc_globalExecute;
 				}];
 		}];
-		[] spawn INS_setupFastTravel;
+			
+		// jip commander setup
+		if ( !isDedicated ) then {
+			[] spawn {
+				[] spawn INS_setupFastTravel;
+				{
+					_x hideObject false;
+				} forEach INS_spies;
+				{
+					_x hideObject false;
+				} forEach (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
+				
+				private _flag = selectRandom (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
+				opforCommander setPos ( (getPos (_flag select 0)) findEmptyPosition [2,10,"MAN"] );
+				opforCommander setDir ( (getPos opforCommander) getDir (getPos (_flag select 0)) );
+			};
+		};
 	};
 
 };
@@ -220,6 +235,7 @@ if ( isServer && isNil "INS_caches" ) then {
 	waitUntil { scriptDone _insmon };
 	// Serverside AI controller
 	[] spawn (compile preprocessFileLineNumbers "rts\systems\insurgency\ai_controller.sqf");
+	diag_log "Server Init Complete";
 };
 
 if ( isDedicated || !hasInterface ) exitWith {};

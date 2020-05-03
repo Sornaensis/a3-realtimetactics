@@ -2,7 +2,7 @@ INS_spawnedUnitCap = 100; // maximum spawned soldiers
 INS_civilianCap = 50;
 INS_spawnDist = 800; // distance in meters from buildings a player shall be when we begin spawning units.
 INS_despawn = 1200; // despawn units this distance from players when they cannot be seen and their zone is inactive
-INS_spawnPulse = 20; // seconds to pulse spawns
+INS_spawnPulse = 10; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
 INS_civilianDensity = 10;
 INS_populationDensity = 24; 
@@ -121,7 +121,7 @@ INS_getZoneCivilianDensity = {
 	private _size = (_mx max _my) * 1.8;
 	_size = _size*_size; // sq m
 	
-	private _population = count ( (allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < _size && !isPlayer _x && (_x getVariable ["ins_side",east]) == civilian } );
+	private _population = count ( (allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.8) && !isPlayer _x && (_x getVariable ["ins_side",east]) == civilian } );
 	
 	(_population)/(_size/1000/1000)
 	
@@ -137,7 +137,7 @@ INS_getZoneDensity = {
 	private _size = (_mx max _my) * 1.8;
 	_size = _size*_size; // sq m
 	
-	private _population = count ((allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < _size && !isPlayer _x && (_x getVariable ["ins_side",east]) != civilian });
+	private _population = count ((allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.8) && !isPlayer _x && (_x getVariable ["ins_side",east]) != civilian });
 	
 	(_population)/(_size/1000/1000)
 	
@@ -150,7 +150,7 @@ INS_canZoneSpawnCiviliansAndUpdate = {
 	private _zones = INS_civSpawnTable select { (_x select 0) == _zoneName };
 	
 	if ( count _zones == 0 ) then {
-		_zones pushback [ _zoneName, time ];
+		INS_civSpawnTable pushback [ _zoneName, time ];
 	} else {
 		private _zone = _zones select 0;
 		
@@ -171,7 +171,7 @@ INS_canZoneSpawnAndUpdate = {
 	private _zones = INS_aiSpawnTable select { (_x select 0) == _zoneName };
 	
 	if ( count _zones == 0 ) then {
-		_zones pushback [ _zoneName, time ];
+		INS_aiSpawnTable pushback [ _zoneName, time ];
 	} else {
 		private _zone = _zones select 0;
 		
@@ -249,6 +249,7 @@ INS_spawnUnits = {
 	private _side = [[_zone] call INS_zoneDisposition] call INS_greenforDisposition;
 	
 	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select { (count (_x buildingPos -1) > 2) && ((position _x) distance _pos) < 1400 };
+	_buildings = _buildings select { count ([position _x, call INS_allPlayers,300] call CBA_fnc_getNearest) == 0 };
 	if ( count _buildings == 0) exitWith { objnull };
 	
 	private _pos = getPos (selectRandom _buildings);
@@ -293,6 +294,7 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 				private _zoneparams = zone select 2;
 				private _disp = _zoneparams select 0;
 				_zoneparams set [0, _disp + 0.5];
+				publicVariable "INS_controlAreas";
 			};
 		};
 		if ( (_unit getVariable ["ins_side", east]) == west || (_unit getVariable ["ins_side", east]) == civilian ) then {
@@ -304,7 +306,7 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 				private _disp = _zoneparams select 0;
 				_zoneparams set [3, _aggression + 10];
 				_zoneparams set [0, _disp - 5];
-				
+				publicVariable "INS_controlAreas";				
 				[-1,
 				{
 					params ["_city"];
@@ -323,13 +325,14 @@ addMissionEventHandler ["BuildingChanged", {
 	if ( _isRuin ) then {
 		private _zones = INS_controlAreas select { (position _newObject) inArea (_x select 1) };
 		
-		if ( count _zones > 0 ) then {
+		if ( count _zones > 0 && count (_previousObject buildingPos -1) > 2 ) then {
 			private _zone = _zones select 0;
 			private _zoneparams = _zone select 2;
 			private _aggression = _zoneparams select 3;
 			private _disp = _zoneparams select 0;
 			_zoneparams set [3, _aggression + 5];
 			_zoneparams set [0, _disp - 5];
+			publicVariable "INS_controlAreas";
 			
 			[-1,
 			{
@@ -341,8 +344,113 @@ addMissionEventHandler ["BuildingChanged", {
 	};
 }];
 
-INS_missionMonitor= addMissionEventHandler [ "EachFrame",
+INS_bluforMission = "NONE";
+INS_previousTaskComplete = 0;
+INS_taskZone = "";
+INS_currentMission = 0;
+INS_truckMarker = createMarker ["ins_truck_marker",[0,0,0]];
+INS_truckMarker setMarkerShape "ICON";
+INS_truckMarker setMarkerText "AID Vehicle";
+INS_truckMarker setMarkerColor "ColorBlue";
+INS_truckMarker setMarkerType "select";
+INS_truckMarker setMarkerAlpha 0;
+INS_currentMissionName = { format ["blufor_task_%1",INS_currentMission] };
+
+INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 	{
+		if ( INS_bluforMission == "NONE" ) then {
+			// Setup aid delivery mission
+			
+			if ( ( time > (INS_previousTaskComplete + 180) || INS_currentMission == 0 ) && count (call INS_allPlayers) > 0 ) then {
+				/*if ( INS_currentMission > 0 ) then {
+					[call INS_currentMissionName,west] call BIS_fnc_deleteTask;
+				};*/ // We'll go ahead and keep a running tally of all missions conducted
+				INS_currentMission = INS_currentMission + 1;
+				private _truckClass = "rhssaf_un_ural";
+				private _zones = INS_controlAreas select { ([_x] call INS_zoneDisposition) > -24 };
+				
+				_zones = [ _zones, [], { _x distance (getMarkerPos "truck_spawn")}, "ASCEND"] call BIS_fnc_sortBy;
+				
+				private _threeNearest = [];
+
+				for "_i" from 0 to 2 do {
+					if ( count _zones > _i ) then {
+						_threeNearest pushback (_zones select _i);
+					};
+				};
+				
+				private _zone = selectRandom _threeNearest;
+				
+				
+				private _name = _zone select 0;
+				private _marker = _zone select 1;
+				(getMarkerSize _marker) params ["_mx","_my"];
+				private _road = selectRandom ((getMarkerPos _marker) nearRoads (_mx max _my));
+				private _truckMarkerPos = getMarkerPos "truck_spawn";
+				private _truckPos = _truckMarkerPos findEmptyPosition [0,20,_truckClass];
+				
+				while { ! ( isOnRoad _truckPos ) } do {
+					_truckPos = _truckPos findEmptyPosition [0,30,_truckClass];
+				};
+				INS_truck
+				INS_taskZone = _name;
+				INS_aidTruck = _truckClass createVehicle _truckPos;
+				INS_bluforMission = "AID";
+				INS_truckMarker setMarkerPos (getPos INS_aidTruck);
+				INS_truckMarker setMarkerAlpha 1;
+				
+				[west, [call INS_currentMissionName], 
+					[ 
+						format ["<marker name='ins_truck_marker'>Deliver AID</marker> from Coalition airfield to the town of %1",_name],
+						"Deliver AID",
+						"aidMarker"],
+						getPos _road, 1, 3, true] call BIS_fnc_taskCreate;	
+			};
+		} else {
+			switch ( INS_bluforMission ) do {
+				case "AID": {
+					INS_truckMarker setMarkerPos (getPos INS_aidTruck);
+					if ( ((getPos INS_aidTruck) distance ((call INS_currentMissionName) call BIS_fnc_taskDestination)) < 50 ) then {
+						INS_previousTaskComplete = time;
+						INS_truckMarker setMarkerAlpha 0;
+						INS_aidTruck setVariable ["spawned_vehicle", true];
+						INS_aidTruck = nil;
+						INS_bluforMission = "NONE";
+						
+						private _zone = INS_controlAreas select { (_x select 0) == INS_taskZone };
+						private _zoneparams = _zone select 2;
+						private _disp = _zoneparams select 0;
+						_zoneparams set [0, _disp + 15];
+						publicVariable "INS_controlAreas";
+						
+						[call INS_currentMissionName,"SUCCEEDED"] call BIS_fnc_taskSetState;
+					} else {
+						if ( !(canMove INS_aidTruck) || (getDammage INS_aidTruck) > 0.8 ) then {
+							INS_previousTaskComplete = time;
+							INS_truckMarker setMarkerAlpha 0;
+							INS_aidTruck setVariable ["spawned_vehicle", true];
+							INS_aidTruck = nil;
+							INS_bluforMission = "NONE";
+							
+							private _zone = INS_controlAreas select { (_x select 0) == INS_taskZone };
+							private _zoneparams = _zone select 2;
+							private _aggr = _zoneparams select 3;
+							_zoneparams set [0, _aggr + 5];
+							publicVariable "INS_controlAreas";
+							
+							[-1,
+							{
+								params ["_city"];
+								sleep 4;
+								titleText [format ["HUMINT indicates foiled AID efforts have increased anti-coalition senitment in %1",_city],"PLAIN"];
+							},[_zone select 0]] call CBA_fnc_globalExecute;
+							
+							[call INS_currentMissionName,"FAILED"] call BIS_fnc_taskSetState;
+							};
+					};
+				};
+			};
+		};
 		
 	}];
 	
@@ -365,6 +473,7 @@ INS_zoneColoring = addMissionEventHandler [ "EachFrame",
 			// cap zone to aggression
 			if ( _disp > (100 - _agg) ) then {
 				(_zone select 2) set [0, 100 - _agg];
+				publicVariable "INS_controlAreas";
 			};
 		} forEach INS_controlAreas;
 	}];

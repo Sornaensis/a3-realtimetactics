@@ -1,7 +1,11 @@
-params ["_pos","_group"];
+params ["_pos","_group","_side"];
 
 if ( isNil "_group" ) then {
-	_group = createGroup east;
+	if ( isNil "_side" ) then {
+		_group = createGroup east;
+	} else {
+		_group = createGroup _side;
+	};
 };
 
 private _setups = ( 

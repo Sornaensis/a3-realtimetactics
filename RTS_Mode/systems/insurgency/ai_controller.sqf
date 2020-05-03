@@ -11,7 +11,7 @@ setupAsPatrol = {
 	[_group] call CBA_fnc_clearWaypoints;
 	_group setVariable ["ai_status", "PATROL"];
 	_group setVariable ["ai_city", _city];
-	[_group, _pos, _radius, 7, "MOVE", "SAFE", "RED", "NORMAL"] call CBA_fnc_taskPatrol;
+	[_group, _pos, _radius, 7, "MOVE", "SAFE", "RED", (if ( side _group == civilian ) then { "LIMITED" } else { "NORMAL" })] call CBA_fnc_taskPatrol;
 };
 
 doCounterAttack = {
@@ -54,11 +54,12 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 			if ( !isPlayer _unit && !((_unit getVariable ["ins_side",objnull]) isEqualTo objnull) ) then {
 			
 				private _canBeSeen = false;
-				private _unitPos = _unit;
+				private _unitPos = getPos _unit;
 				
 				{
 					private _playerPos = getPos _x;
-					if ( (_unitPos distance _playerPos) > 1500 ) then {
+					private _zone = [_playerPos] call getNearestControlZone;
+					if ( (_unitPos distance2d _playerPos) > 1500 || isNil "_zone" ) then {
 						if ( ([vehicle _x, vehicle _unit] call BIS_fnc_isInFrontOf) && !(terrainIntersect [eyePos _x,eyePos _unit]) ) then {
 							_canBeSeen = true;		
 						};
@@ -82,7 +83,7 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 				private _canBeSeen = false;
 				{
 					private _playerPos = getPos _x;
-					if ( (_vehpos distance _playerPos) > 1500 ) then {
+					if ( (_vehpos distance2d _playerPos) > 1500 ) then {
 						if ( ([_veh, vehicle _x] call BIS_fnc_isInFrontOf) && !(terrainIntersect [eyePos _x,_vehpos]) ) then {
 							_canBeSeen = true;		
 						};
@@ -124,7 +125,7 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 			{
 				private _player = _x;
 				
-				if ( vehicle _player == _player || ( (getPosATL (vehicle _player)) select 2 ) < 25 ) then {
+				if ( vehicle _player == _player || ( (getPosATL (vehicle _player)) select 2 ) < 800 ) then {
 				
 					private _pos = getPos _player;
 					private _zone = [_pos] call getNearestControlZone;
@@ -137,7 +138,7 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 							if ( ([_zone] call INS_getZoneDensity) < INS_populationDensity ) then {
 								private _soldier = [_pos,_zone] call INS_spawnUnits;
 								if ( !isNull _soldier ) then {
-									private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsPatrol,0.65];
+									private _task = selectRandomWeighted [setupAsGarrison,0.4,setupAsPatrol,0.8];
 									[(group _soldier), [(getPos _soldier), 75] call CBA_fnc_randPos, 400, _zone] call _task;
 								};
 							};
@@ -150,7 +151,7 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 			{
 				private _player = _x;
 				
-				if ( vehicle _player == _player || ( (getPosATL (vehicle _player)) select 2 ) < 25 ) then {
+				if ( vehicle _player == _player || ( (getPosATL (vehicle _player)) select 2 ) < 800 ) then {
 				
 					private _pos = getPos _player;
 					private _zone = [_pos] call getNearestControlZone;
@@ -163,7 +164,7 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 							if ( ([_zone] call INS_getZoneCivilianDensity) < INS_civilianDensity ) then {
 								private _soldier = [_pos,_zone] call INS_spawnCivilian;
 								if ( !isNull _soldier ) then {
-									private _task = selectRandomWeighted [setupAsGarrison,0.3,setupAsPatrol,0.9];
+									private _task = selectRandomWeighted [setupAsGarrison,0.6,setupAsPatrol,0.4];
 									[(group _soldier), [(getPos _soldier), 75] call CBA_fnc_randPos, 400, _zone] call _task;
 								};
 							};

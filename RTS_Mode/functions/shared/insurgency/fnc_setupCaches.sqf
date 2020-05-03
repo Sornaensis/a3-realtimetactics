@@ -133,25 +133,7 @@ INS_fastTravelFlags = [];
 publicVariable "INS_fastTravelFlags";
 publicVariable "INS_controlAreas";
 
-[-1, { 
-		if ( isNil "opforCommander" ) exitWith {};
-		if ( player == opforCommander ) then {
-			[] spawn INS_setupFastTravel;
-		};
-	 }] call CBA_fnc_globalExecute;
-
 [] call INS_fnc_spawnStartingUnits;
-
-// initial commander location
-[] spawn {
-	waitUntil { !isNil "opforCommander" };
-	private _city = (selectRandom (INS_controlAreas select { ((_x select 2) select 0) < -24 })) select 0;
-	private _flags = INS_fastTravelFlags select { (_x select 1) == _city };
-	private _flag = _flags select 0;
-	
-	// Random starting city
-	opforCommander setPosATL ( (getPos (_flag select 0)) findEmptyPosition [5,20,"MAN"] );
-};
 
 INS_setupFinished = true;
 
