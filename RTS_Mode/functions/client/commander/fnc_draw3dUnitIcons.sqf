@@ -41,7 +41,7 @@ if ( RTS_commanding ) then {
 {
 	private ["_group","_pos","_drawpos", "_distScale", "_scale"];
 	_group = _x;
-	if ( count ( (units _x) select { alive _x } ) > 0 && !(player in (units _group)) ) then {
+	if ( count ( (units _x) select { alive _x } ) > 0 ) then {
 		_pos = getPosATLVisual (leader _group);
 		_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 3];
 		private _campos = (if (RTS_commanding) then { (getPos GVAR(camera)) } else { getPos player } );
@@ -56,7 +56,7 @@ if ( RTS_commanding ) then {
 		private _unitcolor = RTS_sideColor;
 		
 		private _living = count ((units _group) select { alive _x });
-		private _maxmorale = (count _units) / (_group getVariable ["initial_strength", 1]) * 100;
+		private _maxmorale = (count _units) / ((_group getVariable ["initial_strength", 1]) max 1) * 100;
 		private _morale = _group getVariable ["morale", 0];
 		if ( _living < (_group getVariable ["initial_strength",-1]) ) then {
 			_unitcolor = RTS_casualtyColor;
