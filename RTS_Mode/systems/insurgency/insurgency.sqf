@@ -415,7 +415,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 						INS_aidTruck = nil;
 						INS_bluforMission = "NONE";
 						
-						private _zone = INS_controlAreas select { (_x select 0) == INS_taskZone };
+						private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
 						private _zoneparams = _zone select 2;
 						private _disp = _zoneparams select 0;
 						_zoneparams set [0, _disp + 15];
@@ -430,11 +430,13 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 							INS_aidTruck = nil;
 							INS_bluforMission = "NONE";
 							
-							private _zone = INS_controlAreas select { (_x select 0) == INS_taskZone };
+							private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
 							private _zoneparams = _zone select 2;
 							private _aggr = _zoneparams select 3;
 							_zoneparams set [0, _aggr + 5];
 							publicVariable "INS_controlAreas";
+							
+							INS_taskZone = "";
 							
 							[-1,
 							{
