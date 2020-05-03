@@ -142,6 +142,11 @@ if ( isDedicated || _runsetup ) then {
 				private _flag = selectRandom (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
 				opforCommander setPos ( (getPos (_flag select 0)) findEmptyPosition [2,10,"MAN"] );
 				opforCommander setDir ( (getPos opforCommander) getDir (getPos (_flag select 0)) );
+				
+				while { true } do {
+					waitUntil { !isNil "INS_truckMarker" };
+					INS_truckMarker setMarkerAlpha 0;
+				};
 			};
 		};
 	};

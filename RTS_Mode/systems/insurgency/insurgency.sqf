@@ -369,19 +369,17 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 				private _truckClass = "rhssaf_un_ural";
 				private _zones = INS_controlAreas select { ([_x] call INS_zoneDisposition) > -24 };
 				
-				_zones = [ _zones, [], { _x distance (getMarkerPos "truck_spawn")}, "ASCEND"] call BIS_fnc_sortBy;
+				_zones = [ _zones, [], { (getMarkerPos (_x select 1)) distance (getMarkerPos "truck_spawn")}, "ASCEND"] call BIS_fnc_sortBy;
 				
 				private _threeNearest = [];
 
 				for "_i" from 0 to 2 do {
-					if ( count _zones > _i ) then {
+					if ( (count _zones) > _i ) then {
 						_threeNearest pushback (_zones select _i);
 					};
 				};
 				
 				private _zone = selectRandom _threeNearest;
-				
-				
 				private _name = _zone select 0;
 				private _marker = _zone select 1;
 				(getMarkerSize _marker) params ["_mx","_my"];
@@ -392,7 +390,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 				while { ! ( isOnRoad _truckPos ) } do {
 					_truckPos = _truckPos findEmptyPosition [0,30,_truckClass];
 				};
-				INS_truck
+
 				INS_taskZone = _name;
 				INS_aidTruck = _truckClass createVehicle _truckPos;
 				INS_bluforMission = "AID";
