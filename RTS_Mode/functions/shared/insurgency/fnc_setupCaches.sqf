@@ -5,6 +5,7 @@ private _cities = (nearestLocations [ getMarkerPos "map_center", ["NameCityCapit
 INS_areas = (nearestLocations [ getMarkerPos "map_center", ["NameCityCapital","NameCity","NameVillage","NameLocal"], 13000]) select { !((position _x) inArea "opfor_restriction") };; // these are the different mission areas
 INS_areaMarkers = [];
 INS_bluforPacification = false;
+publicVariable "INS_bluforPacification";
 
 for "_i" from 0 to 100 do {
 	private _mark = format ["ins_area_%1", _i];
@@ -119,7 +120,6 @@ INS_fastTravelFlags = [];
 	
 	private _flag = "lop_Flag_isis_F" createVehicle _pos;
 	_flag allowDamage false;
-	_flag hideObjectGlobal true;
 	
 	private _flagmark = createMarker [ format ["opfor_fast_travel_marker__%1", _x select 0], _pos];
 	_flagMark setMarkerShape "ICON";
@@ -130,10 +130,15 @@ INS_fastTravelFlags = [];
 	INS_fastTravelFlags pushback [ _flag, _x select 0, _flagmark, _forEachIndex];
 } forEach INS_controlAreas;
 
+// Static verification
+INS_areaCount = count INS_controlAreas;
+publicVariable "INS_areaCount";
+
 publicVariable "INS_fastTravelFlags";
 publicVariable "INS_controlAreas";
 
-[] call INS_fnc_spawnStartingUnits;
+INS_bluforZoneAmount = floor ( count (INS_controlAreas) / 3 );
+publicVariable "INS_bluforZoneAmount";
 
 INS_setupFinished = true;
 

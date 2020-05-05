@@ -18,6 +18,7 @@
 	 Q(INS_fnc_spawnSquad),
 	 Q(INS_fnc_spawnSniper),
 	 Q(INS_fnc_spawnCar),
+	 Q(INS_fnc_spawnEmptyCar),
 	 Q(INS_fnc_spawnAPC),
 	 Q(INS_fnc_spawnTank),
 	 Q(INS_fnc_setupCaches),

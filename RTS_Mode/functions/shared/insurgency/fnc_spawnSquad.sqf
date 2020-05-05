@@ -31,6 +31,6 @@ private _group = grpnull;
 
 if ( !_nosetup ) then {
 	_group setVariable ["RTS_setup", [_group, "Squad", grpnull, "\A3\ui_f\data\map\markers\nato\o_inf.paa", "o_inf"],true];
-};
+};	
 
 (leader _group)

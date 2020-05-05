@@ -69,7 +69,7 @@ INS_greenforDisposition = {
 					_retSide = selectRandomWeighted [east,0.1,resistance,0.9,west,0.01];	
 				} else {
 					if ( _zoneDisp <= 24 ) then {
-						_retSide = selectRandomWeighted [east,0.01,resistance,0.1,west,0.9];
+						_retSide = selectRandomWeighted [resistance,0.6,west,0.4];
 					} else {
 						if ( _zoneDisp < 51 ) then {
 							_retSide = selectRandomWeighted [resistance,0.1,west,0.9];
@@ -208,7 +208,7 @@ INS_spawnCivilian = {
 	
 	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select { ((position _x) inArea (_zone select 1)) && (count (_x buildingPos -1) > 2) && ((position _x) distance _pos) < 1400 };
 	
-	if ( count _buildings == 0) exitWith { objnull };
+	if ( count _buildings == 0) exitWith { };
 	
 	private _pos = (getPos (selectRandom _buildings));
 	
@@ -232,7 +232,7 @@ INS_spawnCivilian = {
 		(vehicle _leader) setVariable ["spawned_vehicle", true];
 	};
 	
-	_leader
+	[_leader,_pos]
 };
 
 INS_spawnUnits = {
@@ -248,8 +248,8 @@ INS_spawnUnits = {
 	private _side = [[_zone] call INS_zoneDisposition] call INS_greenforDisposition;
 	
 	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select { (count (_x buildingPos -1) > 2) && ((position _x) distance _pos) < 1400 };
-	_buildings = _buildings select { count ([position _x, call INS_allPlayers,300] call CBA_fnc_getNearest) == 0 };
-	if ( count _buildings == 0) exitWith { objnull };
+	_buildings = _buildings select { count ([position _x, call INS_allPlayers,100] call CBA_fnc_getNearest) == 0 };
+	if ( count _buildings == 0) exitWith { };
 	
 	private _pos = getPos (selectRandom _buildings);
 	private _tries = 0;
@@ -259,11 +259,26 @@ INS_spawnUnits = {
 		_tries = _tries + 1;
 	};
 	
-	if ( count ([_pos, ([_zoneName] call getZoneSoldiers) select { side _x != _side },400] call CBA_fnc_getNearest) > 0 ) exitWith { objnull };
+	if ( count ([_pos, ([_zoneName] call getZoneSoldiers) select { side _x != _side },300] call CBA_fnc_getNearest) > 0 ) exitWith { };
 	
-	private _spawnfunc = selectRandomWeighted [INS_fnc_spawnSquad,0.9,INS_fnc_spawnAPC,0.05,INC_fnc_spawnTank,0.001];
+	private _spawnfunc = selectRandomWeighted [INS_fnc_spawnSquad,0.9,INS_fnc_spawnAPC,0.1,INC_fnc_spawnTank,0.003];
 	
-	private _leader = [_pos,_side] call _spawnfunc;
+	private _spawnpos = [_pos, 75] call CBA_fnc_randPos;
+	private _spawn = _spawnpos;
+	_tries = 0;
+	while { _tries < 5 && ( count ([_spawnpos, ([_zoneName] call getZoneSoldiers) select { side _x != _side },400] call CBA_fnc_getNearest) > 0 || count ([_spawnpos, call INS_allPlayers,500] call CBA_fnc_getNearest) > 0 || count ((call INS_allPlayers) select { !terrainIntersect[eyePos _x,_spawnpos] } ) > 0 ) } do {
+		_spawnpos = [_spawn, 150 + 35*(_tries+1)] call CBA_fnc_randPos;
+		_tries = _tries + 1;
+	};
+	
+	if ( count ([_spawnpos, call INS_allPlayers,500] call CBA_fnc_getNearest) > 0  || count ((call INS_allPlayers) select { !terrainIntersect[eyePos _x,_spawnpos] } ) > 0 || count ([_spawnpos, ([_zoneName] call getZoneSoldiers) select { side _x != _side },400] call CBA_fnc_getNearest) > 0 ) exitWith {  };
+	
+	private _leader = [_spawnpos,_side] call _spawnfunc;
+	if ( side _leader == west ) then {
+		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.7,"GREEN",0.4]];
+	} else {
+		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.3,"GREEN",0.6,"VETERAN",0.4,"ELITE",0.03]];
+	};
 	(group _leader) setVariable ["ai_city", _zoneName];
 	
 	{
@@ -275,7 +290,7 @@ INS_spawnUnits = {
 		(vehicle _leader) setVariable ["spawned_vehicle", true];
 	};
 	
-	_leader
+	[_leader,_pos]
 };
 
 
@@ -344,6 +359,7 @@ addMissionEventHandler ["BuildingChanged", {
 }];
 
 INS_bluforMission = "NONE";
+publicVariable "INS_bluforMission";
 INS_previousTaskComplete = 0;
 INS_taskZone = "";
 INS_currentMission = 0;
@@ -393,9 +409,10 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 
 				INS_taskZone = _name;
 				INS_aidTruck = _truckClass createVehicle _truckPos;
+				publicVariable "INS_aidTruck";
 				INS_bluforMission = "AID";
+				publicVariable "INS_bluforMission";
 				INS_truckMarker setMarkerPos (getPos INS_aidTruck);
-				INS_truckMarker setMarkerAlpha 1;
 				
 				[west, [call INS_currentMissionName], 
 					[ 
@@ -410,10 +427,10 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 					INS_truckMarker setMarkerPos (getPos INS_aidTruck);
 					if ( ((getPos INS_aidTruck) distance ((call INS_currentMissionName) call BIS_fnc_taskDestination)) < 50 ) then {
 						INS_previousTaskComplete = time;
-						INS_truckMarker setMarkerAlpha 0;
 						INS_aidTruck setVariable ["spawned_vehicle", true];
 						INS_aidTruck = nil;
 						INS_bluforMission = "NONE";
+						publicVariable "INS_bluforMission";
 						
 						private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
 						private _zoneparams = _zone select 2;
@@ -425,7 +442,6 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 					} else {
 						if ( (getDammage INS_aidTruck) > 0.8 ) then {
 							INS_previousTaskComplete = time;
-							INS_truckMarker setMarkerAlpha 0;
 							INS_aidTruck setVariable ["spawned_vehicle", true];
 							INS_aidTruck = nil;
 							INS_bluforMission = "NONE";

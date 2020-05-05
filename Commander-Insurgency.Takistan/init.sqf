@@ -14,6 +14,12 @@ waitUntil { scriptDone _rtsinit };
 // Setup insurgency functions
 waitUntil { isDedicated || ( !(isNull player) && isPlayer player ) };
 
+	
+INS_allPlayers = {
+	private _headlessClients = entities "HeadlessClient_F";
+	(allPlayers - _headlessClients)
+};
+
 private _runsetup = false;
 
 if ( !(isNil "opforCommander") ) then {
@@ -23,24 +29,37 @@ if ( !(isNil "opforCommander") ) then {
 };
 
 if ( isDedicated || _runsetup ) then {
-	if ( _runsetup ) then {
-		// wait to sync important stuff
-		waitUntil { !isNil "INS_fastTravelFlags" };
-		waitUntil { !isNil "INS_controlAreas" };
-	};
+
 	INS_setupFastTravel = {
+	
+		{
+			_x params ["_flag","_city","_marker"];
+			
+			_flag hideObject true;
+			removeAllActions _flag;
+			_marker setMarkerAlphaLocal 0;
+			
+		} forEach (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) >= -24 });	
+	
 		private _flags = INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 };
 		{
 			_x params ["_flag","_city","_marker"];
 			
-			while { count (_flag nearRoads 20) > 0 } do {
+			while { isOnroad _flag } do {
 				_flag setPosATL ((getPos _flag) findEmptyPosition [5,20,"MAN"]);
 			};
 			
 			_flag hideObject false;
 			removeAllActions _flag;
 			_marker setMarkerAlphaLocal 1;
-			_marker setMarkerPos (getPos _flag);
+			_marker setMarkerPosLocal (getPos _flag);
+		
+			_flag addAction ["Open Purchase Menu",
+							 {
+							 	private _diag = createDialog "PurchaseMenuDialog";
+							 	waitUntil { _diag };
+							 	call INS_setupPurchaseMenu;
+							 },[],1.5,true,true,"","true",5,false,"",""];
 			
 			{
 				private _dest = _x;
@@ -59,7 +78,7 @@ if ( isDedicated || _runsetup ) then {
 								 },_dest,1.5,true,true,"","true",5,false,"",""];
 			} forEach (_flags select { (_x select 0) != _flag });
 			
-		} forEach _flags;			
+		} forEach _flags;	
 	};
 	
 	if ( isNil "INS_squadSetups" ) then {
@@ -99,7 +118,118 @@ if ( isDedicated || _runsetup ) then {
 	[] call (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
 	
 	if ( !isDedicated ) then {
-		waitUntil { RTS_commanding };
+		
+		INS_purchaseUnit = {
+			params ["_unitType"];
+			
+			private _canPurchase = false;
+			
+			private _costs = [];
+			private _spawner = { };
+			
+			switch ( _unitType ) do {
+				case "SPY":{
+					_costs = INS_spyCost;
+					_spawner = INS_fnc_spawnSpy;
+				};
+				case "TANK":{
+					_costs = INS_tankCost;
+					_spawner = INS_fnc_spawnTank;
+				};
+				case "IFV":{
+					_costs = INS_apcCost;
+					_spawner = INS_fnc_spawnAPC;
+				};
+				case "SQUAD":{
+					_costs = INS_squadCost;
+					_spawner = INS_fnc_spawnSquad;
+				};
+				case "MG":{
+					_costs = INS_mgCost;
+					_spawner = INS_fnc_spawnMG;
+				};
+				case "SNIPER":{
+					_costs = INS_sniperCost;
+					_spawner = INS_fnc_spawnSniper;
+				};
+				case "CAR":{
+					_costs = INS_carCost;
+					_spawner = INS_fnc_spawnCar;
+				};
+				case "EMPTYCAR":{
+					_costs = INS_carCost;
+					_spawner = INS_fnc_spawnEmptyCar;
+				};
+			};
+			
+			if ( !(_costs isEqualTo []) ) then {
+				_costs params ["_mp","_mat"];
+				if ( _mp <= INS_playerManpower && _mat <= INS_playerMaterials ) then {
+					_canPurchase = true;
+					INS_playerManpower = INS_playerManpower - _mp;
+					publicVariable "INS_playerManpower";
+					INS_playerMaterials = INS_playerMaterials - _mat;
+					publicVariable "INS_playerMaterials";
+					private _spawnpos = (getPos player) findEmptyPosition [5,20, "MAN"];
+					[_spawnpos] call _spawner;
+					[] call RTS_fnc_setupAllGroups;
+				};
+			};
+			
+			if ( ! _canPurchase ) then {
+				titleText ["<t size='1.4'>Not Enough Funds...</t>", "PLAIN", 1, true, true];
+			};
+		};
+	
+		INS_setupPurchaseMenu = {
+			private _spy = 1600;
+			private _squad = 1601;
+			private _emptyCar = 1602;
+			private _car = 1603;
+			private _mgTeam = 1604;
+			private _sniperTeam = 1605;
+			private _ifv = 1606;
+			private _tank = 1607;
+			
+			ctrlSetText [_spy, ( format ["%1 %2 MP / %3 Mat.)", ctrlText _spy, INS_spyCost select 0, INS_spyCost select 1] )];
+			ctrlSetText [_squad, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _squad, INS_squadCost select 0, INS_squadCost select 1] )];
+			ctrlSetText [_mgTeam, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _mgTeam, INS_mgCost select 0, INS_mgCost select 1] )];
+			ctrlSetText [_sniperTeam, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _sniperTeam, INS_sniperCost select 0, INS_sniperCost select 1] )];
+			ctrlSetText [_car, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _car, INS_carCost select 0, INS_carCost select 1] )];
+			ctrlSetText [_emptyCar, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _emptyCar, INS_carCost select 0, INS_carCost select 1] )];
+			ctrlSetText [_ifv, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _ifv, INS_apcCost select 0, INS_apcCost select 1] )];
+			ctrlSetText [_tank, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _tank, INS_tankCost select 0, INS_tankCost select 1] )];
+			
+			buttonSetAction [_tank, "['TANK'] spawn INS_purchaseUnit"];
+			buttonSetAction [_squad, "['SQUAD'] spawn INS_purchaseUnit"];
+			buttonSetAction [_mgTeam, "['MG'] spawn INS_purchaseUnit"];
+			buttonSetAction [_sniperTeam, "['SNIPER'] spawn INS_purchaseUnit"];
+			buttonSetAction [_car, "['CAR'] spawn INS_purchaseUnit"];
+			buttonSetAction [_emptyCar, "['EMPTYCAR'] spawn INS_purchaseUnit"];
+			buttonSetAction [_ifv, "['IFV'] spawn INS_purchaseUnit"];
+			buttonSetAction [_spy, "['SPY'] spawn INS_purchaseUnit"];
+			
+		};
+		
+		waitUntil { !isNil "INS_fastTravelFlags" };
+		waitUntil { !isNil "INS_controlAreas" };
+		waitUntil { !isNil "INS_areaCount" };
+		waitUntil { count INS_controlAreas == INS_areaCount };
+		
+		{
+			_x params ["_name","_mark","_params"];
+			_params params ["","_mp","_mat"];
+			
+			private _marker = createMarkerLocal [ format ["__resource_mark__%1", _name], getMarkerPos _mark];
+			_marker setMarkerShapeLocal "ICON";
+			_marker setMarkerTypeLocal "select";
+			_marker setMarkerColorLocal "ColorBlue";
+			_marker setMarkerTextLocal (format ["Manpower: %1  /  Materials: %2", _mp, _mat]);
+			_marker setMarkerAlphaLocal 1;
+			
+		} forEach INS_controlAreas;
+		
+		
 		INS_maxMen = 45;
 		INS_maxSpies = 10;
 		
@@ -175,31 +305,66 @@ if ( isDedicated || _runsetup ) then {
 					},[player]] call CBA_fnc_globalExecute;
 				}];
 		}];
-
-		INS_playerCommanderMon = {
-			waitUntil { !(isNull (findDisplay 46)) };
-			sleep 5;
-			{
-				_x hideObject false;
-			} forEach INS_spies;
-			{
-				_x hideObject false;
-			} forEach (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
-			
-			private _flag = selectRandom (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
-			player setPos ( (getPos (_flag select 0)) findEmptyPosition [2,10,"MAN"] );
-			player setDir ( (getPos player) getDir (getPos (_flag select 0)) );
-			
-			waitUntil { !isNil "INS_truckMarker" };
-			while { true } do {
-				INS_truckMarker setMarkerAlphaLocal 0;
-			};
-		};
-		INS_commanderMonitor = [] spawn INS_playerCommanderMon;
+				
+		waitUntil { !isNull (findDisplay 46) };
 		
-		INS_insurgentMission = [] spawn {
-			// do mission stuff here
-		};
+		call INS_setupFastTravel;
+		{
+			_x hideObject false;
+		} forEach INS_spies;
+		
+		private _flag = selectRandom (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
+		player setPos ( (getPos (_flag select 0)) findEmptyPosition [2,10,"MAN"] );
+		player setDir ( (getPos player) getDir (getPos (_flag select 0)) );
+		player removeAction INS_deployAction;
+		
+		INS_infoBox = (findDisplay 46) ctrlCreate ["RscText", -1];
+	
+		INS_infoBox ctrlSetFontHeight 0.07;
+		INS_infoBox ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-0.15),safeZoneY+0.01,0.3,0.07]; 
+	
+		INS_controlled = INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -51 };
+	
+		addMissionEventHandler ["Draw3d",
+		{
+			
+			INS_infoBox ctrlSetText 
+				( format ["Manpower %1   /   Material %2   /   Income Regions: %3", INS_playerManpower, INS_playerMaterials, count INS_controlled]
+				);
+				
+			INS_infoBox ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-(ctrlTextWidth INS_infoBox)/2-0.015),safeZoneY+0.01,ctrlTextWidth INS_infoBox+0.03,0.07];
+	
+			INS_infoBox ctrlCommit 0;
+			
+			// Process income
+			if ( count ((call INS_allPlayers) select { side _x == west }) > 0 ) then {
+				INS_controlled = INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -51 };
+				// manpower
+				if ( time > (INS_lastMen + INS_menPulse) ) then {
+					INS_lastMen = time;
+					private _amount = 0;
+					{
+						INS_playerManpower = INS_playerManpower + _x;
+						_amount = _amount + _x;
+					} forEach ( INS_controlled apply { floor ( ( (_x select 2) select 1 ) / 5 ) } );
+					publicVariable "INS_playerManpower";
+					titleText [ format [ "<t size='1.5'>%1 MANPOWER Income received!</t>", _amount ], "PLAIN", 1, true, true];
+				};
+				
+				// material 
+				if ( time > (INS_lastMat + INS_matPulse) ) then {
+					INS_lastMat = time;
+					private _amount = 0;
+					{
+						INS_playerMaterials = INS_playerMaterials + _x;
+						_amount = _amount + _x;
+					} forEach ( INS_controlled apply { floor ( ( (_x select 2) select 2 ) / 10 ) } );
+					publicVariable "INS_playerMaterials";
+					titleText [ format [ "<t size='1.5'>%1 MATERIALS Income received!</t>", _amount ], "PLAIN", 1, true, true];
+				};
+			};
+			
+		}];
 	};
 };
 
@@ -210,12 +375,7 @@ if ( isServer && isNil "INS_caches" ) then {
 	publicVariable "INS_maxCasualties";
 	INS_caches = 2;
 	publicVariable "INS_caches";
-	
-	INS_allPlayers = {
-		private _headlessClients = entities "HeadlessClient_F";
-	 	(allPlayers - _headlessClients)
-	};
-	
+
 	// Setup everything by group
 	{
 		_setupfnc = (leader _x) getVariable ["opfor_setup", nil];
@@ -229,6 +389,18 @@ if ( isServer && isNil "INS_caches" ) then {
 			[_x] call _setupfnc;
 		};
 	} forEach vehicles;
+	
+	publicVariable "INS_carClasses";
+	publicVariable "INS_tankClasses";
+	publicVariable "INS_apcClasses";
+	publicVariable "INS_squadSetups";
+	publicVariable "INS_civilianSetups";
+	publicVariable "INS_bluforSquadSetups";
+	publicVariable "INS_greenforSquadSetups";
+	publicVariable "INS_mgSetups";
+	publicVariable "INS_sniperSetups";
+	publicVariable "INS_spySetups";	
+	
 	// Spawn stuff
 	INS_setupFinished = false;
 	[] spawn INS_fnc_setupCaches;
@@ -301,22 +473,18 @@ if ( isDedicated || !hasInterface ) exitWith {};
 
 // Setup Blufor Player
 if ( side player == west ) then {
-	
-	[] spawn {
-		waitUntil { !isNil "INS_spies" };
+	[] spawn {	
 		while { true } do {
 			{
-				private _nearhouses = _x nearObjects ["House", 150];
-				if ( ((getPos _x) distance (getPos player)) > 350 && (count _nearhouses) > 4 ) then {
-					_x hideObject true;
-				} else {
-					_x hideObject false;
-				};
-			} forEach INS_spies;
-		};		
+				_x params ["_flag","_city","_marker"];
+				
+				_flag hideObject true;
+			} forEach INS_fastTravelFlags;
+			sleep 2;
+		};
 	};
-
-	player addEventHandler [ "killed",
+		
+	player addEventHandler [ "mpkilled",
 							{ 
 								[0, { INS_bluforCasualties = INS_bluforCasualties + 1; publicVariable "INS_bluforCasualties"; }] call CBA_fnc_globalExecute
 							}];
@@ -327,13 +495,34 @@ if ( side player == west ) then {
 	
 	INS_infoBox ctrlSetFontHeight 0.07;
 	INS_infoBox ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-0.15),safeZoneY+0.01,0.3,0.07]; 
+	
+	INS_localTruckMarker = createMarkerLocal ["local_ins_truck_marker",[0,0,0]];
+	INS_localTruckMarker setMarkerShapeLocal "ICON";
+	INS_localTruckMarker setMarkerTextLocal "AID Vehicle";
+	INS_localTruckMarker setMarkerColorLocal "ColorBlue";
+	INS_localTruckMarker setMarkerTypeLocal "select";
+	INS_localTruckMarker setMarkerAlphaLocal 0;
 
 	addMissionEventHandler ["Draw3d",
 	{
+		if ( INS_bluforMission == "AID" ) then {
+			INS_localTruckMarker setMarkerAlphaLocal 1;
+			INS_localTruckMarker setMarkerPosLocal (getPos INS_aidTruck);
+		} else {
+			INS_localTruckMarker setMarkerAlphaLocal 0;
+		};
+	
 		// Update insurgency info display
-		INS_infoBox ctrlSetText 
-			( format ["Blufor Casualties - %1 / %2 | Caches Remaining - %3", INS_bluforCasualties, INS_maxCasualties, INS_caches]
-			);
+		if ( INS_bluforPacification ) then {
+			INS_infoBox ctrlSetText 
+				( format ["Blufor Casualties - %1 / %2 | Caches Remaining - %3", INS_bluforCasualties, INS_maxCasualties, INS_caches]
+				);
+		} else {
+			private _bluforZones = count (INS_controlAreas select { ( (_x select 2) select 0 ) >= 51 });
+			INS_infoBox ctrlSetText 
+				( format ["Blufor Casualties - %1 / %2 | Towns Remaining - %3", INS_bluforCasualties, INS_maxCasualties, INS_bluforZoneAmount - _bluforZones]
+				);
+		};
 		INS_infoBox ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-(ctrlTextWidth INS_infoBox)/2-0.015),safeZoneY+0.01,ctrlTextWidth INS_infoBox+0.03,0.07];
 
 		INS_infoBox ctrlCommit 0;

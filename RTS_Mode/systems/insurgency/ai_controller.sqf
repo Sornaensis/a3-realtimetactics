@@ -26,6 +26,28 @@ doCounterAttack = {
 	};
 };
 
+getNearestControlZone2 = {
+	params ["_pos"];
+	
+	private _inrestricted = false;
+	
+	{
+		if ( _pos inArea _x ) then {
+			_inrestricted = true;
+		};
+	} forEach RTS_restrictionZone;
+	
+	if ( _inrestricted ) exitWith {  };
+	
+	private _zone = [_pos] call getNearestControlZone;
+	
+	private _marker = [_pos, ( INS_controlAreas select { (_x select 0) != _zone } ) apply { _x select 1 }] call CBA_fnc_getNearest;
+	
+	private _location = (INS_controlAreas select { (_x select 1) == _marker });
+	
+	(_location select 0) select 0
+};
+
 getNearestControlZone = {
 	params ["_pos"];
 	
@@ -50,6 +72,7 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 	{
 		private _humanPlayers = call INS_allPlayers;
 		private _insurgents = ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x };
+		private _unitSpawners = (_humanPlayers + _insurgents);
 		{
 			private _unit = _x;
 			if ( !isPlayer _unit && !((_unit getVariable ["ins_side",objnull]) isEqualTo objnull) ) then {
@@ -59,7 +82,10 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 				
 				{
 					private _playerPos = getPos _x;
-					private _zone = [_playerPos] call getNearestControlZone;
+					private _zone = "AI";
+					if ( isPlayer _x ) then {
+						_zone = [_playerPos] call getNearestControlZone;
+					};
 					if ( (_unitPos distance2d _playerPos) > 1500 || isNil "_zone" ) then {
 						if ( ([vehicle _x, vehicle _unit] call BIS_fnc_isInFrontOf) && !(terrainIntersect [eyePos _x,eyePos _unit]) ) then {
 							_canBeSeen = true;		
@@ -67,7 +93,7 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 					} else {
 						_canBeSeen = true;
 					};
-				} forEach (_humanPlayers + _insurgents);
+				} forEach _unitSpawners;
 				
 				if ( !_canBeSeen ) then {		
 					deleteVehicle (vehicle _unit);
@@ -92,7 +118,7 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 					} else {
 						_canBeSeen = true;
 					};
-				} forEach _humanPlayers;
+				} forEach _unitSpawners;
 				
 				if ( !_canBeSeen ) then {		
 					deleteVehicle _veh;
@@ -122,7 +148,8 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 	{
 		private _humanPlayers = call INS_allPlayers;
-		private _insurgents = ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x };
+		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
+		private _unitSpawners = ( (_humanPlayers select { side _x == west }) + _insurgents );
 		
 		// Spawn AI due to blufor player activity
 		if ( (call getSpawnedSoldierCount) < INS_spawnedUnitCap ) then {
@@ -140,16 +167,42 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 					if ( !isNil "_zone" ) then {
 						if ( [_zone] call INS_canZoneSpawnAndUpdate ) then {
 							if ( ([_zone] call INS_getZoneDensity) < INS_populationDensity ) then {
-								private _soldier = [_pos,_zone] call INS_spawnUnits;
-								if ( !isNull _soldier ) then {
+								private _soldierList = [_pos,_zone] call INS_spawnUnits;
+								if ( !isNil "_soldierList" && !isNull (_soldierList select 0) ) then {
+									_soldierList params ["_soldier", "_position"];
 									private _task = selectRandomWeighted [setupAsGarrison,0.4,setupAsPatrol,0.8];
-									[(group _soldier), [(getPos _soldier), 75] call CBA_fnc_randPos, 400, _zone] call _task;
+									private _radius = 200 + (random 100);
+									if ( vehicle _soldier != _soldier ) then {
+										_task = setupAsPatrol;
+										_radius = 400 + (random 100);
+									};									
+									[(group _soldier), [_position, 45] call CBA_fnc_randPos, _radius, _zone] call _task;
+								};
+							};
+						};
+					};
+					
+					// second nearest zone
+					private _zone2 = [_pos] call getNearestControlZone2;
+					if ( !isNil "_zone2" ) then {
+						if ( [_zone2] call INS_canZoneSpawnAndUpdate ) then {
+							if ( ([_zone2] call INS_getZoneDensity) < INS_populationDensity ) then {
+								private _soldierList = [_pos,_zone2] call INS_spawnUnits;
+								if ( !isNil "_soldierList" && !isNull (_soldierList select 0) ) then {
+									_soldierList params ["_soldier", "_position"];
+									private _task = selectRandomWeighted [setupAsGarrison,0.4,setupAsPatrol,0.8];
+									private _radius = 200 + (random 100);
+									if ( vehicle _soldier != _soldier ) then {
+										_task = setupAsPatrol;
+										_radius = 400 + (random 100);
+									};									
+									[(group _soldier), [_position, 45] call CBA_fnc_randPos, _radius, _zone2] call _task;
 								};
 							};
 						};
 					};
 				};
-			} forEach ( (_humanPlayers select { side _x == west }) + _insurgents );
+			} forEach _unitSpawners;
 		};
 		if ( (call getSpawnedCiviliansCount) < INS_civilianCap ) then {
 			{
@@ -166,15 +219,21 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 					if ( !isNil "_zone" ) then {
 						if ( [_zone] call INS_canZoneSpawnCiviliansAndUpdate ) then {
 							if ( ([_zone] call INS_getZoneCivilianDensity) < INS_civilianDensity ) then {
-								private _soldier = [_pos,_zone] call INS_spawnCivilian;
-								if ( !isNull _soldier ) then {
+								private _soldierList = [_pos,_zone] call INS_spawnCivilian;
+								if ( !isNil "_soldierList" && !isNull (_soldierList select 0) ) then {
+									_soldierList params ["_soldier", "_position"];
 									private _task = selectRandomWeighted [setupAsGarrison,0.6,setupAsPatrol,0.4];
-									[(group _soldier), [(getPos _soldier), 75] call CBA_fnc_randPos, 400, _zone] call _task;
+									private _radius = 125 + (random 150);
+									if ( vehicle _soldier != _soldier ) then {
+										_task = setupAsPatrol;
+										_radius = (400 + random 100);
+									};									
+									[(group _soldier), [_pos, 45] call CBA_fnc_randPos, _radius, _zone] call _task;
 								};
 							};
 						};
 					};
 				};
-			} forEach _humanPlayers;
+			} forEach _unitSpawners;
 		};
 	}];

@@ -286,6 +286,116 @@ class PassengerInfoText: RscText
 // GUI EDITOR OUTPUT END
 ////////////////////////////////////////////////////////
 
+class PurchaseMenuDialog 
+{
+	controls[] = {
+		PurchaseMenuBG,
+		PurchaseText,
+		SpyButton,
+		SquadButton,
+		EmptyCarButton,
+		CarButton,
+		MGButton,
+		SniperButton,
+		IFVButton,
+		TankButton
+	};
+	class PurchaseMenuBG: IGUIBack
+	{
+		idc = 2200;
+		x = 0.324687 * safezoneW + safezoneX;
+		y = 0.335 * safezoneH + safezoneY;
+		w = 0.37125 * safezoneW;
+		h = 0.418 * safezoneH;
+	};
+	class SpyButton: RscButton
+	{
+		idc = 1600;
+		text = "Spy"; //--- ToDo: Localize;
+		x = 0.335 * safezoneW + safezoneX;
+		y = 0.423 * safezoneH + safezoneY;
+		w = 0.0979687 * safezoneW;
+		h = 0.066 * safezoneH;
+	};
+	class PurchaseText: RscText
+	{
+		idc = 1000;
+		text = "Purchase Units"; //--- ToDo: Localize;
+		x = 0.463906 * safezoneW + safezoneX;
+		y = 0.357 * safezoneH + safezoneY;
+		w = 0.0928125 * safezoneW;
+		h = 0.044 * safezoneH;
+		sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 1.35)";
+	};
+	class SquadButton: RscButton
+	{
+		idc = 1601;
+		text = "Squad"; //--- ToDo: Localize;
+		x = 0.335 * safezoneW + safezoneX;
+		y = 0.544 * safezoneH + safezoneY;
+		w = 0.0979687 * safezoneW;
+		h = 0.066 * safezoneH;
+	};
+	class EmptyCarButton: RscButton
+	{
+		idc = 1602;
+		text = "Car (Empty)"; //--- ToDo: Localize;
+		x = 0.335 * safezoneW + safezoneX;
+		y = 0.654 * safezoneH + safezoneY;
+		w = 0.0979687 * safezoneW;
+		h = 0.066 * safezoneH;
+	};
+	class CarButton: RscButton
+	{
+		idc = 1603;
+		text = "Car"; //--- ToDo: Localize;
+		x = 0.45875 * safezoneW + safezoneX;
+		y = 0.423 * safezoneH + safezoneY;
+		w = 0.0979687 * safezoneW;
+		h = 0.066 * safezoneH;
+	};
+	class MGButton: RscButton
+	{
+		idc = 1604;
+		text = "MG Team"; //--- ToDo: Localize;
+		x = 0.45875 * safezoneW + safezoneX;
+		y = 0.544 * safezoneH + safezoneY;
+		w = 0.0979687 * safezoneW;
+		h = 0.066 * safezoneH;
+	};
+	class SniperButton: RscButton
+	{
+		idc = 1605;
+		text = "Sniper Team"; //--- ToDo: Localize;
+		x = 0.45875 * safezoneW + safezoneX;
+		y = 0.654 * safezoneH + safezoneY;
+		w = 0.0979687 * safezoneW;
+		h = 0.066 * safezoneH;
+	};
+	class IFVButton: RscButton
+	{
+		idc = 1606;
+		text = "IFV"; //--- ToDo: Localize;
+		x = 0.587656 * safezoneW + safezoneX;
+		y = 0.423 * safezoneH + safezoneY;
+		w = 0.0979687 * safezoneW;
+		h = 0.066 * safezoneH;
+	};
+	class TankButton: RscButton
+	{
+		idc = 1607;
+		text = "Tank"; //--- ToDo: Localize;
+		x = 0.587656 * safezoneW + safezoneX;
+		y = 0.544 * safezoneH + safezoneY;
+		w = 0.0979687 * safezoneW;
+		h = 0.066 * safezoneH;
+	};
+};
+////////////////////////////////////////////////////////
+// GUI EDITOR OUTPUT END
+////////////////////////////////////////////////////////
+
+
 
 /// Spectator
 

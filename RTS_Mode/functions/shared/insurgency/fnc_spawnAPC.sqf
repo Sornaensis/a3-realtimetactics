@@ -9,7 +9,7 @@ if ( isNil "_side" ) then {
 };
 
 private _radius = 50;
-while { !(isOnRoad _pos) } do {
+while { !(isOnRoad _pos) || ([_pos,(call INS_allPlayers) select { side _x != _side },400] call CBA_fnc_getNearest) > 0 } do {
 	private _roads = _pos nearRoads 500;
 	if ( count _roads > 0 ) then {
 		_pos = (getPos (selectRandom _roads));
