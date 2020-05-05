@@ -49,6 +49,7 @@ getNearestControlZone = {
 INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 	{
 		private _humanPlayers = call INS_allPlayers;
+		private _insurgents = ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x };
 		{
 			private _unit = _x;
 			if ( !isPlayer _unit && !((_unit getVariable ["ins_side",objnull]) isEqualTo objnull) ) then {
@@ -66,7 +67,7 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 					} else {
 						_canBeSeen = true;
 					};
-				} forEach _humanPlayers;
+				} forEach (_humanPlayers + _insurgents);
 				
 				if ( !_canBeSeen ) then {		
 					deleteVehicle (vehicle _unit);
@@ -83,7 +84,8 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 				private _canBeSeen = false;
 				{
 					private _playerPos = getPos _x;
-					if ( (_vehpos distance2d _playerPos) > 1500 ) then {
+					private _zone = [_playerPos] call getNearestControlZone;
+					if ( (_vehpos distance2d _playerPos) > 1500 || isNil "_zone" ) then {
 						if ( ([_veh, vehicle _x] call BIS_fnc_isInFrontOf) && !(terrainIntersect [eyePos _x,_vehpos]) ) then {
 							_canBeSeen = true;		
 						};
@@ -102,7 +104,7 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 		{
 			private _veh = _x;
 			private _driver = driver _veh;
-			if ( (_veh getVariable ["spawned_vehicle", false]) || ( !(isNull _driver) && side _driver != west ) ) then {
+			if ( (_veh getVariable ["spawned_vehicle", false]) || ( !(isNull _driver) && !(isPlayer _driver) ) ) then {
 				_veh setFuel 1;
 			};
 		} forEach vehicles;
@@ -120,6 +122,8 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 	{
 		private _humanPlayers = call INS_allPlayers;
+		private _insurgents = ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x };
+		
 		// Spawn AI due to blufor player activity
 		if ( (call getSpawnedSoldierCount) < INS_spawnedUnitCap ) then {
 			{
@@ -145,7 +149,7 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 						};
 					};
 				};
-			} forEach (_humanPlayers select { side _x == west });
+			} forEach ( (_humanPlayers select { side _x == west }) + _insurgents );
 		};
 		if ( (call getSpawnedCiviliansCount) < INS_civilianCap ) then {
 			{
@@ -171,6 +175,6 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 						};
 					};
 				};
-			} forEach (_humanPlayers select { side _x == west });
+			} forEach _humanPlayers;
 		};
 	}];

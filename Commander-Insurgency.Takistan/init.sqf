@@ -7,24 +7,28 @@ if ( side player == east || isServer ) then {
 	};
 };
 
-_rtsinit = [] spawn (compile preprocessFileLinenumbers "rts\init.sqf");
+private _rtsinit = [] spawn (compile preprocessFileLinenumbers "rts\init.sqf");
 
 waitUntil { scriptDone _rtsinit };
 
 // Setup insurgency functions
+waitUntil { isDedicated || ( !(isNull player) && isPlayer player ) };
 
 private _runsetup = false;
 
-if ( !isNil "opforCommander" || isServer ) then {
-	if ( !isDedicated ) then {
+if ( !(isNil "opforCommander") ) then {
+	if ( side player == east ) then {
 		_runsetup = true;
 	};
 };
 
 if ( isDedicated || _runsetup ) then {
-	INS_setupFastTravel = {
+	if ( _runsetup ) then {
+		// wait to sync important stuff
 		waitUntil { !isNil "INS_fastTravelFlags" };
 		waitUntil { !isNil "INS_controlAreas" };
+	};
+	INS_setupFastTravel = {
 		private _flags = INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 };
 		{
 			_x params ["_flag","_city","_marker"];
@@ -94,13 +98,57 @@ if ( isDedicated || _runsetup ) then {
 	
 	[] call (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
 	
-	if ( !isNil "opforCommander" ) then {
-		opforCommander addMPEventHandler ["MPRespawn", {
+	if ( !isDedicated ) then {
+		waitUntil { RTS_commanding };
+		INS_maxMen = 45;
+		INS_maxSpies = 10;
+		
+		// Costs in [manpower, materials]
+		INS_spyCost = [3, 5];
+		INS_squadCost = [10,20];
+		INS_mgCost = [5, 20];
+		INS_sniperCost = [10, 15];
+		INS_carCost = [5, 50];
+		INS_apcCost = [10, 100];
+		INS_tankCost = [30, 250];		
+		
+		INS_lastMen = 0;
+		INS_menPulse = 180;
+		INS_lastMat = 0;
+		INS_matPulse = 240;
+		
+		// Starting materials and manpower
+		if ( isNil "INS_playerMaterials" ) then {
+			INS_playerMaterials = 300;
+			publicVariable "INS_playterMaterials";
+			INS_playerManpower = 20;
+			publicVariable "INS_playerManpower";
+		};
+		
+		/*     Material and Manpower
+		 * Material and manpower are used to purchase units and represent abstractions of the procurement and training process
+	     *   of irregular/semi regular militia and insurgencies. Capturing towns gives immediate rewards, and time based rewards.
+	     * Over time the rewards gained from a town diminish, leading to a cycle where the insurgency relies on its Blufor
+	     *   opponents to actually recapture towns from them in order to gain manpower and materiel.
+	     *
+	     *	   Procurement and Training
+	     * Procurement depends on type and existing quantity. The more units a commander controls the more expensive new units
+	     *  of that type become.
+	     * Additionally commanders should task one area as a training center to increase unit abilities.
+	     * Training only applies to the units undergoing training.
+		 */
+		
+		
+		player addMPEventHandler ["MPRespawn", {
 			if ( !isNil "INS_cacheBuildings" ) then {
 				private _commandbuildings = INS_cacheBuildings select { ((position _x) distance (position INS_currentCache)) > 100 };
-				opforCommander setPosATL ( ([_commandbuildings call BIS_fnc_selectRandom] call BIS_fnc_buildingPositions) call BIS_fnc_selectRandom );
+				player setPosATL ( ([_commandbuildings call BIS_fnc_selectRandom] call BIS_fnc_buildingPositions) call BIS_fnc_selectRandom );
+			} else {
+				private _flag = selectRandom (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
+				player setPos ( (getPos (_flag select 0)) findEmptyPosition [2,10,"MAN"] );
+				player setDir ( (getPos player) getDir (getPos (_flag select 0)) );
 			};
-			opforCommander addAction ["Begin Commanding", 
+			player addAction ["Begin Commanding", 
 				{
 					if ( scriptDone RTS_ui ) then {
 						RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
@@ -127,30 +175,32 @@ if ( isDedicated || _runsetup ) then {
 					},[player]] call CBA_fnc_globalExecute;
 				}];
 		}];
+
+		INS_playerCommanderMon = {
+			waitUntil { !(isNull (findDisplay 46)) };
+			sleep 5;
+			{
+				_x hideObject false;
+			} forEach INS_spies;
+			{
+				_x hideObject false;
+			} forEach (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
 			
-		// jip commander setup
-		if ( !isDedicated ) then {
-			[] spawn {
-				[] spawn INS_setupFastTravel;
-				{
-					_x hideObject false;
-				} forEach INS_spies;
-				{
-					_x hideObject false;
-				} forEach (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
-				
-				private _flag = selectRandom (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
-				opforCommander setPos ( (getPos (_flag select 0)) findEmptyPosition [2,10,"MAN"] );
-				opforCommander setDir ( (getPos opforCommander) getDir (getPos (_flag select 0)) );
-				
-				while { true } do {
-					waitUntil { !isNil "INS_truckMarker" };
-					INS_truckMarker setMarkerAlpha 0;
-				};
+			private _flag = selectRandom (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
+			player setPos ( (getPos (_flag select 0)) findEmptyPosition [2,10,"MAN"] );
+			player setDir ( (getPos player) getDir (getPos (_flag select 0)) );
+			
+			waitUntil { !isNil "INS_truckMarker" };
+			while { true } do {
+				INS_truckMarker setMarkerAlphaLocal 0;
 			};
 		};
+		INS_commanderMonitor = [] spawn INS_playerCommanderMon;
+		
+		INS_insurgentMission = [] spawn {
+			// do mission stuff here
+		};
 	};
-
 };
 
 if ( isServer && isNil "INS_caches" ) then {

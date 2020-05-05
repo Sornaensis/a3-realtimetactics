@@ -124,7 +124,7 @@ INS_fastTravelFlags = [];
 	private _flagmark = createMarker [ format ["opfor_fast_travel_marker__%1", _x select 0], _pos];
 	_flagMark setMarkerShape "ICON";
 	_flagMark setMarkerType "hd_dot";
-	_flagMark setMarkerText "Fast Travel";
+	_flagMark setMarkerText "Travel & Recruitment";
 	_flagMark setMarkerAlpha 0;
 	
 	INS_fastTravelFlags pushback [ _flag, _x select 0, _flagmark, _forEachIndex];

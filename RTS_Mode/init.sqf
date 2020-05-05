@@ -99,8 +99,7 @@ waitUntil { time > 1 };
 
 setGroupIconsVisible [false, false];
 
-
-if ( !([] call RTS_fnc_isCommander) ) exitWith {};
+if ( !(call RTS_fnc_isCommander) ) exitWith {};
 
 [] call (compile preprocessFileLineNumbers "rts\ace_spectator_overrides\setup.sqf");
 [] call (compile preprocessFileLineNumbers "rts\functions\client\commander\setup.sqf");
@@ -280,18 +279,6 @@ disableFriendlyFire = {
 		
 	} forEach allUnits;
 };
-
-// Ai setup seems to bug out so we can just repeatedly 
-// mess with the AI
-RTS_aiSkillLimiter = [] spawn {
-	while { true } do {
-		{
-			_x call RTS_fnc_aiSkill;
-		} forEach allunits;
-		sleep 10;
-	};
-};
-
 
 if ( isNil "RTS_commandObject" ) then {
 	RTS_commandObject = player;

@@ -8,14 +8,19 @@ RTS_eliteAI    = [["aimingAccuracy",0.4],["aimingShake",0.4],["aimingSpeed",0.45
 
 private _group = group _unit;
 private _side = side _group;
-private _sideModifier = (switch (_side) do {
-						case west: { RTS_bluforAIModifier };
-						case east: { RTS_opforAIModifier }; 
-						case resistance: { RTS_greenforAIModifier };
-						case civilian: { RTS_bluforAIModifier };
-						});
+private _sideModifier = 
+(
+if ( !isDedicated ) then {
+	switch (_side) do {
+		case west: { RTS_bluforAIModifier };
+		case east: { RTS_opforAIModifier }; 
+		case resistance: { RTS_greenforAIModifier };
+		case civilian: { RTS_bluforAIModifier };
+	}
+} else { 0 }
+);
 
-_group setVariable ["LeaderFactor", _group getVariable ["LeaderFactor", 3 - (floor (random 5.5)) ] ];
+_group setVariable ["LeaderFactor", _group getVariable ["LeaderFactor", 3 - (floor (random 5.5)) ], true];
 
 private _leaderFactor = _group getVariable "LeaderFactor";
 
@@ -32,7 +37,7 @@ private _isLeader = leader _group == _unit;
 
 private _softFactor = (0.05 * (_leaderFactor + 1) * ( if ( _isLeader ) then { 1.045 } else { 1 } )) + (0.1 - random 0.2);
 
-_unit setVariable ["SoftFactor", _unit getVariable ["SoftFactor", _softFactor]];
+_unit setVariable ["SoftFactor", _unit getVariable ["SoftFactor", _softFactor], true];
 
 _softFactor = _unit getVariable "SoftFactor";
 
@@ -50,6 +55,8 @@ if ( (_unit skill "spotTime") > 0.85 ) then {
 	_unit setSkill ["spotTime", 0.85];
 };
 
-if ( side _unit != RTS_sidePlayer ) then {
-	(group _unit) setVariable ["VCM_SkillDisable",true];
+if ( !isDedicated ) then {
+	if ( side _unit != RTS_sidePlayer ) then {
+		(group _unit) setVariable ["VCM_SkillDisable",true];
+	};
 };

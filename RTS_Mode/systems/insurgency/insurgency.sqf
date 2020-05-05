@@ -226,7 +226,6 @@ INS_spawnCivilian = {
 	
 	{
 		_x setVariable ["ins_side", civilian];
-		_soldierList pushback _x;
 	} forEach (units (group _leader));
 	
 	if ( vehicle _leader != _leader ) then {
@@ -269,7 +268,7 @@ INS_spawnUnits = {
 	
 	{
 		_x setVariable ["ins_side", _side];
-		_soldierList pushback _x;
+		_x call RTS_fnc_aiSkill;
 	} forEach (units (group _leader));
 	
 	if ( vehicle _leader != _leader ) then {
@@ -354,6 +353,7 @@ INS_truckMarker setMarkerText "AID Vehicle";
 INS_truckMarker setMarkerColor "ColorBlue";
 INS_truckMarker setMarkerType "select";
 INS_truckMarker setMarkerAlpha 0;
+publicVariable "INS_truckMarker";
 INS_currentMissionName = { format ["blufor_task_%1",INS_currentMission] };
 
 INS_missionMonitor = addMissionEventHandler [ "EachFrame",
@@ -423,7 +423,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 						
 						[call INS_currentMissionName,"SUCCEEDED"] call BIS_fnc_taskSetState;
 					} else {
-						if ( !(canMove INS_aidTruck) || (getDammage INS_aidTruck) > 0.8 ) then {
+						if ( (getDammage INS_aidTruck) > 0.8 ) then {
 							INS_previousTaskComplete = time;
 							INS_truckMarker setMarkerAlpha 0;
 							INS_aidTruck setVariable ["spawned_vehicle", true];
@@ -442,7 +442,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 							{
 								params ["_city"];
 								sleep 4;
-								titleText [format ["HUMINT indicates foiled AID efforts have increased anti-coalition senitment in %1",_city],"PLAIN"];
+								titleText [format ["HUMINT indicates scrapped AID efforts have increased anti-coalition senitment in %1",_city],"PLAIN"];
 							},[_zone select 0]] call CBA_fnc_globalExecute;
 							
 							[call INS_currentMissionName,"FAILED"] call BIS_fnc_taskSetState;
