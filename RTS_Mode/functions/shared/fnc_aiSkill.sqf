@@ -55,8 +55,12 @@ if ( (_unit skill "spotTime") > 0.85 ) then {
 	_unit setSkill ["spotTime", 0.85];
 };
 
-if ( !isDedicated ) then {
+if ( !isDedicated && !isNil "RTS_sidePlayer" ) then {
 	if ( side _unit != RTS_sidePlayer ) then {
+		(group _unit) setVariable ["VCM_SkillDisable",true];
+	};
+} else {
+	if ( !hasInterface ) then {
 		(group _unit) setVariable ["VCM_SkillDisable",true];
 	};
 };

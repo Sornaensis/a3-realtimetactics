@@ -15,6 +15,7 @@ RTS_setupScripts = [];
 setGroupIconsVisible [true, false];
 
 // Vcom will do side specific stuff for AI
+VCM_ACTVATEAI = true;
 VCM_SIDESPECIFICSKILL = true;
 VCM_AIMagLimit = 1; 
 VCM_Debug = false; 

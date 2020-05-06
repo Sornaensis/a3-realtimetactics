@@ -12,7 +12,7 @@ private _rtsinit = [] spawn (compile preprocessFileLinenumbers "rts\init.sqf");
 waitUntil { scriptDone _rtsinit };
 
 // Setup insurgency functions
-waitUntil { isDedicated || ( !(isNull player) && isPlayer player ) };
+waitUntil { isDedicated || ( !(isNull player) && isPlayer player ) || !hasInterface };
 
 	
 INS_allPlayers = {
@@ -20,11 +20,45 @@ INS_allPlayers = {
 	(allPlayers - _headlessClients)
 };
 
+INS_headlessClients = {
+	entities "HeadlessClient_F"
+};
+
 private _runsetup = false;
 
 if ( !(isNil "opforCommander") ) then {
 	if ( side player == east ) then {
 		_runsetup = true;
+	};
+};
+
+if ( isServer || !hasInterface ) then {
+	setupAsGarrison = {
+		params ["_group", "_pos", "_radius","_city"];
+		[_group] call CBA_fnc_clearWaypoints;
+		_group setVariable ["ai_status", "GARRISON", true];
+		_group setVariable ["ai_city", _city, true];
+		[_group, _pos, _radius, 2, 0.7, 0 ] call CBA_fnc_taskDefend;
+	};
+	
+	setupAsPatrol = {
+		params ["_group", "_pos", "_radius","_city"];
+		[_group] call CBA_fnc_clearWaypoints;
+		_group setVariable ["ai_status", "PATROL", true];
+		_group setVariable ["ai_city", _city, true];
+		[_group, _pos, _radius, 7, "MOVE", "SAFE", "RED", (if ( side _group == civilian ) then { "LIMITED" } else { "NORMAL" })] call CBA_fnc_taskPatrol;
+	};
+	
+	doCounterAttack = {
+		params ["_group", "_pos", "_radius","_city"];
+		[_group] call CBA_fnc_clearWaypoints;
+		_group setVariable ["ai_status", "COUNTER-ATTACK", true];
+		_group setVariable ["ai_city", _city, true];
+		if ( vehicle (leader _group) != leader _group ) then {
+			[_group, _pos, _radius, 7, "MOVE", "COMBAT", "RED", "FULL"] call CBA_fnc_taskPatrol;
+		} else {
+			[_group, _pos, _radius] call CBA_fnc_taskAttack;
+		};
 	};
 };
 
@@ -484,7 +518,7 @@ if ( side player == west ) then {
 		};
 	};
 		
-	player addEventHandler [ "mpkilled",
+	player addMPEventHandler [ "MPRespawn",
 							{ 
 								[0, { INS_bluforCasualties = INS_bluforCasualties + 1; publicVariable "INS_bluforCasualties"; }] call CBA_fnc_globalExecute
 							}];

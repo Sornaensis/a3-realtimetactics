@@ -1,75 +1,24 @@
-setupAsGarrison = {
-	params ["_group", "_pos", "_radius","_city"];
-	[_group] call CBA_fnc_clearWaypoints;
-	_group setVariable ["ai_status", "GARRISON"];
-	_group setVariable ["ai_city", _city];
-	[_group, _pos, _radius, 2, 0.7, 0 ] call CBA_fnc_taskDefend;
-};
+INS_lastHCs = [];
 
-setupAsPatrol = {
-	params ["_group", "_pos", "_radius","_city"];
-	[_group] call CBA_fnc_clearWaypoints;
-	_group setVariable ["ai_status", "PATROL"];
-	_group setVariable ["ai_city", _city];
-	[_group, _pos, _radius, 7, "MOVE", "SAFE", "RED", (if ( side _group == civilian ) then { "LIMITED" } else { "NORMAL" })] call CBA_fnc_taskPatrol;
-};
-
-doCounterAttack = {
-	params ["_group", "_pos", "_radius","_city"];
-	[_group] call CBA_fnc_clearWaypoints;
-	_group setVariable ["ai_status", "COUNTER-ATTACK"];
-	_group setVariable ["ai_city", _city];
-	if ( vehicle (leader _group) != leader _group ) then {
-		[_group, _pos, _radius, 7, "MOVE", "COMBAT", "RED", "FULL"] call CBA_fnc_taskPatrol;
-	} else {
-		[_group, _pos, _radius] call CBA_fnc_taskAttack;
+// basic load balancer
+INS_getNextHC = {
+	private _hcs = (call INS_headlessClients) - INS_lastHCs;
+	
+	if ( count _hcs == 0 ) then {
+		INS_lastHCs = [];
+		_hcs = call INS_headlessClients;
 	};
+	
+	private _hc = _hcs deleteAt 0;
+	
+	INS_lastHCs pushbackunique _hc;
+	
+	_hc
 };
 
-getNearestControlZone2 = {
-	params ["_pos"];
-	
-	private _inrestricted = false;
-	
-	{
-		if ( _pos inArea _x ) then {
-			_inrestricted = true;
-		};
-	} forEach RTS_restrictionZone;
-	
-	if ( _inrestricted ) exitWith {  };
-	
-	private _zone = [_pos] call getNearestControlZone;
-	
-	private _marker = [_pos, ( INS_controlAreas select { (_x select 0) != _zone } ) apply { _x select 1 }] call CBA_fnc_getNearest;
-	
-	private _location = (INS_controlAreas select { (_x select 1) == _marker });
-	
-	(_location select 0) select 0
-};
-
-getNearestControlZone = {
-	params ["_pos"];
-	
-	private _inrestricted = false;
-	
-	{
-		if ( _pos inArea _x ) then {
-			_inrestricted = true;
-		};
-	} forEach RTS_restrictionZone;
-	
-	if ( _inrestricted ) exitWith {  };
-	
-	private _marker = [_pos, INS_controlAreas apply { _x select 1 }] call CBA_fnc_getNearest;
-	
-	private _location = (INS_controlAreas select { (_x select 1) == _marker });
-	
-	(_location select 0) select 0
-};
-
-INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
-	{
+// Despawn
+[] spawn {
+	while { true } do {
 		private _humanPlayers = call INS_allPlayers;
 		private _insurgents = ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x };
 		private _unitSpawners = (_humanPlayers + _insurgents);
@@ -142,7 +91,8 @@ INS_opforAiDeSpawner = addMissionEventHandler [ "EachFrame",
 				};
 			};
 		} forEach allGroups;
-	}];
+	};
+};
 
 
 INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
@@ -150,6 +100,8 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 		private _humanPlayers = call INS_allPlayers;
 		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
 		private _unitSpawners = ( (_humanPlayers select { side _x == west }) + _insurgents );
+		
+		private _headlessClients = call INS_headlessClients;
 		
 		// Spawn AI due to blufor player activity
 		if ( (call getSpawnedSoldierCount) < INS_spawnedUnitCap ) then {
@@ -175,8 +127,26 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 									if ( vehicle _soldier != _soldier ) then {
 										_task = setupAsPatrol;
 										_radius = 400 + (random 100);
-									};									
-									[(group _soldier), [_position, 45] call CBA_fnc_randPos, _radius, _zone] call _task;
+									};
+									// basic Headless client distribution + load balancing									
+									private _hc = call INS_getNextHC;
+									[-1, 
+										{
+											params ["_soldier","_position","_radius","_zone","_task","_hc"];
+											if ( hasInterface ) exitWith {};
+											if ( !local _hc ) exitWith {};
+											[0, { params ["_grp","_owner"]; _grp setGroupOwner _owner },[group _soldier,clientOwner]] call CBA_fnc_globalExecute;	
+											_this spawn {
+												params ["_soldier","_position","_radius","_zone","_task","_hc"];
+												waitUntil { local (group _soldier) };
+												private _group = group _soldier;
+												{
+													_x call RTS_fnc_aiSkill;
+												} forEach ( units _group );
+												[_group, [_position, 45] call CBA_fnc_randPos, _radius, _zone] call _task;
+												diag_log format ["Headless client tasking %1",_group];
+											};
+										}, [_soldier, _position,_radius,_zone,_task,_hc] ] call CBA_fnc_globalExecute;			
 								};
 							};
 						};
@@ -195,8 +165,27 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 									if ( vehicle _soldier != _soldier ) then {
 										_task = setupAsPatrol;
 										_radius = 400 + (random 100);
-									};									
-									[(group _soldier), [_position, 45] call CBA_fnc_randPos, _radius, _zone2] call _task;
+									};
+									// basic Headless client distribution + load balancing									
+									private _hc = call INS_getNextHC;
+									[-1, 
+										{
+											params ["_soldier","_position","_radius","_zone2","_task","_hc"];
+											if ( hasInterface ) exitWith {};
+											if ( !local _hc ) exitWith {};
+											[0, { params ["_grp","_owner"]; _grp setGroupOwner _owner },[group _soldier,clientOwner]] call CBA_fnc_globalExecute;	
+											_this spawn {
+												params ["_soldier","_position","_radius","_zone2","_task","_hc"];
+												waitUntil { local (group _soldier) };
+												private _group = group _soldier;
+												{
+													_x call RTS_fnc_aiSkill;
+												} forEach ( units _group );
+												[_group, [_position, 45] call CBA_fnc_randPos, _radius, _zone2] call _task;
+												diag_log format ["Headless client tasking %1",_group];
+											};
+										}, [_soldier, _position,_radius,_zone2,_task,_hc] ] call CBA_fnc_globalExecute;									
+									
 								};
 							};
 						};

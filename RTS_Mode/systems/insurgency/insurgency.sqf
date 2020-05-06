@@ -2,7 +2,7 @@ INS_spawnedUnitCap = 100; // maximum spawned soldiers
 INS_civilianCap = 50;
 INS_spawnDist = 800; // distance in meters from buildings a player shall be when we begin spawning units.
 INS_despawn = 1200; // despawn units this distance from players when they cannot be seen and their zone is inactive
-INS_spawnPulse = 10; // seconds to pulse spawns
+INS_spawnPulse = 4; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
 INS_civilianDensity = 10;
 INS_populationDensity = 24; 
@@ -63,16 +63,16 @@ INS_greenforDisposition = {
 			_retSide = east;
 		} else {
 			if ( _zoneDisp <= -24 ) then {
-				_retSide = selectRandomWeighted [east,0.9,resistance,0.1,west,0.01];
+				_retSide = selectRandomWeighted [east,1,resistance,0.05,west,0.01];
 			} else {
 				if ( _zoneDisp <= 0 ) then {
-					_retSide = selectRandomWeighted [east,0.1,resistance,0.9,west,0.01];	
+					_retSide = selectRandomWeighted [east,0.01,resistance,1,west,0.05];	
 				} else {
 					if ( _zoneDisp <= 24 ) then {
-						_retSide = selectRandomWeighted [resistance,0.6,west,0.4];
+						_retSide = selectRandomWeighted [resistance,1,west,0.1];
 					} else {
 						if ( _zoneDisp < 51 ) then {
-							_retSide = selectRandomWeighted [resistance,0.1,west,0.9];
+							_retSide = selectRandomWeighted [resistance,0.1,west,1];
 						};
 					};
 				};
@@ -196,6 +196,48 @@ INS_activeZones = {
 	_zones
 };
 
+getNearestControlZone = {
+	params ["_pos"];
+	
+	private _inrestricted = false;
+	
+	{
+		if ( _pos inArea _x ) then {
+			_inrestricted = true;
+		};
+	} forEach RTS_restrictionZone;
+	
+	if ( _inrestricted ) exitWith {  };
+	
+	private _marker = [_pos, INS_controlAreas apply { _x select 1 }] call CBA_fnc_getNearest;
+	
+	private _location = (INS_controlAreas select { (_x select 1) == _marker });
+	
+	(_location select 0) select 0
+};
+
+getNearestControlZone2 = {
+	params ["_pos"];
+	
+	private _inrestricted = false;
+	
+	{
+		if ( _pos inArea _x ) then {
+			_inrestricted = true;
+		};
+	} forEach RTS_restrictionZone;
+	
+	if ( _inrestricted ) exitWith {  };
+	
+	private _zone = [_pos] call getNearestControlZone;
+	
+	private _marker = [_pos, ( INS_controlAreas select { (_x select 0) != _zone } ) apply { _x select 1 }] call CBA_fnc_getNearest;
+	
+	private _location = (INS_controlAreas select { (_x select 1) == _marker });
+	
+	(_location select 0) select 0
+};
+
 INS_spawnCivilian = {
 	params ["_pos","_zoneName"];
 	
@@ -222,7 +264,7 @@ INS_spawnCivilian = {
 		_leader = [_pos,civilian] call INS_fnc_spawnCar;
 	};
 	
-	(group _leader) setVariable ["ai_city", _zoneName];
+	(group _leader) setVariable ["ai_city", _zoneName, true];
 	
 	{
 		_x setVariable ["ins_side", civilian];
@@ -240,59 +282,62 @@ INS_spawnUnits = {
 	
 	private _zone = [_zoneName] call INS_getZone;
 	
-	private _zonePos = getMarkerPos (_zone select 1);
+	private _zoneMarker = (_zone select 1);
+	private _zonePos = getMarkerPos _zoneMarker;
 	
-	(getMarkerPos (_zone select 1)) params ["_mx","_my"];
-	private _zoneSize = (_mx max _my) * 1.2;
+	(getMarkerPos _zoneMarker) params ["_mx","_my"];
+	private _zoneSize = (_mx max _my) * 1.6;
 	
 	private _side = [[_zone] call INS_zoneDisposition] call INS_greenforDisposition;
 	
-	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select { (count (_x buildingPos -1) > 2) && ((position _x) distance _pos) < 1400 };
-	_buildings = _buildings select { count ([position _x, call INS_allPlayers,100] call CBA_fnc_getNearest) == 0 };
+	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select { (count (_x buildingPos -1) > 2) && ((position _x) distance _pos) < 1400 && (position _x) inArea _zoneMarker };
 	if ( count _buildings == 0) exitWith { };
 	
 	private _pos = getPos (selectRandom _buildings);
-	private _tries = 0;
-	
-	while { _tries < 5 && count ([_pos, ([_zoneName] call getZoneSoldiers) select { side _x != _side },400] call CBA_fnc_getNearest) > 0 } do {
-		_pos = getPos (selectRandom _buildings);
-		_tries = _tries + 1;
-	};
-	
-	if ( count ([_pos, ([_zoneName] call getZoneSoldiers) select { side _x != _side },300] call CBA_fnc_getNearest) > 0 ) exitWith { };
 	
 	private _spawnfunc = selectRandomWeighted [INS_fnc_spawnSquad,0.9,INS_fnc_spawnAPC,0.1,INC_fnc_spawnTank,0.003];
 	
-	private _spawnpos = [_pos, 75] call CBA_fnc_randPos;
+	private _spawnpos = [_pos, 250] call CBA_fnc_randPos;
+	private _nearzone = [_spawnpos] call getNearestControlZone;
 	private _spawn = _spawnpos;
-	_tries = 0;
-	while { _tries < 5 && ( count ([_spawnpos, ([_zoneName] call getZoneSoldiers) select { side _x != _side },400] call CBA_fnc_getNearest) > 0 || count ([_spawnpos, call INS_allPlayers,500] call CBA_fnc_getNearest) > 0 || count ((call INS_allPlayers) select { !terrainIntersect[eyePos _x,_spawnpos] } ) > 0 ) } do {
-		_spawnpos = [_spawn, 150 + 35*(_tries+1)] call CBA_fnc_randPos;
+	private _tries = 0;
+	while { _tries < 10 && 
+		( _spawnpos isEqualTo [] 
+			|| _spawnpos isEqualTo [0,0,0] 
+			|| isNil "_nearzone" 
+			|| count ([_spawnpos, ([_zoneName] call getZoneSoldiers) select { (_x getVariable ["ins_side",east]) != _side },400] call CBA_fnc_getNearest) > 0 
+			|| count ([_spawnpos, call INS_allPlayers,500] call CBA_fnc_getNearest) > 0 ) } do {
+		_spawnpos = [_spawn, 250 + 20*(_tries+1)] call CBA_fnc_randPos;
+		_nearzone = [_spawnpos] call getNearestControlZone;
 		_tries = _tries + 1;
 	};
 	
-	if ( count ([_spawnpos, call INS_allPlayers,500] call CBA_fnc_getNearest) > 0  || count ((call INS_allPlayers) select { !terrainIntersect[eyePos _x,_spawnpos] } ) > 0 || count ([_spawnpos, ([_zoneName] call getZoneSoldiers) select { side _x != _side },400] call CBA_fnc_getNearest) > 0 ) exitWith {  };
+	if ( _spawnpos isEqualTo [] 
+			|| _spawnpos isEqualTo [0,0,0] 
+			|| isNil "_nearzone" 
+			|| count ([_spawnpos, call INS_allPlayers,500] call CBA_fnc_getNearest) > 0 
+			|| count ([_spawnpos, ([_zoneName] call getZoneSoldiers) select { (_x getVariable ["ins_side",east]) != _side },400] call CBA_fnc_getNearest) > 0 ) exitWith {  };
 	
 	private _leader = [_spawnpos,_side] call _spawnfunc;
 	if ( side _leader == west ) then {
-		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.7,"GREEN",0.4]];
+		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.7,"GREEN",0.4], true];
 	} else {
-		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.3,"GREEN",0.6,"VETERAN",0.4,"ELITE",0.03]];
+		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.3,"GREEN",0.6,"VETERAN",0.4,"ELITE",0.03], true];
 	};
-	(group _leader) setVariable ["ai_city", _zoneName];
+	(group _leader) setVariable ["ai_city", _zoneName, true];
 	
 	{
-		_x setVariable ["ins_side", _side];
-		_x call RTS_fnc_aiSkill;
+		_x setVariable ["ins_side", _side, true];
 	} forEach (units (group _leader));
 	
 	if ( vehicle _leader != _leader ) then {
-		(vehicle _leader) setVariable ["spawned_vehicle", true];
+		(vehicle _leader) setVariable ["spawned_vehicle", true, true];
 	};
+	
+	diag_log format ["Spawned %1 units of side %2 at %3",count (units (group _leader)),_side,_spawnpos];
 	
 	[_leader,_pos]
 };
-
 
 waitUntil { time > 0 };
 waitUntil { INS_setupFinished };
