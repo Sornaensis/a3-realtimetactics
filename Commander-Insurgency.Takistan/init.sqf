@@ -13,7 +13,6 @@ waitUntil { scriptDone _rtsinit };
 
 // Setup insurgency functions
 waitUntil { isDedicated || ( !(isNull player) && isPlayer player ) || !hasInterface };
-
 	
 INS_allPlayers = {
 	private _headlessClients = entities "HeadlessClient_F";
@@ -61,6 +60,12 @@ if ( isServer || !hasInterface ) then {
 		};
 	};
 };
+
+// Headless client strategic AI
+if ( !hasInterface && !isServer ) then {
+	[] call (compile preprocessFileLineNumbers "rts/systems/insurgency/hc_ai.sqf");
+};
+
 
 if ( isDedicated || _runsetup ) then {
 
@@ -225,14 +230,16 @@ if ( isDedicated || _runsetup ) then {
 			private _ifv = 1606;
 			private _tank = 1607;
 			
-			ctrlSetText [_spy, ( format ["%1 %2 MP / %3 Mat.)", ctrlText _spy, INS_spyCost select 0, INS_spyCost select 1] )];
-			ctrlSetText [_squad, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _squad, INS_squadCost select 0, INS_squadCost select 1] )];
-			ctrlSetText [_mgTeam, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _mgTeam, INS_mgCost select 0, INS_mgCost select 1] )];
-			ctrlSetText [_sniperTeam, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _sniperTeam, INS_sniperCost select 0, INS_sniperCost select 1] )];
-			ctrlSetText [_car, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _car, INS_carCost select 0, INS_carCost select 1] )];
-			ctrlSetText [_emptyCar, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _emptyCar, INS_carCost select 0, INS_carCost select 1] )];
-			ctrlSetText [_ifv, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _ifv, INS_apcCost select 0, INS_apcCost select 1] )];
-			ctrlSetText [_tank, ( format ["%1 (%2 MP / %3 Mat.)", ctrlText _tank, INS_tankCost select 0, INS_tankCost select 1] )];
+			private _display = findDisplay 46;
+			
+			(_display displayCtrl _spy) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_spyCost select 0, INS_spyCost select 1] );
+			(_display displayCtrl _squiad) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_squadCost select 0, INS_squadCost select 1] )];
+			(_display displayCtrl _mgTeam) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_mgCost select 0, INS_mgCost select 1] )];
+			(_display displayCtrl _sniperTeam) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_sniperCost select 0, INS_sniperCost select 1] )];
+			(_display displayCtrl _car) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_carCost select 0, INS_carCost select 1] )];
+			(_display displayCtrl _emptyCar) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_carCost select 0, INS_carCost select 1] )];
+			(_display displayCtrl _ifv) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_apcCost select 0, INS_apcCost select 1] )];
+			(_display displayCtrl _tank) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_tankCost select 0, INS_tankCost select 1] )];
 			
 			buttonSetAction [_tank, "['TANK'] spawn INS_purchaseUnit"];
 			buttonSetAction [_squad, "['SQUAD'] spawn INS_purchaseUnit"];
