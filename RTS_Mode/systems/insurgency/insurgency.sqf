@@ -4,7 +4,7 @@ INS_spawnDist = 800; // distance in meters from buildings a player shall be when
 INS_despawn = 1200; // despawn units this distance from players when they cannot be seen and their zone is inactive
 INS_spawnPulse = 4; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
-INS_civilianDensity = 8;
+INS_civilianDensity = 9;
 INS_populationDensity = 17; 
 
 
@@ -118,10 +118,10 @@ INS_getZoneCivilianDensity = {
 	private _marker = _location select 1;
 	(getMarkerSize _marker) params ["_mx","_my"];
 	
-	private _size = (_mx max _my) * 1.8;
+	private _size = (_mx max _my) * 1.6;
 	_size = _size*_size; // sq m
 	
-	private _population = count ( (allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.8) && !isPlayer _x && (_x getVariable ["ins_side",east]) == civilian } );
+	private _population = count ( (allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.4) && !isPlayer _x && (_x getVariable ["ins_side",east]) == civilian } );
 	private _nominalPop = count ((allUnits + allDeadMen) select { !isPlayer _x && (_x getVariable ["ins_side",east]) == civilian && ((group _x) getVariable ["ai_city",""]) == _zoneName });
 	
 	(_population max _nominalPop)/(_size/1000/1000)
@@ -135,10 +135,10 @@ INS_getZoneDensity = {
 	private _marker = _location select 1;
 	(getMarkerSize _marker) params ["_mx","_my"];
 	
-	private _size = (_mx max _my) * 1.8;
+	private _size = (_mx max _my) * 1.6;
 	_size = _size*_size; // sq m
 	
-	private _population = count ((allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.8) && !isPlayer _x && (_x getVariable ["ins_side",east]) != civilian });
+	private _population = count ((allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.4) && !isPlayer _x && (_x getVariable ["ins_side",east]) != civilian });
 	private _nominalPop = count ((allUnits + allDeadMen) select { !isPlayer _x && (_x getVariable ["ins_side",east]) != civilian && ((group _x) getVariable ["ai_city",""]) == _zoneName });
 	
 	(_population max _nominalPop)/(_size/1000/1000)
@@ -156,7 +156,7 @@ INS_canZoneSpawnCiviliansAndUpdate = {
 	} else {
 		private _zone = _zones select 0;
 		
-		if ( time > ( (_zone select 1) + (INS_spawnPulse*4) ) ) then {
+		if ( time > ( (_zone select 1) + INS_spawnPulse ) ) then {
 			_zone set [1, time];
 		} else {
 			_canSpawn = false;
@@ -413,6 +413,7 @@ INS_truckMarker setMarkerColor "ColorBlue";
 INS_truckMarker setMarkerType "select";
 INS_truckMarker setMarkerAlpha 0;
 publicVariable "INS_truckMarker";
+INS_aidMissionLocated = -1;
 INS_currentMissionName = { format ["blufor_task_%1",INS_currentMission] };
 
 INS_missionMonitor = addMissionEventHandler [ "EachFrame",
@@ -459,7 +460,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 				
 				[west, [call INS_currentMissionName], 
 					[ 
-						format ["<marker name='ins_truck_marker'>Deliver AID</marker> from Coalition airfield to the town of %1",_name],
+						format ["<marker name='ins_truck_marker'>Deliver AID</marker> from Coalition airfield to the town of %1<br/><br/>Once the aid truck reaches the RP, wait for civilians to come begin collecting the supplies.",_name],
 						"Deliver AID",
 						"aidMarker"],
 						getPos _road, 1, 3, true] call BIS_fnc_taskCreate;	
@@ -468,50 +469,167 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 			switch ( INS_bluforMission ) do {
 				case "AID": {
 					INS_truckMarker setMarkerPos (getPos INS_aidTruck);
-					if ( ((getPos INS_aidTruck) distance ((call INS_currentMissionName) call BIS_fnc_taskDestination)) < 50 ) then {
-						INS_previousTaskComplete = time;
-						INS_aidTruck setVariable ["spawned_vehicle", true];
-						INS_aidTruck = nil;
-						INS_bluforMission = "NONE";
-						publicVariable "INS_bluforMission";
+					if ( INS_aidMissionLocated == -1 && ((getPos INS_aidTruck) distance ((call INS_currentMissionName) call BIS_fnc_taskDestination)) < 50 ) then {
+						INS_aidMissionLocated = time;
+						private _civvies = ([INS_taskZone] call getSpawnedCivilians) select { !(_x getVariable ["aid_tasked", false]) };
+						private _civamt = ( 5 + ( random ( (count _civvies) / 2 ) ) ) max (count _civvies);
 						
-						private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
-						private _zoneparams = _zone select 2;
-						private _disp = _zoneparams select 0;
-						_zoneparams set [0, _disp + 15];
-						publicVariable "INS_controlAreas";
+						[-1, 
+						{
+							if ( !hasInterface ) exitWith {};
+							if ( side player == east ) exitWith {};
+							titleText ["AID Truck is at RP; await rendezvous with locals for ~4 minutes", "PLAIN"];
+						}] call CBA_fnc_globalExecute;
 						
-						[call INS_currentMissionName,"SUCCEEDED"] call BIS_fnc_taskSetState;
+						if ( count _civvies >= _civamt ) then {
+							for "_i" from 0 to (_civamt-1) do {
+								private _civ = _civvies select _i;
+								_civ setVariable ["aid_tasked", true];
+								[group _civ] call CBA_fnc_clearWaypoints;
+								private _pos = (getPos INS_aidTruck) findEmptyPosition [3,15,"MAN"];
+								_civ doMove _pos;
+								diag_log (format ["Tasking AID COLLECTION to %1 at position %2", _civ, _pos]);
+							};
+						};
 					} else {
-						if ( (getDammage INS_aidTruck) > 0.8 ) then {
+						if ( INS_aidMissionLocated > 0 && time > (INS_aidMissionLocated + 200) ) then {
+							
+							INS_aidMissionLocated = -1;
+							
+							{
+								private _civ = _x;
+								_civ setVariable ["aid_tasked", nil];
+								[group _civ, [getPos _civ, 200] call CBA_fnc_randPos, 250, INS_taskZone] call setupAsCivilianGarrison;
+								diag_log (format ["De-tasking %1 from aid collection", _civ, _pos]);
+							} forEach ( allUnits select { side _x == civilian && (_x getVariable ["aid_tasked",false]) } );
+							
+							INS_taskZone = "";
 							INS_previousTaskComplete = time;
 							INS_aidTruck setVariable ["spawned_vehicle", true];
 							INS_aidTruck = nil;
+							INS_aidTruck setFuel 0;
 							INS_bluforMission = "NONE";
+							publicVariable "INS_bluforMission";
 							
 							private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
 							private _zoneparams = _zone select 2;
-							private _aggr = _zoneparams select 3;
-							_zoneparams set [0, _aggr + 5];
+							private _disp = _zoneparams select 0;
+							_zoneparams set [0, _disp + 15];
 							publicVariable "INS_controlAreas";
 							
-							INS_taskZone = "";
 							
-							[-1,
-							{
-								params ["_city"];
-								sleep 4;
-								titleText [format ["HUMINT indicates scrapped AID efforts have increased anti-coalition senitment in %1",_city],"PLAIN"];
-							},[_zone select 0]] call CBA_fnc_globalExecute;
-							
-							[call INS_currentMissionName,"FAILED"] call BIS_fnc_taskSetState;
+							[call INS_currentMissionName,"SUCCEEDED"] call BIS_fnc_taskSetState;
+						} else {
+							if ( (getDammage INS_aidTruck) > 0.8 ) then {
+								INS_aidMissionLocated = -1;
+								
+								{
+									private _civ = _x;
+									_civ setVariable ["aid_tasked", nil];
+									[group _civ, [getPos _civ, 200] call CBA_fnc_randPos, 250, INS_taskZone] call setupAsCivilianGarrison;
+								} forEach ( allUnits select { side _x == civilian && (_x getVariable ["aid_tasked",false]) } );
+								
+								INS_taskZone = "";
+								INS_previousTaskComplete = time;
+								INS_aidTruck setVariable ["spawned_vehicle", true];
+								INS_aidTruck = nil;
+								INS_bluforMission = "NONE";
+								
+								private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
+								private _zoneparams = _zone select 2;
+								private _aggr = _zoneparams select 3;
+								_zoneparams set [0, _aggr + 5];
+								publicVariable "INS_controlAreas";
+								
+								INS_taskZone = "";
+								
+								[-1,
+								{
+									params ["_city"];
+									sleep 4;
+									titleText [format ["HUMINT indicates scrapped AID efforts have increased anti-coalition senitment in %1",_city],"PLAIN"];
+								},[_zone select 0]] call CBA_fnc_globalExecute;
+								
+								[call INS_currentMissionName,"FAILED"] call BIS_fnc_taskSetState;
 							};
+						};
 					};
 				};
 			};
 		};
 		
 	}];
+
+// Alert players to the other's activities
+INS_sigIntHumInt = [] spawn {
+	
+	// Sigint reveals opfor activity for blufor
+	INS_sigIntTimeout = 240;
+	INS_sigIntLast = 0;
+	
+	// humint will reveal threat levels etc once implemented
+	
+	
+	INS_nearZoneOrNull = {
+		params ["_pos"];
+		private _zone = [_pos] call getNearestControlZone;
+		
+		if ( isNil "_zone" ) exitWith {
+			objnull
+		};
+		
+		_zone
+	};
+	
+	while { true } do {
+		// Sigint
+		if ( time > (INS_sigIntLast + INS_sigIntTimeout) ) then {
+			INS_sigIntLast = time;
+			
+			private _opforgroups = allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) };
+			private _bluforgroups = allGroups select { (side _x) == west && isPlayer (leader _x) };
+			
+			private _opforlocations  = _opforgroups  apply { selectRandom (
+																			( (units _x) apply { 
+																					[getPos _x] call INS_nearZoneOrNull 
+																				}
+																			 	) select { !(_x isEqualTo objnull) }
+																			 ) };
+			private _bluforlocations = _bluforgroups apply { selectRandom (((units _x) apply { [getPos _x] call INS_nearZoneOrNull }) select { !(_x isEqualTo objnull) }) };
+			
+			diag_log (format ["Opfor intel from: %1", _bluforlocations]);
+			
+			// alert blufor players
+			if ( count _opforlocations > 0 ) then {
+				private _oploc = selectRandom _opforlocations;
+				
+				[-1,
+				{
+					params ["_city"];
+					if (!hasInterface) exitWith {};
+					if ( side player != west ) exitWith {};
+					titleText [ format ["SIGINT: Insurgent activity in the vicinity of %1", _city], "PLAIN" ];
+				},[_oploc]] call CBA_fnc_globalExecute;					
+			};
+			
+			// alert opfor player
+			if ( count _bluforlocations > 0 ) then {
+				private _bluloc = selectRandom _bluforlocations;
+				
+				[-1,
+				{
+					params ["_city"];
+					if (!hasInterface) exitWith {};
+					if ( side player != east ) exitWith {};
+					titleText [ format ["SIGINT: Coalition forces are operating near %1", _city], "PLAIN" ];
+				},[_bluloc]] call CBA_fnc_globalExecute;
+			};
+			
+		};
+	};
+
+};
+
 
 INS_capZones = []; // [ [ zone name, side, time ] ]
 
@@ -539,13 +657,14 @@ INS_getCapZone = {
 INS_insurgencyZoneCapping = [] spawn {
 	while { true } do {
 		private _humanPlayers = call INS_allPlayers;
-		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
+		private _insurgents = ( if ( count ( _humanPlayers select { side _x == west }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
 		private _unitSpawners = ( _humanPlayers + _insurgents );
 		
 		{
 			private _zone = _x;
 			private _name = _zone select 0;
 			private _marker = _zone select 1;
+			private _priorColor = markerColor _marker;
 			if ( [_zone] call INS_zoneIsGreen ) then {
 				_marker setMarkerColor "ColorGreen";
 			} else {
@@ -561,6 +680,27 @@ INS_insurgencyZoneCapping = [] spawn {
 			if ( _disp > (100 - _agg) ) then {
 				(_zone select 2) set [0, 100 - _agg];
 				publicVariable "INS_controlAreas";
+			};
+			
+			// zone has been capped
+			if ( _priorColor != (markerColor _marker) ) then {
+				[-1,
+					{
+						params ["_name","_color"];
+						if ( !hasInterface ) exitWith {};
+						
+						switch ( _color ) do {
+							case "ColorRed": {
+								titleText [ format ["SIGINT: %1 has been captured by Insurgent forces.", _name], "PLAIN"];
+							};
+							case "ColorGreen": {
+								titleText [ format ["SIGINT: %1 is now under the control of local militias.", _name], "PLAIN"];
+							};
+							case "ColorBlue": {
+								titleText [ format ["SIGINT: %1 has been pacified by Coalition forces.", _name], "PLAIN"];
+							};
+						};
+					},[_name,markerColor _marker]] call CBA_fnc_globalExecute;
 			};
 			
 			

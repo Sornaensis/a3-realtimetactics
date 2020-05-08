@@ -99,7 +99,7 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 	{
 		private _humanPlayers = call INS_allPlayers;
 		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
-		private _unitSpawners = ( (_humanPlayers select { side _x == west }) + _insurgents );
+		private _unitSpawners = ( (_humanPlayers select { side _x != east }) + _insurgents );
 		
 		private _headlessClients = call INS_headlessClients;
 		
@@ -210,6 +210,7 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 					if ( !isNil "_zone" ) then {
 						if ( [_zone] call INS_canZoneSpawnCiviliansAndUpdate ) then {
 							if ( ([_zone] call INS_getZoneCivilianDensity) < INS_civilianDensity ) then {
+								diag_log (format ["Can spawn at %1 with civilian density %2", _zone, ([_zone] call INS_getZoneCivilianDensity)]);
 								private _soldierList = [_pos,_zone] call INS_spawnCivilian;
 								if ( !isNil "_soldierList" && !isNull (_soldierList select 0) ) then {
 									_soldierList params ["_soldier", "_position"];
