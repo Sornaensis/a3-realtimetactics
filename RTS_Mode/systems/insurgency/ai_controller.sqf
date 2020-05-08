@@ -20,7 +20,7 @@ INS_getNextHC = {
 [] spawn {
 	while { true } do {
 		private _humanPlayers = call INS_allPlayers;
-		private _insurgents = ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x };
+		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
 		private _unitSpawners = (_humanPlayers + _insurgents);
 		{
 			private _unit = _x;

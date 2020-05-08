@@ -474,18 +474,18 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 			switch ( INS_bluforMission ) do {
 				case "AID": {
 					INS_truckMarker setMarkerPos (getPos INS_aidTruck);
-					if ( INS_aidPackageLocated == -1 && ((getPos INS_aidTruck) distance ((call INS_currentMissionName) call BIS_fnc_taskDestination)) < 50 ) then {
+					if ( INS_aidPackageLocated == -1 && ((getPos INS_aidTruck) distance ((call INS_currentMissionName) call BIS_fnc_taskDestination)) < 75 ) then {
 						INS_aidPackageLocated = time;
 						
 						[-1, 
-							{
-								if ( !hasInterface ) exitWith {};
-								if ( side player == east ) exitWith {};
-								titleText ["AID Truck has reached RP", "PLAIN"];
-							}] call CBA_fnc_globalExecute;
+						{
+							if ( !hasInterface ) exitWith {};
+							if ( side player == east ) exitWith {};
+							titleText ["AID Truck has reached RP", "PLAIN"];
+						}] call CBA_fnc_globalExecute;
 						
 						[] spawn {
-							waitUntil { count ([INS_aidTruck, vehicles select { side (driver _x) == west },200] call CBA_fnc_getNearest) == 0 && speed INS_aidTruck == 0 };
+							waitUntil { count ([INS_aidTruck, vehicles select { speed _x > 0 && isPlayer (driver _x) && side (driver _x) == west },200] call CBA_fnc_getNearest) == 0 && speed INS_aidTruck == 0 };
 							[-1, 
 								{
 									if ( !hasInterface ) exitWith {};
@@ -493,19 +493,21 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 									titleText ["Unloading AID supplies...", "PLAIN"];
 								}] call CBA_fnc_globalExecute;
 							
-							private _diroffset = (vectorDir INS_aidTruck) vectorMultiply -4;						
+							private _diroffset = (vectorDir INS_aidTruck) vectorMultiply -2;						
 							
 							private _pos = ((getPos INS_aidTruck) vectorAdd _diroffset) findEmptyPosition [0,15,INS_aidCrateType];
 							
-							while { isOnRoad _pos } do {
-								_pos = _pos findEmptyPosition [3,15,INS_aidCrateType];
+							if ( _pos isEqualTo [0,0,0] || _pos isEqualTo [] || _pos isEqualTo [0,0] ) then {
+								_pos = ((getPos INS_aidTruck) vectorAdd _diroffset) findEmptyPosition [0,30,INS_aidCrateType];
 							};
 							
 							INS_aidCrate = INS_aidCrateType createVehicle _pos;
 							INS_aidCrate setDir (direction INS_aidTruck);
+							
+							diag_log (format ["Spawned Civilian AID at %1", _pos]);
 						};
 					} else {
-						if ( !isNull INS_aidCrate && INS_aidPackageLocated > 0 && time > ( INS_aidPackageLocated + 20 ) && INS_aidMissionLocated == -1 ) then {
+						if ( !isNull INS_aidCrate && INS_aidPackageLocated > 0 && time > ( INS_aidPackageLocated + 5 ) && INS_aidMissionLocated == -1 ) then {
 							INS_aidMissionLocated = time;
 							private _civvies = [ ([INS_taskZone] call getSpawnedCivilians) select { !(_x getVariable ["aid_tasked", false]) }, [], { (getPos _x) distance (getPos INS_aidTruck) }, "ASCEND"] call BIS_fnc_sortBy;
 							private _civamt = floor ( ( 5 + ( random ( (count _civvies) / 2 ) ) ) min (count _civvies) );
@@ -523,7 +525,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 									private _civ = _civvies select _i;
 									_civ setVariable ["aid_tasked", true];
 									[group _civ] call CBA_fnc_clearWaypoints;
-									private _pos = (getPos INS_aidCrate) findEmptyPosition [2,20,"MAN"];
+									private _pos = ([getPos INS_aidCrate,5] call CBA_fnc_randPos) findEmptyPosition [2,20,"MAN"];
 									_civ doMove _pos;
 									if ( random 1 > 0.2 ) then {
 										(group _civ) setSpeedMode "FULL";
@@ -534,11 +536,8 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 						} else {
 							if ( INS_aidMissionLocated > 0 && 
 								( time > (INS_aidMissionLocated + 300) 
-									|| count ([INS_aidTruck, allUnits select { (_x getVariable ["aid_tasked",false]) }, 50] call CBA_fnc_getNearest) == count (allUnits select { (_x getVariable ["aid_tasked",false]) }) )  ) then {
-								
-								INS_aidMissionLocated = -1;
-								INS_aidPackageLocated = -1;
-								
+									|| count ([INS_aidCrate, allUnits select { (_x getVariable ["aid_tasked",false]) }, 50] call CBA_fnc_getNearest) >= floor ( count (allUnits select { (_x getVariable ["aid_tasked",false]) }) ) / 2 )  ) then {
+																
 								private _zonearea = [INS_taskZone] call INS_getZone;
 								private _marker = _zonearea select 1;
 								(getMarkerSize _marker) params ["_mx","_my"];
@@ -552,14 +551,17 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 									diag_log (format ["De-tasking %1 from aid collection", _civ]);
 								} forEach ( allUnits select { side _x == civilian && (_x getVariable ["aid_tasked",false]) } );
 								
+								deleteVehicle INS_aidCrate;
 								INS_taskZone = "";
 								INS_previousTaskComplete = time;
 								INS_aidTruck setVariable ["spawned_vehicle", true];
-								INS_aidCrate setVariable ["spawned_vehicle", true];
 								INS_aidCrate = objnull;
 								INS_aidTruck = nil;
 								INS_bluforMission = "NONE";
 								publicVariable "INS_bluforMission";
+								
+								INS_aidMissionLocated = -1;
+								INS_aidPackageLocated = -1;
 								
 								private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
 								private _zoneparams = _zone select 2;
@@ -586,10 +588,10 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 										diag_log (format ["De-tasking %1 from aid collection", _civ]);
 									} forEach ( allUnits select { side _x == civilian && (_x getVariable ["aid_tasked",false]) } );
 									
+									deleteVehicle INS_aidCrate;
 									INS_taskZone = "";
 									INS_previousTaskComplete = time;
 									INS_aidTruck setVariable ["spawned_vehicle", true];
-									INS_aidCrate setVariable ["spawned_vehicle", true];
 									INS_aidCrate = objnull;
 									INS_aidTruck = nil;
 									INS_bluforMission = "NONE";
@@ -662,27 +664,34 @@ INS_sigIntHumInt = [] spawn {
 			// alert blufor players
 			if ( count _opforlocations > 0 ) then {
 				private _oploc = selectRandom _opforlocations;
-				
-				[-1,
-				{
-					params ["_city"];
-					if (!hasInterface) exitWith {};
-					if ( side player != west ) exitWith {};
-					titleText [ format ["SIGINT: Insurgent activity in the vicinity of %1", _city], "PLAIN" ];
-				},[_oploc]] call CBA_fnc_globalExecute;					
+				if ( !isNil "_oploc" ) then {
+					if ( !(_oploc isEqualTo objnull)  ) then {
+						[-1,
+						{
+							params ["_city"];
+							if (!hasInterface) exitWith {};
+							if ( side player != west ) exitWith {};
+							titleText [ format ["SIGINT: Insurgent activity in the vicinity of %1", _city], "PLAIN" ];
+						},[_oploc]] call CBA_fnc_globalExecute;					
+					};
+				};
 			};
 			
 			// alert opfor player
 			if ( count _bluforlocations > 0 ) then {
 				private _bluloc = selectRandom _bluforlocations;
 				
-				[-1,
-				{
-					params ["_city"];
-					if (!hasInterface) exitWith {};
-					if ( side player != east ) exitWith {};
-					titleText [ format ["SIGINT: Coalition forces are operating near %1", _city], "PLAIN" ];
-				},[_bluloc]] call CBA_fnc_globalExecute;
+				if ( !isNil "_bluloc" ) then {
+					if ( !(_bluloc isEqualTo objnull) ) then {
+						[-1,
+						{
+							params ["_city"];
+							if (!hasInterface) exitWith {};
+							if ( side player != east ) exitWith {};
+							titleText [ format ["SIGINT: Coalition forces are operating near %1", _city], "PLAIN" ];
+						},[_bluloc]] call CBA_fnc_globalExecute;
+					};
+				};
 			};
 			
 		};
