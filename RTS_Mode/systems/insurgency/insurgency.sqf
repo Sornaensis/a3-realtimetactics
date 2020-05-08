@@ -340,8 +340,8 @@ waitUntil { INS_setupFinished };
 INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 	params ["_unit", "_killer", "_instigator", "_useEffects"];
 	
-	if ( side _instigator == west && isPlayer _instigator && !(isPlayer _unit) ) then {
-		if ( (_unit getVariable ["ins_side", east]) == east || (_unit getVariable ["ins_side", east]) == resistance ) then {
+	if ( side _instigator != east && isPlayer _instigator && !(isPlayer _unit) ) then {
+		if ( !(_unit in INS_spies) && ( (_unit getVariable ["ins_side", east]) == east || (_unit getVariable ["ins_side", east]) == resistance ) ) then {
 			private _city = (group _unit) getVariable ["ai_city",""];
 			if ( _city != "" ) then {
 				private _zone = [_city] call INS_getZone;
@@ -351,7 +351,7 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 				publicVariable "INS_controlAreas";
 			};
 		};
-		if ( (_unit getVariable ["ins_side", east]) == west || (_unit getVariable ["ins_side", east]) == civilian ) then {
+		if ( _unit in INS_spies || (_unit getVariable ["ins_side", east]) == west || (_unit getVariable ["ins_side", east]) == civilian ) then {
 			private _city = (group _unit) getVariable ["ai_city",""];
 			if ( _city != "" ) then {
 				private _zone = [_city] call INS_getZone;
@@ -365,7 +365,7 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 				{
 					params ["_city"];
 					sleep 4;
-					titleText [format ["HUMINT Reports: Collateral damage has damaged coalition efforts in the town of %1",_city], "PLAIN"];
+					systemChat (format ["HUMINT Reports: Collateral damage has damaged coalition efforts in the town of %1",_city]);
 				}, [_city]] call CBA_fnc_globalExecute;
 			};
 		};
@@ -396,7 +396,7 @@ addMissionEventHandler ["BuildingChanged", {
 				{
 					params ["_city"];
 					sleep 4;
-					titleText [format ["HUMINT Reports: Collateral damage has damaged coalition efforts in the town of %1",_city], "PLAIN"];
+					systemChat (format ["HUMINT Reports: Collateral damage has damaged coalition efforts in the town of %1",_city]);
 				}, [_zone select 0]] call CBA_fnc_globalExecute;
 			};
 		};
@@ -432,7 +432,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 				}; // We'll go ahead and keep a running tally of all missions conducted
 				INS_currentMission = INS_currentMission + 1;
 				private _truckClass = "rhssaf_un_ural";
-				private _zones = INS_controlAreas select { ([_x] call INS_zoneDisposition) > -24 };
+				private _zones = INS_controlAreas select { ([_x] call INS_zoneDisposition) > -24 && ([_x] call INS_zoneDisposition) < 51 };
 				
 				_zones = [ _zones, [], { (getMarkerPos (_x select 1)) distance (getMarkerPos "truck_spawn")}, "ASCEND"] call BIS_fnc_sortBy;
 				
@@ -490,6 +490,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 								{
 									if ( !hasInterface ) exitWith {};
 									if ( side player == east ) exitWith {};
+									if ( ((getPos player) distance (getPos INS_aidTruck)) > 200 ) exitWith {};
 									titleText ["Unloading AID supplies...", "PLAIN"];
 								}] call CBA_fnc_globalExecute;
 							
@@ -517,6 +518,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 							{
 								if ( !hasInterface ) exitWith {};
 								if ( side player == east ) exitWith {};
+								if ( ((getPos player) distance (getPos INS_aidTruck)) > 200 ) exitWith {};
 								titleText ["AID Truck awaiting rendezvous with locals.", "PLAIN"];
 							}] call CBA_fnc_globalExecute;
 							
@@ -671,7 +673,7 @@ INS_sigIntHumInt = [] spawn {
 							params ["_city"];
 							if (!hasInterface) exitWith {};
 							if ( side player != west ) exitWith {};
-							titleText [ format ["SIGINT: Insurgent activity in the vicinity of %1", _city], "PLAIN" ];
+							systemChat (format ["SIGINT: Insurgent activity in the vicinity of %1", _city]);
 						},[_oploc]] call CBA_fnc_globalExecute;					
 					};
 				};
@@ -688,7 +690,7 @@ INS_sigIntHumInt = [] spawn {
 							params ["_city"];
 							if (!hasInterface) exitWith {};
 							if ( side player != east ) exitWith {};
-							titleText [ format ["SIGINT: Coalition forces are operating near %1", _city], "PLAIN" ];
+							systemChat (format ["SIGINT: Coalition forces are operating near %1", _city]);
 						},[_bluloc]] call CBA_fnc_globalExecute;
 					};
 				};
@@ -760,13 +762,13 @@ INS_insurgencyZoneCapping = [] spawn {
 						
 						switch ( _color ) do {
 							case "ColorRed": {
-								titleText [ format ["SIGINT: %1 has been captured by Insurgent forces.", _name], "PLAIN"];
+								systemChat (format ["SIGINT: %1 has been captured by Insurgent forces.", _name]);
 							};
 							case "ColorGreen": {
-								titleText [ format ["SIGINT: %1 is now under the control of local militias.", _name], "PLAIN"];
+								systemChat (format ["SIGINT: %1 is now under the control of local militias.", _name]);
 							};
 							case "ColorBlue": {
-								titleText [ format ["SIGINT: %1 has been pacified by Coalition forces.", _name], "PLAIN"];
+								systemChat (format ["SIGINT: %1 has been pacified by Coalition forces.", _name]);
 							};
 						};
 					},[_name,markerColor _marker]] call CBA_fnc_globalExecute;

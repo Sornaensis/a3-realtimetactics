@@ -18,3 +18,4 @@ _grp = group _soldier;
 _grp setVariable ["RTS_setup", [_grp, "Spy", grpnull, "\A3\ui_f\data\map\markers\nato\o_support.paa", "o_support"],true];
 
 INS_spies pushback _soldier;
+publicVariable "INS_spies";

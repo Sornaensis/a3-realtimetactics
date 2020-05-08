@@ -69,7 +69,7 @@ if ( hasInterface ) then {
 		VCM_CARGOCHNG = true; 
 		VCM_TURRETUNLOAD = true;
 		VCM_DISEMBARKRANGE = 200;
-		VCM_AISNIPERS = true; 
+		VCM_AISNIPERS = false; 
 		VCM_AISUPPRESS = true; 
 		Vcm_DrivingActivated = true;
 		Vcm_PlayerAISkills = false; 

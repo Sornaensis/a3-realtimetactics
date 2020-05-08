@@ -149,18 +149,25 @@ publicVariable "INS_bluforPacification";
 [-1,
 {
 	if ( !hasInterface ) exitWith {};
-	titleText ["<t size='1.5'>Coaltiion forces have successfully pacified a sufficient amount of the AO.</t>", "PLAIN"];
+	titleText ["<t size='1.5'>Coalition forces have successfully pacified a sufficient amount of the AO.</t>", "PLAIN", 1, true, true];
 }] call CBA_fnc_globalExecute;
 
-private _targetcities = (nearestLocations [ position (_cities call BIS_fnc_selectRandom), ["NameCityCapital","NameCity","NameVillage"], 4500 ]) select { !((position _x) inArea "opfor_restriction") };
+private _targetcities = INS_controlAreas select { ( (_x select 2) select 0 ) < -24 };
+
+if ( count _targetcities == 0 ) then {
+	_targetcities = INS_controlAreas select { ( (_x select 2) select 0 ) < 51 };
+};
 
 // CACHE 1
-private _cachecity = _targetcities call BIS_fnc_selectRandom;
+private _cachecity = selectRandom _targetcities;
+private _cachecityname = _cachecity select 0;
+private _cachecitymark = _cachecity select 1;
+(getMarkerSize _cachecitymark) params ["_mx1","_my1"];
 
-INS_cacheMarker1 = [format ["__cache___%1-%2", text _cachecity,time], [position _cachecity, 125] call CBA_fnc_randPos, "ICON", [1, 1], "COLOR:", "ColorRED", "TYPE:", "hd_objective", "TEXT:", format ["Destroy Cache Near %1", text _cachecity], "PERSIST"] call CBA_fnc_createMarker;
+INS_cacheMarker1 = [format ["__cache___%1-%2", _cachecityname, time], [getMarkerPos _cachecitymark, 125] call CBA_fnc_randPos, "ICON", [1, 1], "COLOR:", "ColorRED", "TYPE:", "hd_objective", "TEXT:", format ["Destroy Cache Near %1", _cachecityname], "PERSIST"] call CBA_fnc_createMarker;
 
 // Spawn Cache
-private _buildings1 = (nearestObjects [ position _cachecity, ["House"], 3000] select { ( count ([_x] call BIS_fnc_buildingPositions)) > 0 }) select { !((position _x) inArea "opfor_restriction") };
+private _buildings1 = (nearestObjects [ getMarkerPos _cachecitymark, ["House"], _mx1 max _my1] select { ( count ([_x] call BIS_fnc_buildingPositions)) > 0 }) select { !((position _x) inArea "opfor_restriction") };
 private _buildingPos = ([_buildings1 call BIS_fnc_selectRandom] call BIS_fnc_buildingPositions) call BIS_fnc_selectRandom;
 INS_cache1 = "CUP_GuerillaCacheBox" createVehicle [0,0,0];
 INS_cache1 setPos _buildingPos;
@@ -169,16 +176,22 @@ INS_currentCache = INS_cache1;
 
 
 // CACHE 2
-private _cities = (nearestLocations [ getMarkerPos "map_center", ["NameCityCapital","NameCity","NameVillage"], 13000]) select { !((position _x) inArea "opfor_restriction") };
+private _cities = _targetcities select { (_x select 0) != _cachecityname };
 
-private _targetcities = (nearestLocations [ position (_cities call BIS_fnc_selectRandom), ["NameCityCapital","NameCity","NameVillage"], 4500 ]  select { !((position _x) inArea "opfor_restriction") && (([position _x,getPosATL INS_cache1] call CBA_fnc_getDistance) > 1000 ) });
-private _cachecity = _targetcities call BIS_fnc_selectRandom;
+if ( count _targetcities == 0 ) then {
+	_targetcities = INS_controlAreas select { ( (_x select 2) select 0 ) < 51 };
+};
 
-INS_cacheMarker2 = [format ["__cache___%1-%2", text _cachecity,time], [position _cachecity, 125] call CBA_fnc_randPos, "ICON", [1, 1], "COLOR:", "ColorRED", "TYPE:", "hd_objective", "TEXT:", format ["Destroy Cache Near %1", text _cachecity], "PERSIST"] call CBA_fnc_createMarker;
+private _cachecity1 = selectRandom _cities;
+private _cachecityname1 = _cachecity1 select 0;
+private _cachecitymark1 = _cachecity1 select 1;
+(getMarkerSize _cachecitymark1) params ["_mx2","_my2"];
+
+INS_cacheMarker2 = [format ["__cache___%1-%2", _cachecityname1,time], [getMarkerPos _cachecitymark1, 125] call CBA_fnc_randPos, "ICON", [1, 1], "COLOR:", "ColorRED", "TYPE:", "hd_objective", "TEXT:", format ["Destroy Cache Near %1", _cachecityname1], "PERSIST"] call CBA_fnc_createMarker;
 INS_cacheMarker2 setMarkerAlpha 0;
 
 // Spawn Cache
-private _buildings = (nearestObjects [ position _cachecity, ["House"], 3000] select { ( count ([_x] call BIS_fnc_buildingPositions)) > 0 }) select { !((position _x) inArea "opfor_restriction") };
+private _buildings = (nearestObjects [ getMarkerPos _cachecitymark1, ["House"], _mx2 max _my2 ] select { ( count ([_x] call BIS_fnc_buildingPositions)) > 0 }) select { !((position _x) inArea "opfor_restriction") };
 private _buildingPos = ([_buildings call BIS_fnc_selectRandom] call BIS_fnc_buildingPositions) call BIS_fnc_selectRandom;
 INS_cache2 = "CUP_GuerillaCacheBox" createVehicle [0,0,0];
 INS_cache2 setPos _buildingPos;
