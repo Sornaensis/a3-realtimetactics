@@ -142,7 +142,15 @@ publicVariable "INS_bluforZoneAmount";
 
 INS_setupFinished = true;
 
-waitUntil { INS_bluforPacification };
+waitUntil { count (INS_controlAreas select { ( (_x select 2) select 0 ) >= 51 }) >= INS_bluforZoneAmount };
+INS_bluforPacification = true;
+publicVariable "INS_bluforPacification";
+
+[-1,
+{
+	if ( !hasInterface ) exitWith {};
+	titleText ["<t size='1.5'>Coaltiion forces have successfully pacified a sufficient amount of the AO.</t>", "PLAIN"];
+}] call CBA_fnc_globalExecute;
 
 private _targetcities = (nearestLocations [ position (_cities call BIS_fnc_selectRandom), ["NameCityCapital","NameCity","NameVillage"], 4500 ]) select { !((position _x) inArea "opfor_restriction") };
 
