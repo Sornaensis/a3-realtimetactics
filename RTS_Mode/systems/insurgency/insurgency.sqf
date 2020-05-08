@@ -1,10 +1,10 @@
-INS_spawnedUnitCap = 100; // maximum spawned soldiers
+INS_spawnedUnitCap = 110; // maximum spawned soldiers
 INS_civilianCap = 50;
 INS_spawnDist = 800; // distance in meters from buildings a player shall be when we begin spawning units.
 INS_despawn = 1200; // despawn units this distance from players when they cannot be seen and their zone is inactive
 INS_spawnPulse = 4; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
-INS_civilianDensity = 9;
+INS_civilianDensity = 8;
 INS_populationDensity = 17; 
 
 
@@ -118,10 +118,10 @@ INS_getZoneCivilianDensity = {
 	private _marker = _location select 1;
 	(getMarkerSize _marker) params ["_mx","_my"];
 	
-	private _size = (_mx max _my) * 1.6;
+	private _size = (_mx max _my) * 1.8;
 	_size = _size*_size; // sq m
 	
-	private _population = count ( (allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.4) && !isPlayer _x && (_x getVariable ["ins_side",east]) == civilian } );
+	private _population = count ( (allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.3) && !isPlayer _x && (_x getVariable ["ins_side",east]) == civilian } );
 	private _nominalPop = count ((allUnits + allDeadMen) select { !isPlayer _x && (_x getVariable ["ins_side",east]) == civilian && ((group _x) getVariable ["ai_city",""]) == _zoneName });
 	
 	(_population max _nominalPop)/(_size/1000/1000)
@@ -135,10 +135,10 @@ INS_getZoneDensity = {
 	private _marker = _location select 1;
 	(getMarkerSize _marker) params ["_mx","_my"];
 	
-	private _size = (_mx max _my) * 1.6;
+	private _size = (_mx max _my) * 1.8;
 	_size = _size*_size; // sq m
 	
-	private _population = count ((allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.4) && !isPlayer _x && (_x getVariable ["ins_side",east]) != civilian });
+	private _population = count ((allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.3) && !isPlayer _x && (_x getVariable ["ins_side",east]) != civilian });
 	private _nominalPop = count ((allUnits + allDeadMen) select { !isPlayer _x && (_x getVariable ["ins_side",east]) != civilian && ((group _x) getVariable ["ai_city",""]) == _zoneName });
 	
 	(_population max _nominalPop)/(_size/1000/1000)
@@ -248,7 +248,7 @@ INS_spawnCivilian = {
 	private _zonePos = getMarkerPos (_zone select 1);
 	
 	(getMarkerPos (_zone select 1)) params ["_mx","_my"];
-	private _zoneSize = (_mx max _my);
+	private _zoneSize = (_mx max _my)*1.8;
 	
 	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select { (count (_x buildingPos -1) > 2) && ((position _x) distance _pos) < 1400 };
 	
@@ -276,6 +276,8 @@ INS_spawnCivilian = {
 		(vehicle _leader) setVariable ["spawned_vehicle", true];
 	};
 	
+	diag_log format ["Spawned %1 civilian at %2 (%3)",count (units (group _leader)),_pos,_zoneName];
+	
 	[_leader,_pos]
 };
 
@@ -298,7 +300,7 @@ INS_spawnUnits = {
 								&& ([position _x] call getNearestControlZone) isEqualType ""
 								//&& (position _x) inArea _zoneMarker
 								&& count ([_spawnpos, call INS_allPlayers,500] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, ([_zoneName] call getZoneSoldiers) select { (_x getVariable ["ins_side",east]) != _side },400] call CBA_fnc_getNearest) == 0 };
+								&& count ([position _x, ([_zoneName] call getZoneSoldiers) select { (_x getVariable ["ins_side",east]) != _side },650] call CBA_fnc_getNearest) == 0 };
 	if ( count _buildings == 0) exitWith { };
 	
 	_pos = getPos (selectRandom _buildings);
@@ -309,7 +311,7 @@ INS_spawnUnits = {
 	
 	if (  _spawnpos isEqualTo [0,0,0] || _spawnpos isEqualTo []
 	   || count ([_spawnpos, call INS_allPlayers,500] call CBA_fnc_getNearest) > 0 
-	   || count ([_spawnpos, ([_zoneName] call getZoneSoldiers) select { (_x getVariable ["ins_side",east]) != _side },400] call CBA_fnc_getNearest) > 0 ) exitWith {  };
+	   || count ([_spawnpos, ([_zoneName] call getZoneSoldiers) select { (_x getVariable ["ins_side",east]) != _side },650] call CBA_fnc_getNearest) > 0 ) exitWith {  };
 	
 	private _leader = [_spawnpos,_side] call _spawnfunc;
 	if ( side _leader == west ) then {
@@ -327,7 +329,7 @@ INS_spawnUnits = {
 		(vehicle _leader) setVariable ["spawned_vehicle", true];
 	};
 	
-	diag_log format ["Spawned %1 units of side %2 at %3",count (units (group _leader)),_side,_spawnpos];
+	diag_log format ["Spawned %1 units of side %2 at %3 (%4)",count (units (group _leader)),_side,_spawnpos,_zoneName];
 	
 	[_leader,_pos]
 };
@@ -395,7 +397,7 @@ addMissionEventHandler ["BuildingChanged", {
 					params ["_city"];
 					sleep 4;
 					titleText [format ["HUMINT Reports: Collateral damage has damaged coalition efforts in the town of %1",_city], "PLAIN"];
-				}, [_city]] call CBA_fnc_globalExecute;
+				}, [_zone select 0]] call CBA_fnc_globalExecute;
 			};
 		};
 	};
@@ -414,6 +416,9 @@ INS_truckMarker setMarkerType "select";
 INS_truckMarker setMarkerAlpha 0;
 publicVariable "INS_truckMarker";
 INS_aidMissionLocated = -1;
+INS_aidPackageLocated = -1;
+INS_aidCrateType = "Land_transport_crates_EP1";
+INS_aidCrate = objnull;
 INS_currentMissionName = { format ["blufor_task_%1",INS_currentMission] };
 
 INS_missionMonitor = addMissionEventHandler [ "EachFrame",
@@ -421,10 +426,10 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 		if ( INS_bluforMission == "NONE" ) then {
 			// Setup aid delivery mission
 			
-			if ( ( time > (INS_previousTaskComplete + 180) || INS_currentMission == 0 ) && count (call INS_allPlayers) > 0 ) then {
-				/*if ( INS_currentMission > 0 ) then {
+			if ( ( time > (INS_previousTaskComplete + 400) || INS_currentMission == 0 ) && count (call INS_allPlayers) > 0 ) then {
+				if ( INS_currentMission > 0 ) then {
 					[call INS_currentMissionName,west] call BIS_fnc_deleteTask;
-				};*/ // We'll go ahead and keep a running tally of all missions conducted
+				}; // We'll go ahead and keep a running tally of all missions conducted
 				INS_currentMission = INS_currentMission + 1;
 				private _truckClass = "rhssaf_un_ural";
 				private _zones = INS_controlAreas select { ([_x] call INS_zoneDisposition) > -24 };
@@ -460,7 +465,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 				
 				[west, [call INS_currentMissionName], 
 					[ 
-						format ["<marker name='ins_truck_marker'>Deliver AID</marker> from Coalition airfield to the town of %1<br/><br/>Once the aid truck reaches the RP, wait for civilians to come begin collecting the supplies.",_name],
+						format ["<marker name='ins_truck_marker'>Deliver AID</marker> from Coalition airfield to the town of %1<br/><br/>Secure the town before bringing in the supplies.<br/><br/>Once the aid truck reaches the RP, wait for civilians to come begin collecting the supplies.",_name],
 						"Deliver AID",
 						"aidMarker"],
 						getPos _road, 1, 3, true] call BIS_fnc_taskCreate;	
@@ -469,88 +474,143 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 			switch ( INS_bluforMission ) do {
 				case "AID": {
 					INS_truckMarker setMarkerPos (getPos INS_aidTruck);
-					if ( INS_aidMissionLocated == -1 && ((getPos INS_aidTruck) distance ((call INS_currentMissionName) call BIS_fnc_taskDestination)) < 50 ) then {
-						INS_aidMissionLocated = time;
-						private _civvies = ([INS_taskZone] call getSpawnedCivilians) select { !(_x getVariable ["aid_tasked", false]) };
-						private _civamt = ( 5 + ( random ( (count _civvies) / 2 ) ) ) max (count _civvies);
+					if ( INS_aidPackageLocated == -1 && ((getPos INS_aidTruck) distance ((call INS_currentMissionName) call BIS_fnc_taskDestination)) < 50 ) then {
+						INS_aidPackageLocated = time;
 						
 						[-1, 
-						{
-							if ( !hasInterface ) exitWith {};
-							if ( side player == east ) exitWith {};
-							titleText ["AID Truck is at RP; await rendezvous with locals for ~4 minutes", "PLAIN"];
-						}] call CBA_fnc_globalExecute;
+							{
+								if ( !hasInterface ) exitWith {};
+								if ( side player == east ) exitWith {};
+								titleText ["AID Truck has reached RP", "PLAIN"];
+							}] call CBA_fnc_globalExecute;
 						
-						if ( count _civvies >= _civamt ) then {
-							for "_i" from 0 to (_civamt-1) do {
-								private _civ = _civvies select _i;
-								_civ setVariable ["aid_tasked", true];
-								[group _civ] call CBA_fnc_clearWaypoints;
-								private _pos = (getPos INS_aidTruck) findEmptyPosition [3,15,"MAN"];
-								_civ doMove _pos;
-								diag_log (format ["Tasking AID COLLECTION to %1 at position %2", _civ, _pos]);
+						[] spawn {
+							waitUntil { count ([INS_aidTruck, vehicles select { side (driver _x) == west },200] call CBA_fnc_getNearest) == 0 && speed INS_aidTruck == 0 };
+							[-1, 
+								{
+									if ( !hasInterface ) exitWith {};
+									if ( side player == east ) exitWith {};
+									titleText ["Unloading AID supplies...", "PLAIN"];
+								}] call CBA_fnc_globalExecute;
+							
+							private _diroffset = (vectorDir INS_aidTruck) vectorMultiply -4;						
+							
+							private _pos = ((getPos INS_aidTruck) vectorAdd _diroffset) findEmptyPosition [0,15,INS_aidCrateType];
+							
+							while { isOnRoad _pos } do {
+								_pos = _pos findEmptyPosition [3,15,INS_aidCrateType];
 							};
+							
+							INS_aidCrate = INS_aidCrateType createVehicle _pos;
+							INS_aidCrate setDir (direction INS_aidTruck);
 						};
 					} else {
-						if ( INS_aidMissionLocated > 0 && time > (INS_aidMissionLocated + 200) ) then {
+						if ( !isNull INS_aidCrate && INS_aidPackageLocated > 0 && time > ( INS_aidPackageLocated + 20 ) && INS_aidMissionLocated == -1 ) then {
+							INS_aidMissionLocated = time;
+							private _civvies = [ ([INS_taskZone] call getSpawnedCivilians) select { !(_x getVariable ["aid_tasked", false]) }, [], { (getPos _x) distance (getPos INS_aidTruck) }, "ASCEND"] call BIS_fnc_sortBy;
+							private _civamt = floor ( ( 5 + ( random ( (count _civvies) / 2 ) ) ) min (count _civvies) );
+							diag_log (format ["Tasking AID COLLECTION to %1 civilians out of %2", _civamt, count _civvies]);
 							
-							INS_aidMissionLocated = -1;
-							
+							[-1, 
 							{
-								private _civ = _x;
-								_civ setVariable ["aid_tasked", nil];
-								[group _civ, [getPos _civ, 200] call CBA_fnc_randPos, 250, INS_taskZone] call setupAsCivilianGarrison;
-								diag_log (format ["De-tasking %1 from aid collection", _civ, _pos]);
-							} forEach ( allUnits select { side _x == civilian && (_x getVariable ["aid_tasked",false]) } );
+								if ( !hasInterface ) exitWith {};
+								if ( side player == east ) exitWith {};
+								titleText ["AID Truck awaiting rendezvous with locals.", "PLAIN"];
+							}] call CBA_fnc_globalExecute;
 							
-							INS_taskZone = "";
-							INS_previousTaskComplete = time;
-							INS_aidTruck setVariable ["spawned_vehicle", true];
-							INS_aidTruck = nil;
-							INS_aidTruck setFuel 0;
-							INS_bluforMission = "NONE";
-							publicVariable "INS_bluforMission";
-							
-							private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
-							private _zoneparams = _zone select 2;
-							private _disp = _zoneparams select 0;
-							_zoneparams set [0, _disp + 15];
-							publicVariable "INS_controlAreas";
-							
-							
-							[call INS_currentMissionName,"SUCCEEDED"] call BIS_fnc_taskSetState;
+							if ( count _civvies >= _civamt ) then {
+								for "_i" from 0 to (_civamt-1) do {
+									private _civ = _civvies select _i;
+									_civ setVariable ["aid_tasked", true];
+									[group _civ] call CBA_fnc_clearWaypoints;
+									private _pos = (getPos INS_aidCrate) findEmptyPosition [2,20,"MAN"];
+									_civ doMove _pos;
+									if ( random 1 > 0.2 ) then {
+										(group _civ) setSpeedMode "FULL";
+									};
+									diag_log (format ["Tasking AID COLLECTION to %1 at position %2", _civ, _pos]);
+								};
+							};
 						} else {
-							if ( (getDammage INS_aidTruck) > 0.8 ) then {
+							if ( INS_aidMissionLocated > 0 && 
+								( time > (INS_aidMissionLocated + 300) 
+									|| count ([INS_aidTruck, allUnits select { (_x getVariable ["aid_tasked",false]) }, 50] call CBA_fnc_getNearest) == count (allUnits select { (_x getVariable ["aid_tasked",false]) }) )  ) then {
+								
 								INS_aidMissionLocated = -1;
+								INS_aidPackageLocated = -1;
+								
+								private _zonearea = [INS_taskZone] call INS_getZone;
+								private _marker = _zonearea select 1;
+								(getMarkerSize _marker) params ["_mx","_my"];
+								private _houses = ((getMarkerPos _marker) nearObjects [ "HOUSE", _mx max _my]) select { (count (_x buildingPos -1) > 2) };
 								
 								{
 									private _civ = _x;
 									_civ setVariable ["aid_tasked", nil];
-									[group _civ, [getPos _civ, 200] call CBA_fnc_randPos, 250, INS_taskZone] call setupAsCivilianGarrison;
+									[group _civ, getPos (selectRandom _houses), 75, INS_taskZone] call setupAsCivilianGarrison;
+									(group _civ) setSpeedMode "LIMITED";
+									diag_log (format ["De-tasking %1 from aid collection", _civ]);
 								} forEach ( allUnits select { side _x == civilian && (_x getVariable ["aid_tasked",false]) } );
 								
 								INS_taskZone = "";
 								INS_previousTaskComplete = time;
 								INS_aidTruck setVariable ["spawned_vehicle", true];
+								INS_aidCrate setVariable ["spawned_vehicle", true];
+								INS_aidCrate = objnull;
 								INS_aidTruck = nil;
 								INS_bluforMission = "NONE";
+								publicVariable "INS_bluforMission";
 								
 								private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
 								private _zoneparams = _zone select 2;
-								private _aggr = _zoneparams select 3;
-								_zoneparams set [0, _aggr + 5];
+								private _disp = _zoneparams select 0;
+								_zoneparams set [0, _disp + 15];
 								publicVariable "INS_controlAreas";
 								
-								INS_taskZone = "";
 								
-								[-1,
-								{
-									params ["_city"];
-									sleep 4;
-									titleText [format ["HUMINT indicates scrapped AID efforts have increased anti-coalition senitment in %1",_city],"PLAIN"];
-								},[_zone select 0]] call CBA_fnc_globalExecute;
-								
-								[call INS_currentMissionName,"FAILED"] call BIS_fnc_taskSetState;
+								[call INS_currentMissionName,"SUCCEEDED"] call BIS_fnc_taskSetState;
+							} else {
+								if ( (getDammage INS_aidTruck) > 0.8 ) then {
+									INS_aidMissionLocated = -1;
+									INS_aidPackageLocated = -1;
+									
+									private _zonearea = [INS_taskZone] call INS_getZone;
+									private _marker = _zonearea select 1;
+									(getMarkerSize _marker) params ["_mx","_my"];
+									private _houses = ((getMarkerPos _marker) nearObjects [ "HOUSE", _mx max _my]) select { (count (_x buildingPos -1) > 2) };
+									
+									{
+										private _civ = _x;
+										_civ setVariable ["aid_tasked", nil];
+										[group _civ, getPos (selectRandom _houses), 75, INS_taskZone] call setupAsCivilianGarrison;
+										diag_log (format ["De-tasking %1 from aid collection", _civ]);
+									} forEach ( allUnits select { side _x == civilian && (_x getVariable ["aid_tasked",false]) } );
+									
+									INS_taskZone = "";
+									INS_previousTaskComplete = time;
+									INS_aidTruck setVariable ["spawned_vehicle", true];
+									INS_aidCrate setVariable ["spawned_vehicle", true];
+									INS_aidCrate = objnull;
+									INS_aidTruck = nil;
+									INS_bluforMission = "NONE";
+									
+									private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
+									private _zoneparams = _zone select 2;
+									private _aggr = _zoneparams select 3;
+									_zoneparams set [0, _aggr + 5];
+									publicVariable "INS_controlAreas";
+									
+									INS_taskZone = "";
+									
+									[-1,
+									{
+										params ["_city"];
+										sleep 4;
+										titleText [format ["HUMINT indicates scrapped AID efforts have increased anti-coalition senitment in %1",_city],"PLAIN"];
+									},[_zone select 0]] call CBA_fnc_globalExecute;
+									
+									[call INS_currentMissionName,"FAILED"] call BIS_fnc_taskSetState;
+								};
 							};
 						};
 					};

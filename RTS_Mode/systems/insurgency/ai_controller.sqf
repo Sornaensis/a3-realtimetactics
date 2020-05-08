@@ -222,12 +222,12 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 										_task = setupAsPatrol;
 										_radius = (1200 + random 100);
 									};									
-									[(group _soldier), [_pos, 25] call CBA_fnc_randPos, _radius, _zone] call _task;
+									[(group _soldier), [_position, 25] call CBA_fnc_randPos, _radius, _zone] call _task;
 								};
 							};
 						};
 					};
 				};
-			} forEach _unitSpawners;
+			} forEach ( _humanPlayers + _insurgents );
 		};
 	}];
