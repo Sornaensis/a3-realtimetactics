@@ -119,14 +119,15 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 					if ( !isNil "_zone" ) then {
 						if ( [_zone] call INS_canZoneSpawnAndUpdate ) then {
 							if ( ([_zone] call INS_getZoneDensity) < INS_populationDensity ) then {
+								diag_log (format ["Can spawn at %1 with soldier density %2", _zone, ([_zone] call INS_getZoneDensity)]);
 								private _soldierList = [_pos,_zone] call INS_spawnUnits;
 								if ( !isNil "_soldierList" && !isNull (_soldierList select 0) ) then {
 									_soldierList params ["_soldier", "_position"];
-									private _task = selectRandomWeighted [setupAsGarrison,0.4,setupAsPatrol,0.8];
-									private _radius = 200 + (random 100);
+									private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsPatrol,0.2];
+									private _radius = 75 + (random 50);
 									if ( vehicle _soldier != _soldier ) then {
 										_task = setupAsPatrol;
-										_radius = 400 + (random 100);
+										_radius = 250 + (random 100);
 									};
 									// basic Headless client distribution + load balancing									
 									private _hc = call INS_getNextHC;
@@ -143,7 +144,7 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 												{
 													_x call RTS_fnc_aiSkill;
 												} forEach ( units _group );
-												[_group, [_position, 45] call CBA_fnc_randPos, _radius, _zone] call _task;
+												[_group, [_position, 25] call CBA_fnc_randPos, _radius, _zone] call _task;
 												diag_log format ["Headless client tasking %1",_group];
 											};
 										}, [_soldier, _position,_radius,_zone,_task,_hc] ] call CBA_fnc_globalExecute;			
@@ -157,14 +158,15 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 					if ( !isNil "_zone2" ) then {
 						if ( [_zone2] call INS_canZoneSpawnAndUpdate ) then {
 							if ( ([_zone2] call INS_getZoneDensity) < INS_populationDensity ) then {
+								diag_log (format ["Can spawn at %1 with soldier density %2", _zone2, ([_zone2] call INS_getZoneDensity)]);
 								private _soldierList = [_pos,_zone2] call INS_spawnUnits;
 								if ( !isNil "_soldierList" && !isNull (_soldierList select 0) ) then {
 									_soldierList params ["_soldier", "_position"];
-									private _task = selectRandomWeighted [setupAsGarrison,0.4,setupAsPatrol,0.8];
-									private _radius = 200 + (random 100);
+									private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsPatrol,0.2];
+									private _radius = 75 + (random 50);
 									if ( vehicle _soldier != _soldier ) then {
 										_task = setupAsPatrol;
-										_radius = 400 + (random 100);
+										_radius = 250 + (random 100);
 									};
 									// basic Headless client distribution + load balancing									
 									private _hc = call INS_getNextHC;
@@ -181,7 +183,7 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 												{
 													_x call RTS_fnc_aiSkill;
 												} forEach ( units _group );
-												[_group, [_position, 45] call CBA_fnc_randPos, _radius, _zone2] call _task;
+												[_group, [_position, 25] call CBA_fnc_randPos, _radius, _zone2] call _task;
 												diag_log format ["Headless client tasking %1",_group];
 											};
 										}, [_soldier, _position,_radius,_zone2,_task,_hc] ] call CBA_fnc_globalExecute;									
@@ -211,13 +213,15 @@ INS_opforAiSpawner = addMissionEventHandler [ "EachFrame",
 								private _soldierList = [_pos,_zone] call INS_spawnCivilian;
 								if ( !isNil "_soldierList" && !isNull (_soldierList select 0) ) then {
 									_soldierList params ["_soldier", "_position"];
-									private _task = selectRandomWeighted [setupAsGarrison,0.6,setupAsPatrol,0.4];
-									private _radius = 125 + (random 150);
+									private _task = selectRandomWeighted [setupAsCivilianGarrison,0.9,setupAsGarrison,0.1];
+									_soldier setUnitPos "UP";
+									_soldier setUnitPosWeak "UP";
+									private _radius = 75 + (random 50);
 									if ( vehicle _soldier != _soldier ) then {
 										_task = setupAsPatrol;
-										_radius = (400 + random 100);
+										_radius = (1200 + random 100);
 									};									
-									[(group _soldier), [_pos, 45] call CBA_fnc_randPos, _radius, _zone] call _task;
+									[(group _soldier), [_pos, 25] call CBA_fnc_randPos, _radius, _zone] call _task;
 								};
 							};
 						};

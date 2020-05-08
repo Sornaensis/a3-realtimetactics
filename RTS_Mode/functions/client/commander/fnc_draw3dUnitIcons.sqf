@@ -111,6 +111,26 @@ if ( RTS_commanding ) then {
 } forEach RTS_commandingGroups;
 
 if ( RTS_commanding ) then {
+	
+	{
+		private ["_pos", "_drawpos"];
+		_pos = getPosATLVisual _x;
+		_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 0.7]; 
+		if ( !( isObjectHidden _x ) && ((vehicle _x) == _x) ) then {
+			_selectedgroup = RTS_selectedGroup;
+			_draw = if ( !(isNull _selectedgroup) && !RTS_godseye ) then {
+						_x in (_selectedgroup getVariable ["spotted", []])
+					} else {
+						true
+					};
+			if _draw then {
+				drawIcon3D ["\A3\ui_f\data\map\markers\handdrawn\dot_CA.paa", [0,0,0,1], _drawpos, 0.8, 0.8,0];
+				drawIcon3D ["\A3\ui_f\data\map\markers\handdrawn\dot_CA.paa", RTS_sideColor, _drawpos, 0.6, 0.6,0];
+			};
+		};
+	} forEach ( allUnits select {side _x == RTS_sidePlayer && !((group _x) in RTS_commandingGroups) } );
+
+
 	{
 		private ["_pos", "_drawpos"];
 		_pos = getPosATLVisual _x;
@@ -238,7 +258,7 @@ if ( RTS_commanding ) then {
 					};
 			if _draw then {
 				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", [0,0,0,1], _drawpos, 0.8, 0.8,0];
-				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", RTS_Greenfor_GreenColor, _drawpos, 0.6, 0.6,0];
+				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", ( if ( side (driver _x) != RTS_sidePlayer ) then { RTS_Greenfor_GreenColor } else { RTS_sideColor }), _drawpos, 0.6, 0.6,0];
 			};
 		};
 	} forEach ( RTS_greenfor_vehicles );

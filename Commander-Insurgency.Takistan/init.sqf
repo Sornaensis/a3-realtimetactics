@@ -1,3 +1,4 @@
+#include "\z\ace\addons\spectator\script_component.hpp"
 #include "RTS_Mission_Defines.hpp"
 
 if ( side player == east || isServer ) then {
@@ -10,6 +11,8 @@ if ( side player == east || isServer ) then {
 private _rtsinit = [] spawn (compile preprocessFileLinenumbers "rts\init.sqf");
 
 waitUntil { scriptDone _rtsinit };
+
+setViewDistance 2000;
 
 // Setup insurgency functions
 waitUntil { isDedicated || ( !(isNull player) && isPlayer player ) || !hasInterface };
@@ -32,12 +35,21 @@ if ( !(isNil "opforCommander") ) then {
 };
 
 if ( isServer || !hasInterface ) then {
+	
+	setupAsCivilianGarrison = {
+		params ["_group", "_pos", "_radius","_city"];
+		[_group] call CBA_fnc_clearWaypoints;
+		_group setVariable ["ai_status", "GARRISON", true];
+		_group setVariable ["ai_city", _city, true];
+		[_group, _pos, _radius, 2, 0.1, 0.8 ] call CBA_fnc_taskDefend;
+	};
+	
 	setupAsGarrison = {
 		params ["_group", "_pos", "_radius","_city"];
 		[_group] call CBA_fnc_clearWaypoints;
 		_group setVariable ["ai_status", "GARRISON", true];
 		_group setVariable ["ai_city", _city, true];
-		[_group, _pos, _radius, 2, 0.7, 0 ] call CBA_fnc_taskDefend;
+		[_group, _pos, _radius, 2, 0.3, 0.65 ] call CBA_fnc_taskDefend;
 	};
 	
 	setupAsPatrol = {
@@ -63,7 +75,7 @@ if ( isServer || !hasInterface ) then {
 
 // Headless client strategic AI
 if ( !hasInterface && !isServer ) then {
-	[] call (compile preprocessFileLineNumbers "rts/systems/insurgency/hc_ai.sqf");
+	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\hc_ai.sqf");
 };
 
 
@@ -97,7 +109,7 @@ if ( isDedicated || _runsetup ) then {
 							 {
 							 	private _diag = createDialog "PurchaseMenuDialog";
 							 	waitUntil { _diag };
-							 	call INS_setupPurchaseMenu;
+							 	[] spawn INS_setupPurchaseMenu;
 							 },[],1.5,true,true,"","true",5,false,"",""];
 			
 			{
@@ -203,15 +215,26 @@ if ( isDedicated || _runsetup ) then {
 			
 			if ( !(_costs isEqualTo []) ) then {
 				_costs params ["_mp","_mat"];
-				if ( _mp <= INS_playerManpower && _mat <= INS_playerMaterials ) then {
+				private _men = RTS_commandingGroups apply { count (units _x) };
+				private _tot = 0;
+				{
+					_tot = _tot + _x;
+				} forEach _men;
+				
+				if ( _tot < INS_maxMen ) then {
+					if ( _mp <= INS_playerManpower && _mat <= INS_playerMaterials ) then {
+						_canPurchase = true;
+						INS_playerManpower = INS_playerManpower - _mp;
+						publicVariable "INS_playerManpower";
+						INS_playerMaterials = INS_playerMaterials - _mat;
+						publicVariable "INS_playerMaterials";
+						private _spawnpos = (getPos player) findEmptyPosition [5,20, "MAN"];
+						private _soldier = [_spawnpos] call _spawner;
+						[] call RTS_fnc_setupAllGroups;
+					};
+				} else {
 					_canPurchase = true;
-					INS_playerManpower = INS_playerManpower - _mp;
-					publicVariable "INS_playerManpower";
-					INS_playerMaterials = INS_playerMaterials - _mat;
-					publicVariable "INS_playerMaterials";
-					private _spawnpos = (getPos player) findEmptyPosition [5,20, "MAN"];
-					[_spawnpos] call _spawner;
-					[] call RTS_fnc_setupAllGroups;
+					titleText [ format ["<t size='1.4'>You may not control more than %1 men</t>", INS_maxMen], "PLAIN", 1, true, true];
 				};
 			};
 			
@@ -230,16 +253,18 @@ if ( isDedicated || _runsetup ) then {
 			private _ifv = 1606;
 			private _tank = 1607;
 			
-			private _display = findDisplay 46;
+			waitUntil { !( (uiNamespace getVariable ["purchase_dialog",objnull]) isEqualTo objnull ) };
+			
+			private _display = uiNamespace getVariable "purchase_dialog";
 			
 			(_display displayCtrl _spy) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_spyCost select 0, INS_spyCost select 1] );
-			(_display displayCtrl _squiad) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_squadCost select 0, INS_squadCost select 1] )];
-			(_display displayCtrl _mgTeam) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_mgCost select 0, INS_mgCost select 1] )];
-			(_display displayCtrl _sniperTeam) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_sniperCost select 0, INS_sniperCost select 1] )];
-			(_display displayCtrl _car) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_carCost select 0, INS_carCost select 1] )];
-			(_display displayCtrl _emptyCar) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_carCost select 0, INS_carCost select 1] )];
-			(_display displayCtrl _ifv) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_apcCost select 0, INS_apcCost select 1] )];
-			(_display displayCtrl _tank) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_tankCost select 0, INS_tankCost select 1] )];
+			(_display displayCtrl _squad) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_squadCost select 0, INS_squadCost select 1] );
+			(_display displayCtrl _mgTeam) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_mgCost select 0, INS_mgCost select 1] );
+			(_display displayCtrl _sniperTeam) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_sniperCost select 0, INS_sniperCost select 1] );
+			(_display displayCtrl _car) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_carCost select 0, INS_carCost select 1] );
+			(_display displayCtrl _emptyCar) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_carCost select 0, INS_carCost select 1] );
+			(_display displayCtrl _ifv) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_apcCost select 0, INS_apcCost select 1] );
+			(_display displayCtrl _tank) ctrlSetTooltip ( format ["%1 Manpower / %2 Material", INS_tankCost select 0, INS_tankCost select 1] );
 			
 			buttonSetAction [_tank, "['TANK'] spawn INS_purchaseUnit"];
 			buttonSetAction [_squad, "['SQUAD'] spawn INS_purchaseUnit"];
@@ -257,25 +282,55 @@ if ( isDedicated || _runsetup ) then {
 		waitUntil { !isNil "INS_areaCount" };
 		waitUntil { count INS_controlAreas == INS_areaCount };
 		
+		INS_rscMarks = [];
+		
 		{
 			_x params ["_name","_mark","_params"];
-			_params params ["","_mp","_mat"];
+			_params params ["_disp","_mp","_mat"];
+			
+			private _marktype = "mil_warning";
+			
+			if ( _disp < -51 ) then {
+				_marktype = "mil_flag";
+			};
 			
 			private _marker = createMarkerLocal [ format ["__resource_mark__%1", _name], getMarkerPos _mark];
 			_marker setMarkerShapeLocal "ICON";
-			_marker setMarkerTypeLocal "select";
+			_marker setMarkerTypeLocal _marktype;
 			_marker setMarkerColorLocal "ColorBlue";
 			_marker setMarkerTextLocal (format ["Manpower: %1  /  Materials: %2", _mp, _mat]);
 			_marker setMarkerAlphaLocal 1;
-			
+			INS_rscMarks pushback _mark;
 		} forEach INS_controlAreas;
 		
+		[] spawn {
+			while { true } do {
+			
+				{
+					_x params ["_name","_mark","_params"];
+					_params params ["_disp","_mp","_mat"];
+					
+					private _marktype = "mil_warning";
+					
+					if ( _disp < -51 ) then {
+						_marktype = "mil_flag";
+					};
+					
+					private _marker = INS_rscMarks select _forEachIndex;
+					_marker setMarkerTypeLocal _marktype;
+					
+				} forEach INS_controlAreas;
+				
+				call INS_setupFastTravel;
+				
+				sleep 30;
+			};
+		};
 		
 		INS_maxMen = 45;
-		INS_maxSpies = 10;
 		
 		// Costs in [manpower, materials]
-		INS_spyCost = [3, 5];
+		INS_spyCost = [2, 5];
 		INS_squadCost = [10,20];
 		INS_mgCost = [5, 20];
 		INS_sniperCost = [10, 15];
@@ -283,16 +338,18 @@ if ( isDedicated || _runsetup ) then {
 		INS_apcCost = [10, 100];
 		INS_tankCost = [30, 250];		
 		
+		INS_mpMax = 50;
+		INS_matMax = 250;
 		INS_lastMen = 0;
-		INS_menPulse = 180;
+		INS_menPulse = 300;
 		INS_lastMat = 0;
-		INS_matPulse = 240;
+		INS_matPulse = 400;
 		
 		// Starting materials and manpower
 		if ( isNil "INS_playerMaterials" ) then {
-			INS_playerMaterials = 300;
+			INS_playerMaterials = 80;
 			publicVariable "INS_playterMaterials";
-			INS_playerManpower = 20;
+			INS_playerManpower = 30;
 			publicVariable "INS_playerManpower";
 		};
 		
@@ -357,49 +414,75 @@ if ( isDedicated || _runsetup ) then {
 		private _flag = selectRandom (INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -24 });
 		player setPos ( (getPos (_flag select 0)) findEmptyPosition [2,10,"MAN"] );
 		player setDir ( (getPos player) getDir (getPos (_flag select 0)) );
-		player removeAction INS_deployAction;
+		
+		"opfor_target" setMarkerPos (getPos player);
+		
+		private _mrkStart = (getPos player) vectorAdd ((vectorDir player) vectorMultiply -50);
+		
+		"opfor_start" setMarkerPos _mrkStart;
+		
+		INS_disp = false;
+		
+		INS_setupInfoBox = {
+			
+			if ( isNull SPEC_DISPLAY ) exitWith { 
+				false 
+			};
+			
+			if ( !INS_disp ) then {
+				INS_infoBox2 = SPEC_DISPLAY ctrlCreate ["RscText", -1];
+			
+				INS_infoBox2 ctrlSetFontHeight 0.07;
+				INS_infoBox2 ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-0.15),safeZoneY+0.01,0.3,0.07]; 
+			};
+
+			true			
+		};
 		
 		INS_infoBox = (findDisplay 46) ctrlCreate ["RscText", -1];
-	
+			
 		INS_infoBox ctrlSetFontHeight 0.07;
-		INS_infoBox ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-0.15),safeZoneY+0.01,0.3,0.07]; 
-	
-		INS_controlled = INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -51 };
+		INS_infoBox ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-0.15),safeZoneY+0.01,0.3,0.07];
+		
+		INS_controlled = INS_controlAreas select { ((_x select 2) select 0) < -51 };
 	
 		addMissionEventHandler ["Draw3d",
 		{
+			INS_disp = call INS_setupInfoBox;
 			
-			INS_infoBox ctrlSetText 
-				( format ["Manpower %1   /   Material %2   /   Income Regions: %3", INS_playerManpower, INS_playerMaterials, count INS_controlled]
+			private _box = ( if ( INS_disp ) then { INS_infoBox2 } else { INS_infoBox } );
+			
+			_box ctrlSetText 
+				( format ["Manpower: %1/%4   /   Material: %2/%5   /   Income Regions: %3", INS_playerManpower, INS_playerMaterials, count INS_controlled, INS_mpMax, INS_matMax]
 				);
 				
-			INS_infoBox ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-(ctrlTextWidth INS_infoBox)/2-0.015),safeZoneY+0.01,ctrlTextWidth INS_infoBox+0.03,0.07];
+			_box ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-(ctrlTextWidth _box)/2-0.015),safeZoneY+0.01,ctrlTextWidth _box+0.03,0.07];
 	
-			INS_infoBox ctrlCommit 0;
+			_box ctrlCommit 0;
 			
 			// Process income
 			if ( count ((call INS_allPlayers) select { side _x == west }) > 0 ) then {
-				INS_controlled = INS_fastTravelFlags select { (((INS_controlAreas select (_x select 3)) select 2) select 0) < -51 };
+				INS_controlled = INS_controlAreas select { ((_x select 2) select 0) < -51 };
 				// manpower
-				if ( time > (INS_lastMen + INS_menPulse) ) then {
+				if ( time > (INS_lastMen + INS_menPulse) && INS_playerManpower < INS_mpMax ) then {
 					INS_lastMen = time;
 					private _amount = 0;
 					{
 						INS_playerManpower = INS_playerManpower + _x;
 						_amount = _amount + _x;
-					} forEach ( INS_controlled apply { floor ( ( (_x select 2) select 1 ) / 5 ) } );
+					} forEach ( INS_controlled apply { floor ( ( (_x select 2) select 1 ) / 10 ) } );
 					publicVariable "INS_playerManpower";
 					titleText [ format [ "<t size='1.5'>%1 MANPOWER Income received!</t>", _amount ], "PLAIN", 1, true, true];
 				};
 				
 				// material 
-				if ( time > (INS_lastMat + INS_matPulse) ) then {
+				if ( time > (INS_lastMat + INS_matPulse) && INS_playerMaterials < INS_matMax ) then {
 					INS_lastMat = time;
 					private _amount = 0;
 					{
 						INS_playerMaterials = INS_playerMaterials + _x;
 						_amount = _amount + _x;
-					} forEach ( INS_controlled apply { floor ( ( (_x select 2) select 2 ) / 10 ) } );
+					} forEach ( INS_controlled apply { floor ( ( (_x select 2) select 2 ) / 15 ) } );
 					publicVariable "INS_playerMaterials";
 					titleText [ format [ "<t size='1.5'>%1 MATERIALS Income received!</t>", _amount ], "PLAIN", 1, true, true];
 				};
@@ -477,7 +560,7 @@ if ( isServer && isNil "INS_caches" ) then {
 							params ["_unit"];
 							private _spawn = [0,0,0,0,0,0,0,0,1,0,0,1] call BIS_fnc_selectRandom;
 							if ( _spawn == 1 ) then  {
-								_suitcase = "Suitcase" createVehicle ((getPosATL _unit) findEmptyPosition [0,30,"Suitcase"]);
+								private _suitcase = "Suitcase" createVehicle ((getPosATL _unit) findEmptyPosition [0,30,"Suitcase"]);
 								[_suitcase] spawn {
 									params ["_case"];
 									waitUntil { [_case, 5] call CBA_fnc_nearPlayer };

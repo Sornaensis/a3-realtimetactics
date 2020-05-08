@@ -538,7 +538,7 @@
 	// Assign Targets
 	if ( combatMode _group != "GREEN" ) then {
 		private _lead = leader _group;
-		private _targets = ( [ _group getVariable ["spotted",[]], [], { (getPos _x) distance (getPos _lead)  }, "ASCEND"] call BIS_fnc_sortBy ) select { side _x != civilian };
+		private _targets = ( [ _group getVariable ["spotted",[]], [], { (getPos _x) distance (getPos _lead)  }, "ASCEND"] call BIS_fnc_sortBy ) select { side _x != civilian && side _x != RTS_sidePlayer };
 		
 		if ( count _targets > 0 ) then {
 			private _units = (units _group) select { ! ( (_x getVariable ["assigned_target", objnull]) in _targets ) };

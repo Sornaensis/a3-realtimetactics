@@ -288,6 +288,9 @@ class PassengerInfoText: RscText
 
 class PurchaseMenuDialog 
 {
+	idd = -1;
+	movingenable = 0;
+	onLoad = "uiNamespace setVariable ['purchase_dialog', _this select 0]";
 	controls[] = {
 		PurchaseMenuBG,
 		PurchaseText,

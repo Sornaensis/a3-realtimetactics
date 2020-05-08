@@ -3,47 +3,56 @@
 waitUntil { RTS_phase == "MAIN" };
 
 RTS_revealSpotted = {
-	private _opfor = allUnits select { (side _x == RTS_sideEnemy) || (side _x == RTS_sideGreen) };
-	{
-		private _spots = _x;
+	private _cmdr = objnull;
+	if ( !isNil "RTS_commanderUnit" ) then {
+		_cmdr = RTS_commanderUnit;
+	};
+	if ( RTS_commanding ) then {
+		private _opfor = allUnits select { _x != _cmdr && side _x != civilian && !( (group _x) in RTS_commandingGroups ) };
 		{
-			_x hideObject false;
-			(vehicle _x) hideObject false;
-			_opfor = _opfor - [_x];
-		} forEach _spots;
-	} forEach (RTS_commandingGroups apply { _x getVariable ["spotted",[]] });
-	
-	{
-		(vehicle _x) hideObject true;
-		_x hideObject true;
-	} forEach _opfor;
-	
-	_opfor_vehicles = [];
-	{
-		if ( count ((crew _x) select { alive _x } ) == 0 ) then {
-			_x hideObject false;
-		} else {
-			_opfor_vehicles pushback _x;
-		};
-	} forEach RTS_opfor_vehicles;
-	RTS_opfor_vehicles = _opfor_vehicles;
-	_greenfor_vehicles = [];
-	{
-		if ( count ((crew _x) select { alive _x } ) == 0 ) then {
-			_x hideObject false;
-		} else {
-			_greenfor_vehicles pushback _x;
-		};
-	} forEach RTS_greenfor_vehicles;
-	RTS_greenfor_vehicles = _greenfor_vehicles; 
-	
+			private _spots = _x;
+			{
+				_x hideObject false;
+				(vehicle _x) hideObject false;
+				_opfor = _opfor - [_x];
+			} forEach _spots;
+		} forEach (RTS_commandingGroups apply { _x getVariable ["spotted",[]] });
+		
+		{
+			(vehicle _x) hideObject true;
+			_x hideObject true;
+		} forEach _opfor;
+		
+		_opfor_vehicles = [];
+		{
+			if ( count ((crew _x) select { alive _x } ) == 0 ) then {
+				_x hideObject false;
+			} else {
+				_opfor_vehicles pushback _x;
+			};
+		} forEach RTS_opfor_vehicles;
+		RTS_opfor_vehicles = _opfor_vehicles;
+		_greenfor_vehicles = [];
+		{
+			if ( count ((crew _x) select { alive _x } ) == 0 ) then {
+				_x hideObject false;
+			} else {
+				_greenfor_vehicles pushback _x;
+			};
+		} forEach RTS_greenfor_vehicles;
+		RTS_greenfor_vehicles = _greenfor_vehicles; 
+	};
 };
 
 // OPFOR check if they are spotted
 RTS_spottingLoop = [] spawn { 
 	while {true} do {
+		private _cmdr = objnull;
+		if ( !isNil "RTS_commanderUnit" ) then {
+			_cmdr = RTS_commanderUnit;
+		};
 		if ( RTS_commanding && !RTS_godseye ) then {
-			private _enemies = allUnits select { side _x == RTS_sideEnemy || side _x == RTS_sideGreen };
+			private _enemies = allUnits select { _x != _cmdr && side _x != civilian && !( (group _x) in RTS_commandingGroups ) };
 			{
 				private _group = _x;
 				private _units = units _group;
@@ -53,7 +62,7 @@ RTS_spottingLoop = [] spawn {
 						if ( side _enemy == RTS_sideEnemy ) then {
 							RTS_opfor_vehicles pushBackUnique (vehicle _enemy);
 						} else {
-							if ( side _enemy == RTS_sideGreen ) then {
+							if ( side _enemy == RTS_sideGreen || side _enemy == RTS_sidePlayer ) then {
 								RTS_greenfor_vehicles pushBackUnique (vehicle _enemy);
 							};
 						};
@@ -70,7 +79,7 @@ RTS_spottingLoop = [] spawn {
 			{
 				(vehicle _x) hideObject false;
 				_x hideObject false;
-			} forEach (allunits select { side _x != RTS_sidePlayer } );
+			} forEach allUnits;
 			{
 				_x hideObject false;
 			} forEach RTS_opfor_vehicles;
