@@ -293,14 +293,14 @@ INS_spawnUnits = {
 	private _zoneSize = (_mx max _my) * 1.8;
 	
 	private _side = [[_zone] call INS_zoneDisposition] call INS_greenforDisposition;
-	private _otherSoldiers = ([_zoneName] call getZoneSoldiers) select { (_x getVariable ["ins_side",east]) != _side;
+	private _otherSoldiers = ([_zoneName] call getZoneSoldiers) select { (_x getVariable ["ins_side",east]) != _side };
 	
 	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select 
 							{ (count (_x buildingPos -1) > 2) 
 								&& ((position _x) distance _pos) < 1400
 								&& ([position _x] call getNearestControlZone) isEqualType ""
 								&& count ([position _x, call INS_allPlayers,500] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, _otherSoldiers },800] call CBA_fnc_getNearest) == 0 };
+								&& count ([position _x, _otherSoldiers,800] call CBA_fnc_getNearest) == 0 };
 	if ( count _buildings == 0) exitWith { };
 	
 	_pos = getPos (selectRandom _buildings);
@@ -311,7 +311,7 @@ INS_spawnUnits = {
 	
 	if (  _spawnpos isEqualTo [0,0,0] || _spawnpos isEqualTo []
 	   || count ([_spawnpos, call INS_allPlayers,500] call CBA_fnc_getNearest) > 0 
-	   || count ([_spawnpos, _otherSoldiers },800] call CBA_fnc_getNearest) > 0 ) exitWith {  };
+	   || count ([_spawnpos, _otherSoldiers,800] call CBA_fnc_getNearest) > 0 ) exitWith {  };
 	
 	private _leader = [_spawnpos,_side] call _spawnfunc;
 	if ( side _leader == west ) then {

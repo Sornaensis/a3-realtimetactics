@@ -7,9 +7,8 @@ Basic algorithm: Patrols and vehicle teams maneuver and assault.
 
 */
 
-INS_insurgentAI = [] spawn {
-	while { true } do {
-		
+INS_insurgentAI = addMissionEventHandler [ "EachFrame",
+{	
 		private _humanPlayers = call INS_allPlayers;
 		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
 		private _unitSpawners = ( (_humanPlayers select { side _x != east }) + _insurgents );
@@ -136,5 +135,4 @@ INS_insurgentAI = [] spawn {
 			};
 					
 		} forEach (allGroups select { local _x && time > (_x getVariable ["ai_cooldown",0]) });
-	};
-};
+	}];
