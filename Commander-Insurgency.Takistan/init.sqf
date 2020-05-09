@@ -22,10 +22,6 @@ INS_allPlayers = {
 	(allPlayers - _headlessClients)
 };
 
-INS_headlessClients = {
-	entities "HeadlessClient_F"
-};
-
 private _runsetup = false;
 
 if ( !(isNil "opforCommander") ) then {
@@ -75,6 +71,8 @@ if ( isServer || !hasInterface ) then {
 
 // Headless client strategic AI
 if ( !hasInterface && !isServer ) then {
+	[] call (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
+	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\insurgency.sqf");
 	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\hc_ai.sqf");
 };
 
@@ -338,8 +336,8 @@ if ( isDedicated || _runsetup ) then {
 		INS_apcCost = [10, 100];
 		INS_tankCost = [30, 250];		
 		
-		INS_mpMax = 50;
-		INS_matMax = 250;
+		INS_mpMax = 75;
+		INS_matMax = 300;
 		INS_lastMen = 0;
 		INS_menPulse = 300;
 		INS_lastMat = 0;
@@ -347,9 +345,9 @@ if ( isDedicated || _runsetup ) then {
 		
 		// Starting materials and manpower
 		if ( isNil "INS_playerMaterials" ) then {
-			INS_playerMaterials = 80;
+			INS_playerMaterials = 100;
 			publicVariable "INS_playterMaterials";
-			INS_playerManpower = 30;
+			INS_playerManpower = 50;
 			publicVariable "INS_playerManpower";
 		};
 		
@@ -541,9 +539,9 @@ if ( isServer && isNil "INS_caches" ) then {
 		while { true } do {
 			waitUntil { INS_bluforCasualties >= INS_maxCasualties || INS_caches == 0 };
 			if ( INS_caches == 0 ) then {
-				[-1, { ["Coalition Victory",if (side player == west ) then { true } else { false },3] call BIS_fnc_endMission; }] call CBA_fnc_globalExecute;
+				[-1, { ["Coalition Victory",if (side (group player) == west ) then { true } else { false },3] call BIS_fnc_endMission; }] call CBA_fnc_globalExecute;
 			} else {
-				[-1, { ["Insurgent Victory",if (side player == east ) then { true } else { false },3] call BIS_fnc_endMission; }] call CBA_fnc_globalExecute;
+				[-1, { ["Insurgent Victory",if (side (group player) == east ) then { true } else { false },3] call BIS_fnc_endMission; }] call CBA_fnc_globalExecute;
 			};
 		};
 	};
