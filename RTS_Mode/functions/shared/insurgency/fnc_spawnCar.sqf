@@ -10,9 +10,10 @@ if ( isNil "_side" ) then {
 
 private _soldier = [_pos,nil,_side] call INS_fnc_spawnRandomSoldier;
 
-private _radius = 50;
-while { !(isOnRoad _pos) || count ([_pos,(call INS_allPlayers) select { side _x != _side },350] call CBA_fnc_getNearest) > 0 } do {
-	private _roads = _pos nearRoads 500;
+private _radius = 150;
+private _players = (call INS_allPlayers) select { side _x != _side };
+while { !(isOnRoad _pos) || count ([_pos, _players,350] call CBA_fnc_getNearest) > 0 } do {
+	private _roads = _pos nearRoads _radius;
 	if ( count _roads > 0 ) then {
 		_pos = (getPos (selectRandom _roads));
 	} else {

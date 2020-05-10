@@ -1,5 +1,5 @@
 // Despawn
-[] spawn {
+INS_despawner = [] spawn {
 	while { true } do {
 		private _humanPlayers = call INS_allPlayers;
 		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
@@ -76,11 +76,69 @@
 	};
 };
 
+INS_hasHC = {
+	count (entities "HeadlessClient_F") > 0
+};
+
+INS_hcRoundRobin = [];
+
+INS_getNextHC = {
+	private _headlessClients = (entities "HeadlessClient_F") - INS_hcRoundRobin;
+	
+	if ( _headlessClients isEqualTo [] ) then {
+		INS_hcRoundRobin = [];
+		_headlessClients = entities "HeadlessClient_F";
+	};
+	
+	private _hc = _headlessClients # 0;
+	
+	INS_hcRoundRobin pushback _hc;
+	
+	_hc	
+};
 
 INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 {
 		private _humanPlayers = call INS_allPlayers;
 		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
+		private _unitSpawners = ( (_humanPlayers select { side _x != east }) + _insurgents );
+				
+		// Spawn AI due to blufor player activity
+		if ( (call getSpawnedSoldierCount) < INS_spawnedUnitCap ) then {
+			{
+				private _player = _x;
+				
+				if ( vehicle _player == _player || ( (getPosATL (vehicle _player)) select 2 ) < 800 ) then {
+				
+					private _pos = getPos _player;
+					private _zone = [_pos] call getNearestControlZone;
+					
+					if ( !isNil "_zone" ) then {
+						// record zone
+						_player setVariable ["insurgency_zone", _zone];
+						if ( call INS_hasHC ) then {
+							private _hc = call INS_getNextHC;
+							[[_zone, _pos], INS_spawnTownGarrison] remoteExecCall [ "call", _hc ];
+						} else {
+							[_zone, _pos] call INS_spawnTownGarrison;
+						};
+					} else {
+						_player setVariable ["insurgency_zone", nil];
+					};
+					
+					// second nearest zone
+					private _zone2 = [_pos] call getNearestControlZone2;
+					if ( !isNil "_zone2" ) then {
+						if ( call INS_hasHC ) then {
+							private _hc = call INS_getNextHC;
+							[[_zone2, _pos], INS_spawnTownGarrison] remoteExecCall [ "call", _hc ];
+						} else {
+							[_zone2, _pos] call INS_spawnTownGarrison;
+						};
+					};
+				};
+			} forEach _unitSpawners;
+		};
 		
 		if ( (call getSpawnedCiviliansCount) < INS_civilianCap ) then {
 			{
