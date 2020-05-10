@@ -7,8 +7,8 @@ Basic algorithm: Patrols and vehicle teams maneuver and assault.
 
 */
 
-INS_insurgentAI = addMissionEventHandler [ "EachFrame",
-{	
+INS_insurgentAI = [] spawn {
+	while { true } do {	
 		private _humanPlayers = call INS_allPlayers;
 		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
 		private _unitSpawners = ( (_humanPlayers select { side _x != east }) + _insurgents );
@@ -35,7 +35,7 @@ INS_insurgentAI = addMissionEventHandler [ "EachFrame",
 			
 			switch ( _tasking ) do {
 				case "GARRISON": {
-					private _units = _interestingUnits select { side _x != side _group && count ([_x,units _group,250] call CBA_fnc_getNearest) > 0 && ( _group knowsAbout _x ) > 0.5 };
+					private _units = _interestingUnits select { side (group _x) != side _group && count ([_x,units _group,250] call CBA_fnc_getNearest) > 0 && ( _group knowsAbout _x ) > 1 };
 					
 					if ( count _units > 0 ) then {
 						private _target = [_leader, _units] call CBA_fnc_getNearest;
@@ -51,7 +51,7 @@ INS_insurgentAI = addMissionEventHandler [ "EachFrame",
 					};
 				};
 				case "PATROL": {
-					private _units = _interestingUnits select { side _x != side _group && count ([_x,units _group,1000] call CBA_fnc_getNearest) > 0 && ( _group knowsAbout _x ) > 0.5 };
+					private _units = _interestingUnits select { side (group _x) != side _group && count ([_x,units _group,1000] call CBA_fnc_getNearest) > 0 && ( _group knowsAbout _x ) > 1 };
 					
 					if ( count _units > 0 ) then {
 						private _target = [_leader, _units] call CBA_fnc_getNearest;
@@ -74,4 +74,5 @@ INS_insurgentAI = addMissionEventHandler [ "EachFrame",
 			};
 					
 		} forEach (allGroups select { local _x && time > (_x getVariable ["ai_cooldown",0]) });
-	}];
+	};
+};

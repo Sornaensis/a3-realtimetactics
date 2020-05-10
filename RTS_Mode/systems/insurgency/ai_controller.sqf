@@ -116,11 +116,15 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 					if ( !isNil "_zone" ) then {
 						// record zone
 						_player setVariable ["insurgency_zone", _zone];
-						if ( call INS_hasHC ) then {
-							private _hc = call INS_getNextHC;
-							[[_zone, _pos], INS_spawnTownGarrison] remoteExecCall [ "call", _hc ];
-						} else {
-							[_zone, _pos] call INS_spawnTownGarrison;
+						if ( [_zone] call INS_canZoneSpawnAndUpdate ) then {
+							if ( ([_zone] call INS_getZoneDensity) < INS_populationDensity ) then {
+								if ( call INS_hasHC ) then {
+									private _hc = call INS_getNextHC;
+									[[_zone, _pos], INS_spawnTownGarrison] remoteExec [ "call", _hc ];
+								} else {
+									[_zone, _pos] call INS_spawnTownGarrison;
+								};
+							};
 						};
 					} else {
 						_player setVariable ["insurgency_zone", nil];
@@ -129,11 +133,15 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 					// second nearest zone
 					private _zone2 = [_pos] call getNearestControlZone2;
 					if ( !isNil "_zone2" ) then {
-						if ( call INS_hasHC ) then {
-							private _hc = call INS_getNextHC;
-							[[_zone2, _pos], INS_spawnTownGarrison] remoteExecCall [ "call", _hc ];
-						} else {
-							[_zone2, _pos] call INS_spawnTownGarrison;
+						if ( [_zone2] call INS_canZoneSpawnAndUpdate ) then {
+							if ( ([_zone2] call INS_getZoneDensity) < INS_populationDensity ) then {
+								if ( call INS_hasHC ) then {
+									private _hc = call INS_getNextHC;
+									[[_zone2, _pos], INS_spawnTownGarrison] remoteExec [ "call", _hc ];
+								} else {
+									[_zone2, _pos] call INS_spawnTownGarrison;
+								};
+							};
 						};
 					};
 				};

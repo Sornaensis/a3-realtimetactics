@@ -63,20 +63,20 @@ INS_greenforDisposition = {
 	if ( _zoneDisp >= 51 ) then {
 		_retSide = west;
 	} else {
-		if ( _zoneDisp <= -51 ) then {
+		if ( _zoneDisp < -51 ) then {
 			_retSide = east;
 		} else {
-			if ( _zoneDisp <= -24 ) then {
-				_retSide = selectRandomWeighted [east,1];
+			if ( _zoneDisp < -24 ) then {
+				_retSide = east;
 			} else {
 				if ( _zoneDisp <= 0 ) then {
-					_retSide = selectRandomWeighted [resistance,1];	
+					_retSide = selectRandomWeighted [resistance,1,west,0.05];	
 				} else {
 					if ( _zoneDisp <= 24 ) then {
-						_retSide = selectRandomWeighted [resistance,1];
+						_retSide = selectRandomWeighted [resistance,1,west,0.1];
 					} else {
 						if ( _zoneDisp < 51 ) then {
-							_retSide = selectRandomWeighted [west,1];
+							_retSide = selectRandomWeighted [resistance,1,west,0.2];
 						};
 					};
 				};
@@ -92,7 +92,7 @@ getSpawnedSoldierCount = {
 };
 
 getSpawnedSoldiers = {
-	(allUnits + allDeadMen) select { !(((group _x) getVariable ["ai_city",objnull]) isEqualTo objnull) && (_x getVariable ["ins_side",east]) != civilian }
+	(allUnits + allDeadMen) select { !(((group _x) getVariable ["ai_city",objnull]) isEqualTo objnull) && (_x getVariable ["ins_side",civilian]) != civilian }
 };
 
 getSpawnedCiviliansCount = {
@@ -161,13 +161,13 @@ INS_getZoneDensity = {
 	
 	private _popAdjust = 0;
 	
-	private _casIndex = INS_cityCasualtyTracker findIf { _x # 0 == _zoneName };
+	private _casIndex = INS_cityCasualtyTracker findIf { (_x # 0) == _zoneName };
 	if ( _casIndex != -1 ) then {
 		private _casualties = INS_cityCasualtyTracker # _casIndex;
 		
-		if ( time < (_casualties # 2 ) + 600 ) then {
+		if ( time < ( (_casualties # 2 ) + 600 ) ) then {
 			private _count = _casualties # 1;
-			_popAdjust = _count min (([_zoneName] call INS_zoneMaxPop) / 2);
+			_popAdjust = _count min (([_location] call INS_zoneMaxPop) / 2);
 			diag_log (format ["Adjusting population of %1 by %2", _zoneName, _popAdjust]);
 		};
 	};
@@ -287,7 +287,7 @@ INS_spawnCivilian = {
 	
 	_pos = (getPos (selectRandom _buildings));
 	
-	private _spawnfunc = selectRandomWeighted ["Civ",1,"Car",0.01];
+	private _spawnfunc = selectRandomWeighted ["Civ",1,"Car",0.1];
 	
 	private _leader = objnull;
 	
@@ -297,10 +297,10 @@ INS_spawnCivilian = {
 		_leader = [_pos,civilian] call INS_fnc_spawnCar;
 	};
 	
-	(group _leader) setVariable ["ai_city", _zoneName];
+	(group _leader) setVariable ["ai_city", _zoneName, true];
 	
 	{
-		_x setVariable ["ins_side", civilian];
+		_x setVariable ["ins_side", civilian, true];
 	} forEach (units (group _leader));
 	
 	if ( vehicle _leader != _leader ) then {
@@ -324,28 +324,26 @@ INS_spawnUnits = {
 	private _zoneSize = (_mx max _my) * 1.6;
 	
 	private _side = [[_zone] call INS_zoneDisposition] call INS_greenforDisposition;
-	private _zoneSoldiers = ([_zoneName] call getZoneSoldiers);
-	private _enemySoldiers = _zoneSoldiers select { (_x getVariable ["ins_side",east]) != _side };
-	private _friendlySoldiers = _zoneSoldiers select { (_x getVariable ["ins_side",east]) == _side };
+	private _enemySoldiers = allUnits select { !((_x getVariable ["ai_city",objnull]) isEqualTo objnull) && (_x getVariable ["ins_side",civilian]) != civilian && (_x getVariable ["ins_side",civilian]) != _side };
+	private _friendlySoldiers = allUnits select { !((_x getVariable ["ai_city",objnull]) isEqualTo objnull) && (_x getVariable ["ins_side",civilian]) != civilian && (_x getVariable ["ins_side",civilian]) == _side };
 	
-	private _players = call INS_allPlayers;
+	private _players = (call INS_allPlayers) select { side (group _x) != _side };
 	
 	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select 
 							{ (count (_x buildingPos -1) > 2) 
 								&& ((position _x) distance _pos) < 1400
 								&& !((position _x) inArea "opfor_restriction")
 								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, _friendlySoldiers,50] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, _enemySoldiers,700] call CBA_fnc_getNearest) == 0 };
+								&& count ([position _x, _friendlySoldiers,75] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _enemySoldiers,500] call CBA_fnc_getNearest) == 0 };
 	if ( count _buildings == 0) exitWith { };
 	
 	_pos = getPos (selectRandom _buildings);
 	
 	private _spawnfunc = selectRandomWeighted [INS_fnc_spawnSquad,0.9,INS_fnc_spawnAPC,0.05,INS_fnc_spawnTank,0.005];
 
-	private _spawnpos = [_pos, 35] call CBA_fnc_randPos;
 	
-	private _leader = [_spawnpos,_side] call _spawnfunc;
+	private _leader = [_pos,_side] call _spawnfunc;
 	if ( side _leader == west ) then {
 		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.7,"GREEN",0.4]];
 	} else {
@@ -362,7 +360,7 @@ INS_spawnUnits = {
 		(vehicle _leader) setVariable ["spawned_vehicle", true, true];
 	};
 	
-	diag_log format ["Spawned %1 units of side %2 at %3 (%4)",count (units (group _leader)),_side,_spawnpos,_zoneName];
+	diag_log format ["Spawned %1 units of side %2 at %3 (%4)",count (units (group _leader)),_side,_pos,_zoneName];
 	
 	[_leader,_pos]
 };
@@ -371,24 +369,22 @@ INS_spawnUnits = {
 // Spawn soldiers within a town
 INS_spawnTownGarrison = {
 	params ["_zone", "_pos" ];
-	if ( [_zone] call INS_canZoneSpawnAndUpdate ) then {
-		if ( ([_zone] call INS_getZoneDensity) < INS_populationDensity ) then {
-			diag_log (format ["Can spawn at %1 with soldier density %2", _zone, ([_zone] call INS_getZoneDensity)]);
-			private _soldierList = [_pos,_zone] call INS_spawnUnits;
-			if ( !isNil "_soldierList" ) then {
-				_soldierList params ["_soldier", "_position"];
-				private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsPatrol,0.2];
-				private _radius = 75 + (random 50);
-				if ( vehicle _soldier != _soldier ) then {
-					_task = setupAsPatrol;
-					_radius = 400 + (random 150);
-				};
-				private _group = group _soldier;
-				[_group, [_position, 25] call CBA_fnc_randPos, _radius, _zone] call _task;
-				diag_log (format ["Headless client tasking %1",_group]);
-			};			
-		};
-	};
+	if ( ([_zone] call INS_getZoneDensity) < INS_populationDensity ) then {
+		diag_log (format ["Can spawn at %1 with soldier density %2", _zone, ([_zone] call INS_getZoneDensity)]);
+		private _soldierList = [_pos,_zone] call INS_spawnUnits;
+		if ( !isNil "_soldierList" ) then {
+			_soldierList params ["_soldier", "_position"];
+			private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsPatrol,0.2];
+			private _radius = 75 + (random 50);
+			if ( vehicle _soldier != _soldier ) then {
+				_task = setupAsPatrol;
+				_radius = 400 + (random 150);
+			};
+			private _group = group _soldier;
+			[_group, [_position, 25] call CBA_fnc_randPos, _radius, _zone] call _task;
+			diag_log (format ["Headless client tasking %1",_group]);
+		};	
+	};		
 };
 
 if ( !isServer ) exitWith {};
@@ -400,9 +396,9 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 	params ["_unit", "_killer", "_instigator", "_useEffects"];
 	
 	// casualities persist for ~10 minutes
-	if ( !((_unit getVariable ["ai_city", objnull]) isEqualTo objnull) && (_unit getVariable ["ai_city", objnull]) != civilian ) then {
-		private _city = _unit getVariable ["ai_city", objnull];
-		private _index = INS_cityCasualtyTracker findIf { _x # 0 == _city };
+	if ( !(((group _unit) getVariable ["ai_city", objnull]) isEqualTo objnull) && (_unit getVariable ["ins_side", east]) != civilian ) then {
+		private _city = (group _unit) getVariable "ai_city";
+		private _index = INS_cityCasualtyTracker findIf { (_x # 0) == _city };
 		
 		// first blood
 		if ( _index == -1 ) then {
@@ -415,7 +411,7 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 				_cas set [1, 1];
 				_cas set [2, time];
 			} else {
-				private _ct + _cas # 1;
+				private _ct = _cas # 1;
 				_cas set [1, _ct + 1];
 				_cas set [2, time];
 			};
