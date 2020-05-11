@@ -408,8 +408,8 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 		} else {
 			private _cas = INS_cityCasualtyTracker # _index;
 			private _time = _cas # 2;
-			// reset counter after 10 minutes
-			if ( time > _time + 600 ) then {
+			// reset counter after 20 minutes
+			if ( time > _time + 1200 ) then {
 				_cas set [1, 1];
 				_cas set [2, time];
 			} else {
