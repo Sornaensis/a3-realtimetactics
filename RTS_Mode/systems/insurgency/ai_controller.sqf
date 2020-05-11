@@ -110,40 +110,47 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 				
 				if ( vehicle _player == _player || ( (getPosATL (vehicle _player)) select 2 ) < 800 ) then {
 				
+					private _params = [];
 					private _pos = getPos _player;
 					private _zone = [_pos] call getNearestControlZone;
+					private _zone2 = [_pos] call getNearestControlZone2;
 					
-					if ( !isNil "_zone" ) then {
+					if ( !isNil "_zone" ) then {					
 						// record zone
 						_player setVariable ["insurgency_zone", _zone];
 						if ( [_zone] call INS_canZoneSpawnAndUpdate ) then {
-							if ( ([_zone] call INS_getZoneDensity) < INS_populationDensity ) then {
-								if ( call INS_hasHC ) then {
-									private _hc = call INS_getNextHC;
-									[[_zone, _pos], INS_spawnTownGarrison] remoteExec [ "call", _hc ];
-								} else {
-									[_zone, _pos] call INS_spawnTownGarrison;
-								};
+							private _density = [_zone] call INS_getZoneDensity;
+							if ( _density < INS_populationDensity ) then {
+								_params pushback [_zone, _pos];
 							};
 						};
 					} else {
 						_player setVariable ["insurgency_zone", nil];
 					};
 					
-					// second nearest zone
-					private _zone2 = [_pos] call getNearestControlZone2;
 					if ( !isNil "_zone2" ) then {
 						if ( [_zone2] call INS_canZoneSpawnAndUpdate ) then {
-							if ( ([_zone2] call INS_getZoneDensity) < INS_populationDensity ) then {
-								if ( call INS_hasHC ) then {
-									private _hc = call INS_getNextHC;
-									[[_zone2, _pos], INS_spawnTownGarrison] remoteExec [ "call", _hc ];
-								} else {
-									[_zone2, _pos] call INS_spawnTownGarrison;
-								};
+							private _density = [_zone2] call INS_getZoneDensity;
+							if ( _density < INS_populationDensity ) then {
+								_params pushback [_zone2, _pos];
 							};
 						};
 					};
+					
+					if ( !(_params isEqualTo []) ) then {
+						if ( call INS_hasHC ) then {
+							private _hc = call INS_getNextHC;
+							[_params, _hc] spawn {
+								params ["_params","_hc"];
+								[_params, { { _x call INS_spawnTownGarrison; } forEach _this; }] remoteExecCall [ "call", _hc ];
+							};
+						} else {
+							{
+								_x call INS_spawnTownGarrison;
+							} forEach _params;
+						};
+					};
+					
 				};
 			} forEach _unitSpawners;
 		};

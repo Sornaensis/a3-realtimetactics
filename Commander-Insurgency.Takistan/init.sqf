@@ -37,7 +37,7 @@ if ( isServer || !hasInterface ) then {
 		[_group] call CBA_fnc_clearWaypoints;
 		_group setVariable ["ai_status", "GARRISON", true];
 		_group setVariable ["ai_city", _city, true];
-		[_group, _pos, _radius, 2, 0.1, 0.8 ] call CBA_fnc_taskDefend;
+		[_group, _pos, _radius, 2, 0.35, 0.9 ] call CBA_fnc_taskDefend;
 	};
 	
 	setupAsGarrison = {
@@ -45,7 +45,7 @@ if ( isServer || !hasInterface ) then {
 		[_group] call CBA_fnc_clearWaypoints;
 		_group setVariable ["ai_status", "GARRISON", true];
 		_group setVariable ["ai_city", _city, true];
-		[_group, _pos, _radius, 2, 0.3, 0.65 ] call CBA_fnc_taskDefend;
+		[_group, _pos, _radius, 2, 0.4, (random 70)/100 ] call CBA_fnc_taskDefend;
 	};
 	
 	setupAsPatrol = {
