@@ -137,6 +137,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 						};
 					};
 					
+					// garrison spawn
 					if ( !(_params isEqualTo []) ) then {
 						if ( call INS_hasHC ) then {
 							private _hc = call INS_getNextHC;
@@ -148,6 +149,42 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 							{
 								_x call INS_spawnTownGarrison;
 							} forEach _params;
+						};
+					};
+					
+					// patrol logic
+					if ( !isNil "_zone" ) then {
+						private _patrolZone = INS_patrolTable findIf { (_x select 0) isEqualTo _zone };
+						
+						if ( _patrolZone != -1 ) then {
+							private _patrols = INS_patrolTable # _patrolZone;
+							_patrols params ["","_pulse","_time"];
+							if ( _time != -1 ) then {
+								if ( time > (_time + _pulse) ) then {
+									
+									if ( _pulse > 1200 ) then {
+										_pulse = 0;
+									};
+									
+									_patrols set [1, _pulse + 200 + (floor (random 140))];
+									_patrols set [2, time];
+									if ( call INS_hasHC ) then {
+										private _hc = call INS_getNextHC;
+										[_zone, _hc] spawn {
+											params ["_zone","_hc"];
+											[_zone, { _this spawn INS_spawnPatrol; }] remoteExecCall [ "call", _hc ];
+										};
+									} else {
+										_zone spawn INS_spawnPatrol;
+									};
+								};
+							} else {
+								_patrols set [1, 300 + (floor (random 200))];
+								_patrols set [2, time];
+							};
+							
+						} else {
+							INS_patrolTable pushback [ _zone, -1, -1 ];
 						};
 					};
 					

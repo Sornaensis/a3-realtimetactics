@@ -7,13 +7,18 @@ INS_initialSquads = 3; // spawn this many squads
 INS_civilianDensity = 9;
 INS_populationDensity = 18; 
 
-					
+
 // track soldier casualties so zones aren't always fully respawning
 INS_cityCasualtyTracker = []; // [ [ name, count, timestamp ] ]
 
 // track spawn times
 INS_aiSpawnTable = []; //  [  [ name, timestamp ] ]
 INS_civSpawnTable = [];
+
+// Spawn a patrol in an active zone
+// pulse patrols between 300-500 seconds
+// after each pulse increase time by 200-340
+INS_patrolTable = []; // [ [ name, pulse, timestamp (-1 for inactive) ] ]
 
 INS_getZone = {
 	params ["_zoneName"];
@@ -336,7 +341,7 @@ INS_spawnUnits = {
 								&& ((position _x) distance _pos) < 1400
 								&& !((position _x) inArea "opfor_restriction")
 								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, _friendlySoldiers,50] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
 	if ( count _buildings == 0) exitWith { };
 	
@@ -388,6 +393,24 @@ INS_spawnTownGarrison = {
 		};	
 	};		
 };
+
+
+// Spawn soldiers attacking a town
+INS_spawnPatrol = {
+	private _zoneName = _this;
+	private _zone = [_zoneName] call INS_getZone;
+	private _side = selectRandom ([east,west,resistance] - [[[_zone] call INS_zoneDisposition] call INS_greenforDisposition]);
+	diag_log (format ["Spawning patrol of side %1 at %2", _side, _zone]);
+	//private _soldierList = [_pos,_zone] call INS_spawnUnits;
+	
+	// we want to spawn 2-3 squads and 0-2 vehicles
+	private _sqdCt = selectRandom [2,3];
+	private _carCt = selectRandomWeighted [0,1,1,0.3,2,0.05];
+	
+	private _carFunc = selectRandomWeighted [INS_fnc_spawnAPC,1,INS_fnc_spawnTank,0.01];
+	
+};
+
 
 if ( !isServer ) exitWith {};
 
