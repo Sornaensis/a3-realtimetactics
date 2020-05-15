@@ -407,7 +407,7 @@ INS_spawnTownGarrison = {
 		private _soldierList = [_pos,_zone] call INS_spawnUnits;
 		if ( !isNil "_soldierList" ) then {
 			_soldierList params ["_soldier", "_position"];
-			private _taskType = selectRandomWeighted [setupAsGarrison,0.9,setupAsDismissed,0.5,setupAsPatrol,0.2];
+			private _task = selectRandomWeighted [setupAsGarrison,0.7,setupAsFullGarrison,0.5,setupAsPatrol,0.2];
 			private _radius = 75 + (random 50);
 			if ( vehicle _soldier != _soldier ) then {
 				_task = setupAsPatrol;

@@ -51,13 +51,13 @@ if ( isServer || !hasInterface ) then {
 		[_group, _pos, _radius, 2, 0.4, (random 70)/100 ] call CBA_fnc_taskDefend;
 	};
 	
-	setupAsDismissed = {
+	setupAsFullGarrison = {
 		params ["_group", "_pos", "_radius","_city"];
 		[_group] call CBA_fnc_clearWaypoints;
 		_group setVariable ["ai_dismiss_loc", _pos];
-		_group setVariable ["ai_status", "DISMISSED"];
+		_group setVariable ["ai_status", "GARRISON"];
 		_group setVariable ["ai_city", _city, true];
-		[_group, _pos, _radius, "DISMISSED"] call CBA_fnc_addWaypoint;
+		[_group, _pos] execVM "\x\cba\addons\ai\fnc_waypointGarrison.sqf";
 	};
 	
 	setupAsPatrol = {

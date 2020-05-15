@@ -221,15 +221,21 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 								private _soldierList = [_pos,_zone] call INS_spawnCivilian;
 								if ( !isNil "_soldierList" && !isNull (_soldierList select 0) ) then {
 									_soldierList params ["_soldier", "_position"];
-									private _task = selectRandomWeighted [setupAsCivilianGarrison,0.9,setupAsGarrison,0.1];
+									private _task = selectRandomWeighted [setupAsCivilianGarrison,0.9,setupAsFullGarrison,0.7,setupAsPatrol,0.1];
 									_soldier setUnitPos "UP";
 									_soldier setUnitPosWeak "UP";
 									private _radius = 75 + (random 50);
 									if ( vehicle _soldier != _soldier ) then {
 										_task = setupAsPatrol;
 										_radius = (1200 + random 100);
-									};									
-									[(group _soldier), [_position, 25] call CBA_fnc_randPos, _radius, _zone] call _task;
+									};
+									private _zoneAct = [_zone] call INS_getZone;
+									private _zoneMarker = _zoneAct select 1;
+									(getMarkerSize _zoneMarker) params ["_mx","_my"];
+									private _zoneSize = (_mx max _my) * 1.2;
+									private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSize] ) 
+														select { (count (_x buildingPos -1)) > 2 };									
+									[(group _soldier), getPos (selectRandom _building), _radius, _zone] call _task;
 								};
 							};
 						};
