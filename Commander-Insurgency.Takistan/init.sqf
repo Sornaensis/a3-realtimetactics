@@ -57,7 +57,7 @@ if ( isServer || !hasInterface ) then {
 		_group setVariable ["ai_dismiss_loc", _pos];
 		_group setVariable ["ai_status", "DISMISSED"];
 		_group setVariable ["ai_city", _city, true];
-		[_group, _pos, _radius] call CBA_fnc_addWaypoint;
+		[_group, _pos, _radius, "DISMISSED"] call CBA_fnc_addWaypoint;
 	};
 	
 	setupAsPatrol = {

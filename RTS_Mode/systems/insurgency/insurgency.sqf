@@ -418,8 +418,8 @@ INS_spawnTownGarrison = {
 			private _zoneMarker = _zoneAct select 1;
 			(getMarkerSize _zoneMarker) params ["_mx","_my"];
 			private _zoneSize = (_mx max _my) * 1.2;
-			private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSide] ) 
-								select { (_x buildingPos -1) > 2 };
+			private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSize] ) 
+								select { (count (_x buildingPos -1)) > 2 };
 			[_group, getPos (selectRandom _buildings), _radius, _zone] call _task;
 			diag_log (format ["Headless client tasking %1 as %2",_group, _group getVariable "ai_status"]);
 		};	

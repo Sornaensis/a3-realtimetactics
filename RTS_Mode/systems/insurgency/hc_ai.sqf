@@ -97,8 +97,8 @@ INS_insurgentAI = [] spawn {
 							private _zoneMarker = _zone select 1;
 							(getMarkerSize _zoneMarker) params ["_mx","_my"];
 							private _zoneSize = (_mx max _my) * 1.2;
-							private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSide] ) 
-												select { (_x buildingPos -1) > 2 };
+							private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSize] ) 
+												select { (count (_x buildingPos -1)) > 2 };
 							[_group, getPos (selectRandom _buildings), 200 + (random 60), _zoneName] call setupAsPatrol;
 							diag_log (format ["Retasking %1 as a patrol in %2", _group, _zoneName]);
 						};
@@ -108,7 +108,7 @@ INS_insurgentAI = [] spawn {
 						_group setVariable ["ai_cooldown", time + 10]; 
 					};
 				};
-				case "DISMISSED" {
+				case "DISMISSED": {
 					if ( behaviour (leader _group) != "COMBAT" ) then { // retask during combat
 						private _center = _group getVariable "ai_dest";
 						private _leaders = [];
