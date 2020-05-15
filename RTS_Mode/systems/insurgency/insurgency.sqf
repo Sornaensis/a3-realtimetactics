@@ -1,11 +1,11 @@
-INS_spawnedUnitCap = 110; // maximum spawned soldiers
+INS_spawnedUnitCap = 150; // maximum spawned soldiers
 INS_civilianCap = 50;
 INS_spawnDist = 800; // distance in meters from buildings a player shall be when we begin spawning units.
 INS_despawn = 1200; // despawn units this distance from players when they cannot be seen and their zone is inactive
 INS_spawnPulse = 8; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
 INS_civilianDensity = 9;
-INS_populationDensity = 18; 
+INS_populationDensity = 15; 
 
 
 // track soldier casualties so zones aren't always fully respawning
@@ -282,7 +282,7 @@ INS_spawnCivilian = {
 	
 	private _zonePos = getMarkerPos (_zone select 1);
 	
-	(getMarkerPos (_zone select 1)) params ["_mx","_my"];
+	(getMarkerSize (_zone select 1)) params ["_mx","_my"];
 	private _zoneSize = (_mx max _my)*1.8;
 	
 	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select { (count (_x buildingPos -1) > 2) && ((position _x) distance _pos) < 1400 };
@@ -327,34 +327,60 @@ INS_spawnUnits = {
 	private _zoneMarker = (_zone select 1);
 	private _zonePos = getMarkerPos _zoneMarker;
 	
-	(getMarkerPos _zoneMarker) params ["_mx","_my"];
-	private _zoneSize = (_mx max _my) * 1.45;
-	
+	(getMarkerSize _zoneMarker) params ["_mx","_my"];
+	private _zoneSize = (_mx max _my) * 1.5;
+		
 	private _side = [[_zone] call INS_zoneDisposition] call INS_greenforDisposition;
-	private _enemySoldiers = allUnits select { !((_x getVariable ["ai_city",objnull]) isEqualTo objnull) && (_x getVariable ["ins_side",civilian]) != civilian && (_x getVariable ["ins_side",civilian]) != _side };
-	private _friendlySoldiers = allUnits select { !((_x getVariable ["ai_city",objnull]) isEqualTo objnull) && (_x getVariable ["ins_side",civilian]) != civilian && (_x getVariable ["ins_side",civilian]) == _side };
+	private _enemySoldiers = allUnits select { side (group _x) != civilian && side (group _x) != _side };
+	private _friendlySoldiers = allUnits select { side (group _x) == _side && side (group _x) != civilian };
 	
 	private _players = (call INS_allPlayers) select { side (group _x) != _side };
 	
-	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select 
+	private _spawnlocs = [];
+	
+	private _spawntype = selectRandomWeighted ["Squad",1,"APC",0.1,"Tank",0.009];
+	private _spawnfunc = {};
+	
+	switch ( _spawntype ) do {
+		case "Squad":{
+			_spawnfunc = INS_fnc_spawnSquad;		
+			_spawnlocs = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select 
 							{ (count (_x buildingPos -1) > 2) 
 								&& ((position _x) distance _pos) < 1400
 								&& !((position _x) inArea "opfor_restriction")
 								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _friendlySoldiers,30] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
+		};
+		case "APC": {
+			_spawnfunc = INS_fnc_spawnAPC;
+			_spawnlocs =  (_zonePos nearRoads _zoneSize) select 
+							{  !((position _x) inArea "opfor_restriction")
+								&& ((position _x) distance _pos) < 1400
+								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
-	if ( count _buildings == 0) exitWith { };
+		};
+		case "Tank":{
+			_spawnfunc = INS_fnc_spawnTank;
+			_spawnlocs =  (_zonePos nearRoads _zoneSize) select 
+							{  !((position _x) inArea "opfor_restriction")
+								&& ((position _x) distance _pos) < 1400
+								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
+		};
+	};
 	
-	_pos = getPos (selectRandom _buildings);
+	if ( count _spawnlocs == 0) exitWith { };
 	
-	private _spawnfunc = selectRandomWeighted [INS_fnc_spawnSquad,1,INS_fnc_spawnAPC,0.1,INS_fnc_spawnTank,0.009];
-
+	private _spawnpos = getPos (selectRandom _spawnlocs);
 	
-	private _leader = [_pos,_side] call _spawnfunc;
+	private _leader = [_spawnpos,_side,true] call _spawnfunc;
 	if ( side _leader == west ) then {
 		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.3,"GREEN",0.6, "VETERAN", 0.3]];
 	} else {
-		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.7,"VETERAN",0.5]];
+		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.6,"VETERAN",0.5]];
 	};
 	(group _leader) setVariable ["ai_city", _zoneName, true];
 	
@@ -367,9 +393,9 @@ INS_spawnUnits = {
 		(vehicle _leader) setVariable ["spawned_vehicle", true, true];
 	};
 	
-	diag_log format ["Spawned %1 units of side %2 at %3 (%4)",count (units (group _leader)),_side,_pos,_zoneName];
+	diag_log format ["Spawned %1 units of side %2 at %3 (%4)",count (units (group _leader)),_side,_spawnpos,_zoneName];
 	
-	[_leader,_pos]
+	[_leader,_spawnpos]
 };
 
 
@@ -381,11 +407,11 @@ INS_spawnTownGarrison = {
 		private _soldierList = [_pos,_zone] call INS_spawnUnits;
 		if ( !isNil "_soldierList" ) then {
 			_soldierList params ["_soldier", "_position"];
-			private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsPatrol,0.2];
+			private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsDismissed,0.5,setupAsPatrol,0.2];
 			private _radius = 75 + (random 50);
 			if ( vehicle _soldier != _soldier ) then {
 				_task = setupAsPatrol;
-				_radius = 400 + (random 150);
+				_radius = 400 + (random 250);
 			};
 			private _group = group _soldier;
 			[_group, [_position, 25] call CBA_fnc_randPos, _radius, _zone] call _task;
@@ -399,15 +425,126 @@ INS_spawnTownGarrison = {
 INS_spawnPatrol = {
 	private _zoneName = _this;
 	private _zone = [_zoneName] call INS_getZone;
-	private _side = selectRandom ([east,west,resistance] - [[[_zone] call INS_zoneDisposition] call INS_greenforDisposition]);
-	diag_log (format ["Spawning patrol of side %1 at %2", _side, _zone]);
-	//private _soldierList = [_pos,_zone] call INS_spawnUnits;
+	private _zoneMark = _zone select 1;
+	private _zonePos = getMarkerPos _zoneMark;
+	(getMarkerSize _zoneMark) params ["_mx","_my"];
+	private _zoneSize = (_mx max _my)*3;
 	
-	// we want to spawn 2-3 squads and 0-2 vehicles
-	private _sqdCt = selectRandom [2,3];
+	private _side = selectRandom ([east,west,resistance] - [[[_zone] call INS_zoneDisposition] call INS_greenforDisposition]);
+	diag_log (format ["Attempting to spawn patrol of side %1 at %2", _side, _zone]);
+	
+	// we want to spawn 2-4 squads and 0-2 vehicles
+	private _sqdCt = selectRandom [2,3,4];
 	private _carCt = selectRandomWeighted [0,1,1,0.3,2,0.05];
 	
 	private _carFunc = selectRandomWeighted [INS_fnc_spawnAPC,1,INS_fnc_spawnTank,0.01];
+	
+	private _enemySoldiers = allUnits select { side (group _x) != civilian && side (group _x) != _side };
+	private _friendlySoldiers = allUnits select { side (group _x) == _side && side (group _x) != civilian };
+	private _players = (call INS_allPlayers) select { side (group _x) != _side };
+		
+	private _targets = ( _players select { side (group _x) != _side && ([getPos _x] call getNearestControlZone) == _zoneName }) + ( [_zoneName] call getZoneSoldiers );
+	if ( count _targets == 0 ) exitWith {};	
+	
+	private _didspawn = false;
+	
+	for "_i" from 1 to _sqdCt do {
+		private _tries = 0;
+		private _pos = [_zonePos, _zoneSize] call CBA_fnc_randPos; 
+		while { _tries < 25 && (_pos inArea "opfor_restriction")
+								&& count ([_pos, _players,500] call CBA_fnc_getNearest) > 0
+								&& count ([_pos, _players,1300] call CBA_fnc_getNearest) == 0
+								&& count ([_pos, _friendlySoldiers,40] call CBA_fnc_getNearest) > 0
+								&& count ([_pos, _enemySoldiers,400] call CBA_fnc_getNearest) > 0 } do {
+			_pos = [_zonePos, _zoneSize] call CBA_fnc_randPos;
+			_tries = _tries + 1;
+		};
+		
+		if ( _tries < 25 ) then {
+			private _target = leader (group (selectRandom _targets));
+			private _leader = [_pos,_side,true] call INS_fnc_spawnSquad;
+			private _group = group _leader;
+			if ( side _leader == west ) then {
+				_group setVariable ["Experience", selectRandomWeighted ["MILITIA",0.3,"GREEN",0.6, "VETERAN", 0.3]];
+			} else {
+				_group setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.7,"VETERAN",0.5]];
+			};
+			_group setVariable ["ai_city", _zoneName, true];
+			_group setVariable ["ai_status", "COUNTER-ATTACK"];
+			_group setVariable ["ai_target_group", group _target];
+			
+			
+			{
+				_x setVariable ["ins_side", _side, true];
+				_x call RTS_fnc_aiSkill;
+			} forEach (units _group);
+			
+			_group setVariable ["ai_dest", getPos _target];
+			[_group, getPos _target, 80, _zoneName] call doCounterAttack;
+			_didspawn = true;
+			diag_log (format ["Spawned patrol of %1 men attacking %2", count (units _group), _target]);
+		};
+	};
+	
+	if ( _carCt == 0 && _didSpawn && _side == west ) then {
+		[-1,
+		{
+			params ["_city"];
+			if (!hasInterface) exitWith {};
+			if ( side (group player) != west ) exitWith {};
+			systemChat (format ["SIGINT: Friendly milita operating in the vicinity of %1", _city]);
+		},[_zoneName]] call CBA_fnc_globalExecute;
+	};
+	
+	if ( _carCt == 0 ) exitWith {};
+	private _roads = (_zonePos nearRoads _zoneSize);
+	if ( count _roads > 0 ) then {
+	
+		for "_i" from 1 to _carCt do {
+			private _sqdRoads =  _roads select 
+								{  !((position _x) inArea "opfor_restriction")
+									&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
+									&& count ([position _x, _players,1200] call CBA_fnc_getNearest) > 0
+									&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
+									&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
+			if ( count _sqdRoads > 0 ) then {
+				private _road = selectRandom _sqdRoads;
+			
+				private _target = leader (group (selectRandom _targets));
+				private _leader = [getPos _road,_side,true] call _carFunc;
+				private _group = group _leader;
+				(vehicle _leader) setVariable ["spawned_vehicle", true, true];
+				if ( side _leader == west ) then {
+					_group setVariable ["Experience", selectRandomWeighted ["MILITIA",0.3,"GREEN",0.6, "VETERAN", 0.3]];
+				} else {
+					_group setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.7,"VETERAN",0.5]];
+				};
+				_group setVariable ["ai_city", _zoneName, true];
+				_group setVariable ["ai_status", "COUNTER-ATTACK"];
+				_group setVariable ["ai_target_group", group _target];
+				
+				{
+					_x setVariable ["ins_side", _side, true];
+					_x call RTS_fnc_aiSkill;
+				} forEach (units _group);
+				
+				_group setVariable ["ai_dest", getPos _target];
+				[_group, getPos _target, 100, _zoneName] call doCounterAttack;
+				_didSpawn = true;
+				diag_log (format ["Spawned vehicle of type %1 men attacking %2", vehicle _leader, _target]);
+			};
+		};
+	};
+	
+	if ( _didSpawn && _side == west ) then {
+		[-1,
+		{
+			params ["_city"];
+			if (!hasInterface) exitWith {};
+			if ( side (group player) != west ) exitWith {};
+			systemChat (format ["SIGINT: Friendly milita operating in the vicinity of %1", _city]);
+		},[_zoneName]] call CBA_fnc_globalExecute;
+	};
 	
 };
 
@@ -420,7 +557,7 @@ waitUntil { INS_setupFinished };
 INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 	params ["_unit", "_killer", "_instigator", "_useEffects"];
 	
-	// casualities persist for ~10 minutes
+	// casualities persist for ~20 minutes
 	if ( !(((group _unit) getVariable ["ai_city", objnull]) isEqualTo objnull) && (_unit getVariable ["ins_side", east]) != civilian ) then {
 		private _city = (group _unit) getVariable "ai_city";
 		private _index = INS_cityCasualtyTracker findIf { (_x # 0) == _city };
@@ -475,7 +612,9 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 				[-1,
 				{
 					params ["_city"];
-					sleep 4;
+					if ( !hasInterface ) exitWIth {};
+					if ( side (group player) != west ) exitWith {};
+					sleep 4 + ( floor (random 3) );
 					systemChat (format ["HUMINT Reports: Collateral damage has damaged coalition efforts in the town of %1",_city]);
 				}, [_city]] call CBA_fnc_globalExecute;
 			};
@@ -487,29 +626,33 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 addMissionEventHandler ["BuildingChanged", {
 	params ["_previousObject", "_newObject", "_isRuin"];
 	
-	if ( _isRuin ) then {
-		private _zones = INS_controlAreas select { (position _newObject) inArea (_x select 1) };
+	if ( count (_previousObject buildingPos -1) > 2 ) then {
+		private _blufor = ( (call INS_allPlayers) select { side _x == west && ( (getPos _x) distance2d (getPos _newObject) ) < 1500 } );
+		private _opforPlyr = ( (call INS_allPlayers) select { side _x == east && ( (getPos _x) distance2d (getPos _newObject) ) < 800 } );
+		private _opfor = allUnits select { !((group _x) getVariable ["rts_setup",objnull] isEqualTo objnull) && ( (getPos _x) distance2d (getPos _newObject) ) < 800 };
 		
-		if ( count _zones > 0 && count (_previousObject buildingPos -1) > 2 ) then {
-			private _zone = _zones select 0;
-			private _blufor = ( (call INS_allPlayers) select { side _x == west } ) apply { [getPos _x] call getNearestControlZone };
+		if ( count _blufor > 0 && count (_opforPlyr + _opfor) == 0 ) then {
 			
-			if ( (_zone select 0) in _blufor ) then {
-				
-				private _zoneparams = _zone select 2;
-				private _aggression = _zoneparams select 3;
-				private _disp = _zoneparams select 0;
+			private _zoneparams = _zone select 2;
+			private _aggression = _zoneparams select 3;
+			private _disp = _zoneparams select 0;
+			if ( _isRuin ) then {
+				_zoneparams set [3, _aggression + 15];
+				_zoneparams set [0, _disp - 10];
+			} else {
 				_zoneparams set [3, _aggression + 5];
 				_zoneparams set [0, _disp - 5];
-				publicVariable "INS_controlAreas";
-				
-				[-1,
-				{
-					params ["_city"];
-					sleep 4;
-					systemChat (format ["HUMINT Reports: Collateral damage has damaged coalition efforts in the town of %1",_city]);
-				}, [_zone select 0]] call CBA_fnc_globalExecute;
 			};
+			publicVariable "INS_controlAreas";
+			
+			[-1,
+			{
+				params ["_city"];
+				if ( !hasInterface ) exitWIth {};
+				if ( side (group player) != west ) exitWith {};
+				sleep 4 + ( floor (random 3) );
+				systemChat (format ["HUMINT Reports: Collateral damage has damaged coalition efforts in the town of %1",_city]);
+			}, [_zone select 0]] call CBA_fnc_globalExecute;
 		};
 	};
 }];

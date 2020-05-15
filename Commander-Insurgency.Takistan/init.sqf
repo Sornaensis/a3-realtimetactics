@@ -12,6 +12,9 @@ private _rtsinit = [] spawn (compile preprocessFileLinenumbers "rts\init.sqf");
 
 waitUntil { scriptDone _rtsinit };
 
+[] spawn (compile preprocessFileLinenumbers "balancer.sqf");
+[] spawn (compile preprocessFileLinenumbers "headless_vcom.sqf");
+
 setViewDistance 2000;
 
 // Setup insurgency functions
@@ -35,7 +38,7 @@ if ( isServer || !hasInterface ) then {
 	setupAsCivilianGarrison = {
 		params ["_group", "_pos", "_radius","_city"];
 		[_group] call CBA_fnc_clearWaypoints;
-		_group setVariable ["ai_status", "GARRISON", true];
+		_group setVariable ["ai_status", "GARRISON"];
 		_group setVariable ["ai_city", _city, true];
 		[_group, _pos, _radius, 2, 0.35, 0.9 ] call CBA_fnc_taskDefend;
 	};
@@ -43,15 +46,24 @@ if ( isServer || !hasInterface ) then {
 	setupAsGarrison = {
 		params ["_group", "_pos", "_radius","_city"];
 		[_group] call CBA_fnc_clearWaypoints;
-		_group setVariable ["ai_status", "GARRISON", true];
+		_group setVariable ["ai_status", "GARRISON"];
 		_group setVariable ["ai_city", _city, true];
 		[_group, _pos, _radius, 2, 0.4, (random 70)/100 ] call CBA_fnc_taskDefend;
+	};
+	
+	setupAsDismissed = {
+		params ["_group", "_pos", "_radius","_city"];
+		[_group] call CBA_fnc_clearWaypoints;
+		_group setVariable ["ai_dismiss_loc", _pos];
+		_group setVariable ["ai_status", "DISMISSED"];
+		_group setVariable ["ai_city", _city, true];
+		[_group, _pos, _radius] call CBA_fnc_addWaypoint;
 	};
 	
 	setupAsPatrol = {
 		params ["_group", "_pos", "_radius","_city"];
 		[_group] call CBA_fnc_clearWaypoints;
-		_group setVariable ["ai_status", "PATROL", true];
+		_group setVariable ["ai_status", "PATROL"];
 		_group setVariable ["ai_city", _city, true];
 		[_group, _pos, _radius, 7, "MOVE", "SAFE", "RED", (if ( side _group == civilian ) then { "LIMITED" } else { "NORMAL" })] call CBA_fnc_taskPatrol;
 	};
@@ -59,7 +71,7 @@ if ( isServer || !hasInterface ) then {
 	doCounterAttack = {
 		params ["_group", "_pos", "_radius","_city"];
 		[_group] call CBA_fnc_clearWaypoints;
-		_group setVariable ["ai_status", "COUNTER-ATTACK", true];
+		_group setVariable ["ai_status", "COUNTER-ATTACK"];
 		_group setVariable ["ai_city", _city, true];
 		if ( vehicle (leader _group) != leader _group ) then {
 			[_group, _pos, _radius, 7, "MOVE", "COMBAT", "RED", "FULL"] call CBA_fnc_taskPatrol;

@@ -1,5 +1,5 @@
 // Despawn
-INS_despawner = [] spawn {
+INS_unitDespawner = [] spawn {
 	while { true } do {
 		private _humanPlayers = call INS_allPlayers;
 		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
@@ -35,9 +35,24 @@ INS_despawner = [] spawn {
 		} forEach (allUnits + allDeadMen);
 		
 		{
+			if ( !((_x getVariable ["ai_city",objnull]) isEqualTo objnull) ) then {
+				if ( count ( (units _x) select { alive _x } ) == 0 ) then {
+					deleteGroup _x;
+				};
+			};
+		} forEach allGroups;
+	};
+};
+
+INS_vehicleDespawner = {
+	while { true } do {
+		private _humanPlayers = call INS_allPlayers;
+		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
+		private _unitSpawners = (_humanPlayers + _insurgents);
+		{
 			private _veh = _x;
 			private _vehpos = getPos _x;
-			if ( _veh getVariable ["spawned_vehicle", false] ) then {
+			if ( _veh getVariable ["spawned_vehicle", false] || _veh isKindOf "WeaponHolder" ) then {
 				private _canBeSeen = false;
 				{
 					private _playerPos = getPos _x;
@@ -51,8 +66,12 @@ INS_despawner = [] spawn {
 					};
 				} forEach _unitSpawners;
 				
-				if ( !_canBeSeen ) then {		
-					deleteVehicle _veh;
+				if ( !_canBeSeen ) then {
+					if ( _veh isKindOf "WeaponHolder" ) then {
+						clearWeaponCargo _veh; clearMagazineCargo _veh; clearItemCargo _veh;
+					} else {					
+						deleteVehicle _veh;
+					};
 				};
 			};
 		} forEach (vehicles + allDead);
@@ -66,13 +85,6 @@ INS_despawner = [] spawn {
 			};
 		} forEach vehicles;
 		
-		{
-			if ( !((_x getVariable ["ai_city",objnull]) isEqualTo objnull) ) then {
-				if ( count ( (units _x) select { alive _x } ) == 0 ) then {
-					deleteGroup _x;
-				};
-			};
-		} forEach allGroups;
 	};
 };
 
@@ -121,7 +133,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 						if ( [_zone] call INS_canZoneSpawnAndUpdate ) then {
 							private _density = [_zone] call INS_getZoneDensity;
 							if ( _density < INS_populationDensity ) then {
-								_params pushback [_zone, _pos];
+								_params pushback [_zone,_pos];
 							};
 						};
 					} else {
@@ -132,7 +144,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 						if ( [_zone2] call INS_canZoneSpawnAndUpdate ) then {
 							private _density = [_zone2] call INS_getZoneDensity;
 							if ( _density < INS_populationDensity ) then {
-								_params pushback [_zone2, _pos];
+								_params pushback [_zone2,_pos];
 							};
 						};
 					};
@@ -143,7 +155,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 							private _hc = call INS_getNextHC;
 							[_params, _hc] spawn {
 								params ["_params","_hc"];
-								[_params, { { _x call INS_spawnTownGarrison; } forEach _this; }] remoteExecCall [ "call", _hc ];
+								[_params, { { _x spawn INS_spawnTownGarrison; } forEach _this; }] remoteExecCall [ "call", _hc ];
 							};
 						} else {
 							{
@@ -159,14 +171,15 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 						if ( _patrolZone != -1 ) then {
 							private _patrols = INS_patrolTable # _patrolZone;
 							_patrols params ["","_pulse","_time"];
-							if ( _time != -1 ) then {
+							// reset patrols after 2min zone absence
+							if ( _time != -1 && time < (_time + _pulse) + 120 ) then {
 								if ( time > (_time + _pulse) ) then {
 									
-									if ( _pulse > 1200 ) then {
+									if ( _pulse > 4000 ) then {
 										_pulse = 0;
 									};
 									
-									_patrols set [1, _pulse + 200 + (floor (random 140))];
+									_patrols set [1, _pulse + 300 + (floor (random 300))];
 									_patrols set [2, time];
 									if ( call INS_hasHC ) then {
 										private _hc = call INS_getNextHC;
@@ -179,7 +192,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 									};
 								};
 							} else {
-								_patrols set [1, 300 + (floor (random 200))];
+								_patrols set [1, 600 + (floor (random 240))];
 								_patrols set [2, time];
 							};
 							

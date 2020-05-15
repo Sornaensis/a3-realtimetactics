@@ -1,6 +1,7 @@
 #include "rts\ui\Defines.hpp"
 #include "rts\ui\Dialogs.hpp"
 
+forceadvancedrotorlib = 1;
 enableDebugConsole = 1;
 respawn_delay = 0;
 respawn = "BASE";
