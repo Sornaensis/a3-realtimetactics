@@ -6,7 +6,7 @@ INS_unitDespawner = [] spawn {
 		private _unitSpawners = (_humanPlayers + _insurgents);
 		{
 			private _unit = _x;
-			if ( !isPlayer _unit && !((_unit getVariable ["ins_side",objnull]) isEqualTo objnull) ) then {
+			if ( !isPlayer _unit && !((_unit getVariable ["ins_side",objnull]) isEqualTo objnull) || !(alive _unit) ) then {
 			
 				private _canBeSeen = false;
 				private _unitPos = getPos _unit;
@@ -44,7 +44,7 @@ INS_unitDespawner = [] spawn {
 	};
 };
 
-INS_vehicleDespawner = {
+INS_vehicleDespawner = [] spawn {
 	while { true } do {
 		private _humanPlayers = call INS_allPlayers;
 		private _insurgents = ( if ( count ( _humanPlayers select { side _x == east }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
@@ -52,7 +52,7 @@ INS_vehicleDespawner = {
 		{
 			private _veh = _x;
 			private _vehpos = getPos _x;
-			if ( _veh getVariable ["spawned_vehicle", false] || _veh isKindOf "WeaponHolder" ) then {
+			if ( _veh getVariable ["spawned_vehicle", false] || _veh isKindOf "WeaponHolder" || !(alive _x) ) then {
 				private _canBeSeen = false;
 				{
 					private _playerPos = getPos _x;
@@ -120,7 +120,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 			{
 				private _player = _x;
 				
-				if ( vehicle _player == _player || ( (getPosATL (vehicle _player)) select 2 ) < 800 ) then {
+				if ( vehicle _player == _player || ( (getPosATL (vehicle _player)) select 2 ) < 5 || ( (speed (vehicle _player) < 14 ) && ( (getPosATL (vehicle _player)) select 2 ) < 200 ) ) then {
 				
 					private _params = [];
 					private _pos = getPos _player;

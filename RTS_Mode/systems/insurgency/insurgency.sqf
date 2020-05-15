@@ -378,9 +378,9 @@ INS_spawnUnits = {
 	
 	private _leader = [_spawnpos,_side,true] call _spawnfunc;
 	if ( side _leader == west ) then {
-		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.3,"GREEN",0.6, "VETERAN", 0.3]];
+		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.2,"GREEN",0.5, "VETERAN", 0.3]];
 	} else {
-		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.6,"VETERAN",0.5]];
+		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.5,"VETERAN",0.5]];
 	};
 	(group _leader) setVariable ["ai_city", _zoneName, true];
 	
@@ -407,15 +407,21 @@ INS_spawnTownGarrison = {
 		private _soldierList = [_pos,_zone] call INS_spawnUnits;
 		if ( !isNil "_soldierList" ) then {
 			_soldierList params ["_soldier", "_position"];
-			private _task = selectRandomWeighted [setupAsGarrison,0.9,setupAsDismissed,0.5,setupAsPatrol,0.2];
+			private _taskType = selectRandomWeighted [setupAsGarrison,0.9,setupAsDismissed,0.5,setupAsPatrol,0.2];
 			private _radius = 75 + (random 50);
 			if ( vehicle _soldier != _soldier ) then {
 				_task = setupAsPatrol;
 				_radius = 400 + (random 250);
 			};
 			private _group = group _soldier;
-			[_group, [_position, 25] call CBA_fnc_randPos, _radius, _zone] call _task;
-			diag_log (format ["Headless client tasking %1",_group]);
+			private _zoneAct = [_zone] call INS_getZone;
+			private _zoneMarker = _zoneAct select 1;
+			(getMarkerSize _zoneMarker) params ["_mx","_my"];
+			private _zoneSize = (_mx max _my) * 1.2;
+			private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSide] ) 
+								select { (_x buildingPos -1) > 2 };
+			[_group, getPos (selectRandom _buildings), _radius, _zone] call _task;
+			diag_log (format ["Headless client tasking %1 as %2",_group, _group getVariable "ai_status"]);
 		};	
 	};		
 };

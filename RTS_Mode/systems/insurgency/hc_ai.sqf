@@ -75,7 +75,7 @@ INS_insurgentAI = [] spawn {
 						private _targetGrp = _group getVariable "ai_target_group";
 						private _retask = false;
 						if ( !isNull _targetGrp ) then {
-							if ( count (_group select { alive _x }) > 0 then {
+							if ( count (_group select { alive _x }) > 0 ) then {
 								if ( ( (getPos (leader _group)) distance (getPos (leader _targetGroup)) ) > 150 ) then {
 									_group setVariable ["ai_dest", getPos (leader _targetGroup)];
 									[_group, getPos (leader _targetGroup), 50 + (random 25), _group getVariable "ai_city"] call doCounterAttack;
