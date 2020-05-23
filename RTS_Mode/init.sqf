@@ -44,36 +44,35 @@ if ( hasInterface ) then {
 	Vcm_DrivingActivated = true;
 	Vcm_PlayerAISkills = false; 
 	vcm_fnc_sniperengage = { true };
-} else { // serverside Vcom settings
-	if ( !isServer ) then {
-		VCM_ACTIVATEAI = true;
-		VCM_SIDESPECIFICSKILL = true;
-		VCM_AIMagLimit = 1; 
-		VCM_Debug = false; 
-		VCM_MINECHANCE = 75;
-		VCM_SIDEENABLED = [west,east,resistance]; 
-		VCM_RAGDOLL = true; 
-		VCM_RAGDOLLCHC = 50; 
-		VCM_FullSpeed = true; 
-		VCM_HEARINGDISTANCE = 1200; 
-		VCM_WARNDIST = 1000; 
-		VCM_WARNDELAY = 10; 
-		VCM_STATICARMT = 300;
-		VCM_StealVeh = true;
-		VCM_ClassSteal = false;
-		VCM_AIDISTANCEVEHPATH = 150; 
-		VCM_ADVANCEDMOVEMENT = true; 
-		VCM_FRMCHANGE = true; 
-		VCM_SKILLCHANGE = true;
-		VCM_USECBASETTINGS = true;
-		VCM_CARGOCHNG = true; 
-		VCM_TURRETUNLOAD = true;
-		VCM_DISEMBARKRANGE = 200;
-		VCM_AISNIPERS = false; 
-		VCM_AISUPPRESS = true; 
-		Vcm_DrivingActivated = true;
-		Vcm_PlayerAISkills = false; 
-	};
+} else { 
+	VCM_ACTIVATEAI = true;
+	VCM_SIDESPECIFICSKILL = true;
+	VCM_AIMagLimit = 1; 
+	VCM_Debug = false; 
+	VCM_MINECHANCE = 75;
+	VCM_SIDEENABLED = [west,east,resistance]; 
+	VCM_RAGDOLL = true; 
+	VCM_RAGDOLLCHC = 50; 
+	VCM_FullSpeed = true; 
+	VCM_HEARINGDISTANCE = 1200; 
+	VCM_WARNDIST = 1000; 
+	VCM_WARNDELAY = 10; 
+	VCM_STATICARMT = 300;
+	VCM_StealVeh = true;
+	VCM_ClassSteal = false;
+	VCM_AIDISTANCEVEHPATH = 150; 
+	VCM_ADVANCEDMOVEMENT = true; 
+	VCM_FRMCHANGE = true; 
+	VCM_SKILLCHANGE = true;
+	VCM_USECBASETTINGS = true;
+	VCM_CARGOCHNG = true; 
+	VCM_TURRETUNLOAD = true;
+	VCM_DISEMBARKRANGE = 200;
+	VCM_AISNIPERS = false; 
+	VCM_AISUPPRESS = true; 
+	Vcm_DrivingActivated = true;
+	Vcm_PlayerAISkills = false;
+	vcm_fnc_sniperengage = { true };	
 };
 
 // Skill increase or decrease as a percentage

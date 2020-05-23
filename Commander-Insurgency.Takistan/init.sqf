@@ -1,6 +1,8 @@
 #include "\z\ace\addons\spectator\script_component.hpp"
 #include "RTS_Mission_Defines.hpp"
 
+acex_fortify_locations pushBack [fob_flag, 200, 200, 0, false];
+
 if ( side player == east || isServer ) then {
 	if ( isNil "RTS_restrictionZone" ) then {
 		RTS_restrictionZone = ["opfor_restriction"];
@@ -19,7 +21,7 @@ setViewDistance 2000;
 
 // Setup insurgency functions
 waitUntil { isDedicated || ( !(isNull player) && isPlayer player ) || !hasInterface };
-	
+
 INS_allPlayers = {
 	private _headlessClients = entities "HeadlessClient_F";
 	(allPlayers - _headlessClients)
@@ -31,6 +33,10 @@ if ( !(isNil "opforCommander") ) then {
 	if ( side player == east ) then {
 		_runsetup = true;
 	};
+};
+
+if ( !isDedicated && hasInterface ) then {
+	enableEngineArtillery false;
 };
 
 if ( isServer || !hasInterface ) then {
@@ -57,7 +63,7 @@ if ( isServer || !hasInterface ) then {
 		_group setVariable ["ai_dismiss_loc", _pos];
 		_group setVariable ["ai_status", "GARRISON"];
 		_group setVariable ["ai_city", _city, true];
-		[_group, _pos] execVM "\x\cba\addons\ai\fnc_waypointGarrison.sqf";
+		[_pos, nil, units _group, _radius, 0, false, false] call ace_ai_fnc_garrison;
 	};
 	
 	setupAsPatrol = {
@@ -81,7 +87,7 @@ if ( isServer || !hasInterface ) then {
 	};
 };
 
-// Headless client strategic AI
+// Headless client strategic AI and spawning
 if ( !hasInterface && !isServer ) then {
 	[] call (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
 	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\insurgency.sqf");
@@ -596,6 +602,8 @@ if ( isServer && isNil "INS_caches" ) then {
 	waitUntil { scriptDone _insmon };
 	// Serverside AI controller
 	[] spawn (compile preprocessFileLineNumbers "rts\systems\insurgency\ai_controller.sqf");
+	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\base_setup.sqf");
+	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\cqb_training.sqf");
 	diag_log "Server Init Complete";
 };
 
@@ -617,12 +625,104 @@ if ( side player == west ) then {
 			sleep 2;
 		};
 	};
-		
+	
 	player addMPEventHandler [ "MPRespawn",
 							{ 
 								[0, { INS_bluforCasualties = INS_bluforCasualties + 1; publicVariable "INS_bluforCasualties"; }] call CBA_fnc_globalExecute
 							}];
 	
+	CQB_flag addAction [
+		"Start CQB Training",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			[[],{ call INS_startCqbTraining; }] remoteExec ["call",2];
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"!INS_cqbStarted",
+		5,
+		false,
+		"",
+		""
+	];
+	
+	CQB_flag addAction [
+		"Reset CQB Training",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			[[],{ { deleteVehicle _x; } forEach (call INS_getCqbSoldiers); }] remoteExec ["call",2];
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"INS_cqbStarted",
+		5,
+		false,
+		"",
+		""
+	];
+	
+	base_flag addAction [
+		"Deploy to FOB",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			(vehicle player) setPosATL ((getPos fob_flag) findEmptyPosition [2, 50, typeOf (vehicle player)]);
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"INS_fobDeployed",
+		5,
+		false,
+		"",
+		""
+	];
+	
+	fob_flag addAction [
+		"Undeploy FOB",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			fob_flag setPosATL INS_initFobFlagPos;
+			INS_fobDeployed = false;
+			publicVariable "INS_fobDeployed";
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"INS_fobDeployed && (leader (group player)) == player",
+		5,
+		false,
+		"",
+		""
+	];
+	
+	INS_createFob = {
+		fob_flag setPosATL ((getPosATL player) findEmptyPosition [2, 15, typeOf fob_flag]);
+		INS_fobDeployed = true;
+		publicVariable "INS_fobDeployed";
+	};
+	
+	INS_fobLoop = [] spawn {
+		while { true } do {
+			if ( !INS_fobDeployed && !((getPos player) inArea "opfor_restriction") && (leader (group player)) == player && isNil "INS_interactionPath" ) then {
+				INS_interactionPath = [player, 1, ["ACE_SelfActions"], INS_createFob] call ace_interact_menu_fnc_addActionToObject;
+			} else {
+				if ( !(isNil "INS_interactionPath") ) then {
+					[player,1,INS_interactionPath] call ace_interact_menu_fnc_removeActionFromObject;
+				};
+			};
+		};
+	};
+		
 	waitUntil { ! (isNull (findDisplay 46)) };
 
 	INS_infoBox = (findDisplay 46) ctrlCreate ["RscText", -1];

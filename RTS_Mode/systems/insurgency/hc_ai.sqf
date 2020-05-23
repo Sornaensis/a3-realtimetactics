@@ -75,7 +75,7 @@ INS_insurgentAI = [] spawn {
 						private _targetGrp = _group getVariable "ai_target_group";
 						private _retask = false;
 						if ( !isNull _targetGrp ) then {
-							if ( count (_group select { alive _x }) > 0 ) then {
+							if ( count ((units _group) select { alive _x }) > 0 ) then {
 								if ( ( (getPos (leader _group)) distance (getPos (leader _targetGroup)) ) > 150 ) then {
 									_group setVariable ["ai_dest", getPos (leader _targetGroup)];
 									[_group, getPos (leader _targetGroup), 50 + (random 25), _group getVariable "ai_city"] call doCounterAttack;
@@ -106,27 +106,6 @@ INS_insurgentAI = [] spawn {
 						_group setVariable ["ai_cooldown", time + 30]; 
 					} else {
 						_group setVariable ["ai_cooldown", time + 10]; 
-					};
-				};
-				case "DISMISSED": {
-					if ( behaviour (leader _group) != "COMBAT" ) then { // retask during combat
-						private _center = _group getVariable "ai_dest";
-						private _leaders = [];
-						{
-							private _unit = _x;
-							if ( !(_x in _leaders) && alive _x && ((getPos _x) distance _center) > 400 ) then {
-								if ( !( (formationLeader _x) in _leaders ) then {
-									private _formLeader = (formationLeader _x);
-									_leaders pushBackUnique _formLeader ;
-									_formLeader doMove ( [_center, 75] call CBA_fnc_randPos );
-								};
-							};
-						} forEach (units _group);
-						_group setVariable ["ai_cooldown", time + 60];
-					} else {
-						_group setVariable ["ai_dest", nil];
-						_group setVariable ["ai_status", "PATROL"];
-						_group setVariable ["ai_cooldown", time + 5];
 					};
 				};
 				case "NONE": {

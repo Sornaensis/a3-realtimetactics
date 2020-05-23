@@ -285,7 +285,7 @@ INS_spawnCivilian = {
 	(getMarkerSize (_zone select 1)) params ["_mx","_my"];
 	private _zoneSize = (_mx max _my)*1.8;
 	
-	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select { (count (_x buildingPos -1) > 2) && ((position _x) distance _pos) < 1400 };
+	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select { (count (_x buildingPos -1) > 2) && ((position _x) distance _pos) < 1600	};
 	
 	if ( count _buildings == 0) exitWith { };
 	
@@ -346,18 +346,18 @@ INS_spawnUnits = {
 			_spawnfunc = INS_fnc_spawnSquad;		
 			_spawnlocs = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select 
 							{ (count (_x buildingPos -1) > 2) 
-								&& ((position _x) distance _pos) < 1400
+								&& ((position _x) distance _pos) < 1600
 								&& !((position _x) inArea "opfor_restriction")
-								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, _friendlySoldiers,30] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _players,400] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
 		};
 		case "APC": {
 			_spawnfunc = INS_fnc_spawnAPC;
 			_spawnlocs =  (_zonePos nearRoads _zoneSize) select 
 							{  !((position _x) inArea "opfor_restriction")
-								&& ((position _x) distance _pos) < 1400
-								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
+								&& ((position _x) distance _pos) < 1600
+								&& count ([position _x, _players,400] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
 		};
@@ -365,7 +365,7 @@ INS_spawnUnits = {
 			_spawnfunc = INS_fnc_spawnTank;
 			_spawnlocs =  (_zonePos nearRoads _zoneSize) select 
 							{  !((position _x) inArea "opfor_restriction")
-								&& ((position _x) distance _pos) < 1400
+								&& ((position _x) distance _pos) < 1600
 								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
@@ -437,10 +437,10 @@ INS_spawnPatrol = {
 	private _zoneSize = (_mx max _my)*3;
 	
 	private _side = selectRandom ([east,west,resistance] - [[[_zone] call INS_zoneDisposition] call INS_greenforDisposition]);
-	diag_log (format ["Attempting to spawn patrol of side %1 at %2", _side, _zone]);
+	diag_log (format ["Attempting to spawn patrol of side %1 at %2", _side, _zoneName]);
 	
 	// we want to spawn 2-4 squads and 0-2 vehicles
-	private _sqdCt = selectRandom [2,3,4];
+	private _sqdCt = selectRandom [2,3];
 	private _carCt = selectRandomWeighted [0,1,1,0.3,2,0.05];
 	
 	private _carFunc = selectRandomWeighted [INS_fnc_spawnAPC,1,INS_fnc_spawnTank,0.01];

@@ -6,7 +6,7 @@ INS_unitDespawner = [] spawn {
 		private _unitSpawners = (_humanPlayers + _insurgents);
 		{
 			private _unit = _x;
-			if ( !isPlayer _unit && !((_unit getVariable ["ins_side",objnull]) isEqualTo objnull) || !(alive _unit) ) then {
+			if ( ( !isPlayer _unit && !((_unit getVariable ["ins_side",objnull]) isEqualTo objnull) ) || !(alive _unit) ) then {
 			
 				private _canBeSeen = false;
 				private _unitPos = getPos _unit;
@@ -17,7 +17,7 @@ INS_unitDespawner = [] spawn {
 					if ( isPlayer _x ) then {
 						_zone = [_playerPos] call getNearestControlZone;
 					};
-					if ( (_unitPos distance2d _playerPos) > 1500 || isNil "_zone" ) then {
+					if ( (_unitPos distance2d _playerPos) > 1800 || ( isNil "_zone" && !(_unit getVariable ["cqb_soldier", false]) ) ) then {
 						if ( ([vehicle _x, vehicle _unit] call BIS_fnc_isInFrontOf) && !(terrainIntersect [eyePos _x,eyePos _unit]) ) then {
 							_canBeSeen = true;		
 						};
@@ -52,12 +52,14 @@ INS_vehicleDespawner = [] spawn {
 		{
 			private _veh = _x;
 			private _vehpos = getPos _x;
-			if ( _veh getVariable ["spawned_vehicle", false] || _veh isKindOf "WeaponHolder" || !(alive _x) ) then {
+			private _distance = _veh getVariable ["respawn_distance", 1800];
+			private _baseVeh = _veh getVariable ["base_veh", false];
+			if ( _veh getVariable ["spawned_vehicle", false] || _veh isKindOf "WeaponHolder" || !(alive _veh) ) then {
 				private _canBeSeen = false;
 				{
 					private _playerPos = getPos _x;
 					private _zone = [_playerPos] call getNearestControlZone;
-					if ( (_vehpos distance2d _playerPos) > 1500 || isNil "_zone" ) then {
+					if ( (_vehpos distance2d _playerPos) > _distance || ( isNil "_zone" && !_baseVeh && !(_veh getVariable ["cqb_soldier", false]) ) ) then {
 						if ( ([_veh, vehicle _x] call BIS_fnc_isInFrontOf) && !(terrainIntersect [eyePos _x,_vehpos]) ) then {
 							_canBeSeen = true;		
 						};
@@ -67,10 +69,44 @@ INS_vehicleDespawner = [] spawn {
 				} forEach _unitSpawners;
 				
 				if ( !_canBeSeen ) then {
+					if ( _baseVeh ) then { // respawn base vehicles
+						if ( !(alive _veh) || !(canMove _veh) ) then {
+							[_veh getVariable "info_offset",time,_distance] spawn {
+								params ["_offset","_start","_distance"];
+								private _info = INS_baseVehicleSetup select _offset;
+								_info params ["_type","_dir","_pos","_time"];
+								waitUntil { time > (_start + _time) };
+								private _veh = _type createVehicle _pos;
+								_veh setDir _dir;
+								_veh setPosATL _pos;
+								_veh setVariable ["base_veh", true];
+								_veh setVariable ["info_offset",_offset];
+								_veh setVariable ["respawn_distance", _distance];							
+								_veh addEventHandler ["GetIn", {
+									params ["_vehicle", "_role", "_unit", "_turret"];
+									if ( !(_vehicle getVariable ["spawned_vehicle", false]) ) then {
+										_vehicle setVariable ["spawned_vehicle", true, true];
+									};		
+								}];
+							};
+						} else {
+							_canBeSeen = true;
+							private _info = INS_baseVehicleSetup select (_veh getVariable "info_offset");
+							_info params ["","_dir","_pos",""];
+							_veh setVariable ["spawned_vehicle", false, true];
+							_veh setDir _dir;
+							_veh setPosATL _pos;
+							if ( fuel _veh < 0.8 ) then {
+								_veh setFuel 0.8;
+							};
+						};
+					};
 					if ( _veh isKindOf "WeaponHolder" ) then {
 						clearWeaponCargo _veh; clearMagazineCargo _veh; clearItemCargo _veh;
-					} else {					
-						deleteVehicle _veh;
+					} else {
+						if ( !_canBeSeen ) then {					
+							deleteVehicle _veh;
+						};
 					};
 				};
 			};
@@ -179,7 +215,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 										_pulse = 0;
 									};
 									
-									_patrols set [1, _pulse + 300 + (floor (random 300))];
+									_patrols set [1, _pulse + 300 + (floor (random 100))];
 									_patrols set [2, time];
 									if ( call INS_hasHC ) then {
 										private _hc = call INS_getNextHC;
@@ -192,7 +228,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 									};
 								};
 							} else {
-								_patrols set [1, 600 + (floor (random 240))];
+								_patrols set [1, 1000 + (floor (random 240))];
 								_patrols set [2, time];
 							};
 							
