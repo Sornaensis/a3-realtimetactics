@@ -32,3 +32,26 @@ publicVariable "INS_initFobFlagPos";
 
 INS_fobDeployed = false;
 publicVariable "INS_fobDeployed";
+
+[west, -1, [
+	
+["Land_CncBarrierMedium_F",1],
+["Land_HBarrier_3_F",1],
+["Land_HBarrier_5_F",1],
+["Land_HBarrier_Big_F",1],
+["Land_HBarrier_1_F",1],
+["Land_Plank_01_4m_F",1],
+["Land_Plank_01_8m_F",1],
+["Land_CncShelter_F",1],
+["Land_BagBunker_Small_F",1],
+["Land_BagBunker_Tower_F",1],
+["Land_BagFence_Long_F",1],
+["Land_BagFence_Short_F",1],
+["Land_BagFence_Round_F",1],
+["Land_SandbagBarricade_01_half_F",1],
+["Land_SandbagBarricade_01_F",1],
+["Land_SandbagBarricade_01_hole_F",1],
+["Wire",1],
+["Land_HelipadCircle_F",1]
+
+]] call acex_fortify_fnc_registerObjects;

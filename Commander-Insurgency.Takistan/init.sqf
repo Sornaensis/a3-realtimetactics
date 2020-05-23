@@ -628,6 +628,9 @@ if ( side player == west ) then {
 	
 	player addMPEventHandler [ "MPRespawn",
 							{ 
+								private _condition = { !INS_fobDeployed && !((getPos player) inArea "opfor_restriction") && (leader (group player)) == player };
+								private _action = ["Create FOB","Deploy FOB at your location.","",INS_createFob,_condition] call ace_interact_menu_fnc_createAction;
+								[player, 1, ["ACE_SelfActions"], _action] call ace_interact_menu_fnc_addActionToObject;
 								[0, { INS_bluforCasualties = INS_bluforCasualties + 1; publicVariable "INS_bluforCasualties"; }] call CBA_fnc_globalExecute
 							}];
 	
@@ -678,7 +681,7 @@ if ( side player == west ) then {
 		true,
 		true,
 		"",
-		"INS_fobDeployed",
+		"INS_fobDeployed && count ([fob_flag, allUnits select { side (group _x) != civilian && side (group _x) != west }, 300] call CBA_fnc_getNearest) == 0",
 		5,
 		false,
 		"",
@@ -689,7 +692,9 @@ if ( side player == west ) then {
 		"Undeploy FOB",
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
+			[fob_flag, true] remoteExec ["hideObjectGlobal", 2];
 			fob_flag setPosATL INS_initFobFlagPos;
+			deleteMarker INS_fobMarker;
 			INS_fobDeployed = false;
 			publicVariable "INS_fobDeployed";
 		},
@@ -705,23 +710,41 @@ if ( side player == west ) then {
 		""
 	];
 	
+	fob_flag addAction [
+		"Deploy to Airbase",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			(vehicle player) setPosATL ((getPos base_flag) findEmptyPosition [2, 50, typeOf (vehicle player)]);
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"count ([player, allUnits select { side (group _x) != civilian && side (group _x) != west }, 300] call CBA_fnc_getNearest) == 0",
+		5,
+		false,
+		"",
+		""
+	];
+	
 	INS_createFob = {
-		fob_flag setPosATL ((getPosATL player) findEmptyPosition [2, 15, typeOf fob_flag]);
+		[fob_flag, false] remoteExec ["hideObjectGlobal", 2];
+		private _pos = (getPosATL player) findEmptyPosition [2, 15, typeOf fob_flag];
+		fob_flag setPosATL _pos;
+		INS_fobMarker = createMarker ["Insurgency_Fob_Marker", _pos ];
+		INS_fobMarker setMarkerColor "ColorBlue";
+		INS_fobMarker setMarkerShape "ICON";
+		INS_fobMarker setMarkerType "mil_flag";
+		INS_fobMarker setMarkerText "FOB Sentinel";
+		publicVariable "INS_fobMarker";
 		INS_fobDeployed = true;
 		publicVariable "INS_fobDeployed";
 	};
 	
-	INS_fobLoop = [] spawn {
-		while { true } do {
-			if ( !INS_fobDeployed && !((getPos player) inArea "opfor_restriction") && (leader (group player)) == player && isNil "INS_interactionPath" ) then {
-				INS_interactionPath = [player, 1, ["ACE_SelfActions"], INS_createFob] call ace_interact_menu_fnc_addActionToObject;
-			} else {
-				if ( !(isNil "INS_interactionPath") ) then {
-					[player,1,INS_interactionPath] call ace_interact_menu_fnc_removeActionFromObject;
-				};
-			};
-		};
-	};
+	private _condition = { !INS_fobDeployed && !((getPos player) inArea "opfor_restriction") && (leader (group player)) == player };
+	private _action = ["Create FOB","Deploy FOB at your location.","",INS_createFob,_condition] call ace_interact_menu_fnc_createAction;
+	[player, 1, ["ACE_SelfActions"], _action] call ace_interact_menu_fnc_addActionToObject;
 		
 	waitUntil { ! (isNull (findDisplay 46)) };
 
