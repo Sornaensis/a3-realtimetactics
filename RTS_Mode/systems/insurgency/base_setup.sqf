@@ -26,10 +26,10 @@ private _baseSize = (_mx max _my);
 	_x removeAllEventHandlers "HitPart";	
 } forEach ( ((getMarkerPos INS_baseMarker) nearObjects ["HOUSE", _baseSize]) select { _x inArea INS_baseMarker });
 
-INS_vehicleAmmoCrateSpawned = -900;
-publicVariable "INS_vehicelAmmoCrateSpawned";
+INS_vehicleAmmoCrateSpawned = -1800;
+publicVariable "INS_vehicleAmmoCrateSpawned";
 
-INS_fuelPalletSpawned = -900;
+INS_fuelPalletSpawned = -1800;
 publicVariable "INS_fuelPalletSpawned";
 
 fob_flag hideObjectGlobal true;

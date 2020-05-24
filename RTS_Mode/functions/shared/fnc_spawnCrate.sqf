@@ -46,7 +46,7 @@ switch ( _type ) do {
 	};
 	case "FUEL": {
 		_crate = "Boxloader_drumpallet_fuel" createVehicle (_pos findEmptyPosition [2, 40, "Boxloader_drumpallet_fuel"]);
-		[ _crate, 1000 ] call ace_refuel_fnc_makeSource;
+		[[ _crate, 1000 ], { _this call ace_refuel_fnc_makeSource }] remoteExecCall ["call",2];
 	};
 };
 
