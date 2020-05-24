@@ -4,8 +4,8 @@ INS_spawnDist = 800; // distance in meters from buildings a player shall be when
 INS_despawn = 1200; // despawn units this distance from players when they cannot be seen and their zone is inactive
 INS_spawnPulse = 8; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
-INS_civilianDensity = 9;
-INS_populationDensity = 15; 
+INS_civilianDensity = 11;
+INS_populationDensity = 18; 
 
 
 // track soldier casualties so zones aren't always fully respawning
@@ -285,7 +285,13 @@ INS_spawnCivilian = {
 	(getMarkerSize (_zone select 1)) params ["_mx","_my"];
 	private _zoneSize = (_mx max _my)*1.8;
 	
-	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select { (count (_x buildingPos -1) > 2) && ((position _x) distance _pos) < 1600	};
+	private _otherCivs = allUnits select { (_x getVariable ["ins_side",east]) == civilian };
+	
+	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select 
+							{ 
+								(count (_x buildingPos -1) > 2) 
+								&& count ([position _x, _otherCivs,30] call CBA_fnc_getNearest) == 0
+								&& ((position _x) distance _pos) < 1600	};
 	
 	if ( count _buildings == 0) exitWith { };
 	
@@ -380,7 +386,7 @@ INS_spawnUnits = {
 	if ( side _leader == west ) then {
 		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.2,"GREEN",0.5, "VETERAN", 0.3]];
 	} else {
-		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.5,"VETERAN",0.5]];
+		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.4,"VETERAN",0.7]];
 	};
 	(group _leader) setVariable ["ai_city", _zoneName, true];
 	

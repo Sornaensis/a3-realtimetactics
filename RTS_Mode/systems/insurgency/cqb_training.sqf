@@ -56,7 +56,7 @@ INS_startCqbTraining = {
 			_group setVariable ["Experience", "ELITE"];
 			_soldier setPosATL _pos;
 			_soldier call RTS_fnc_aiSkill;
-			_soldier disableAI "MOVE";
+			_soldier disableAI "PATH";
 			_soldier disableAI "FSM";
 			_soldier setVariable ["cqb_soldier", true];
 			_solider setUnitPos "MIDDLE";
