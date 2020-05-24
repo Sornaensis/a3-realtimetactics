@@ -62,7 +62,6 @@ INS_startCqbTraining = {
 			_solider setUnitPos "MIDDLE";
 			_soldier setUnitPosWeak "MIDDLE";
 			_group deleteGroupWhenEmpty true;
-			_soldier enableAI "FSM";
 		};
 	} forEach _allPositions;
 	

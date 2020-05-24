@@ -58,7 +58,7 @@ if ( !(_crate isEqualTo objnull) ) then {
 		[-1, 
 		{
 			params ["_crate"];
-			_crate addAction addAction [
+			_crate addAction [
 				"Put Away Ammo Crate",
 				{
 					params ["_target", "_caller", "_actionId", "_arguments"];
