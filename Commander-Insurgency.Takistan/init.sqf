@@ -728,10 +728,89 @@ if ( side player == west ) then {
 		""
 	];
 	
+	arsenal_crate addAction [
+		"Get Spare Ammo Crate",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			["AMMO",getPos player, group player] call RTS_fnc_spawnCrate;
+			(group player) setVariable ["INS_ammoCrateSpawned", time, true];
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"time > (((group player) getVariable ['INS_ammoCrateSpawned',0]) + 120)",
+		10,
+		false,
+		"",
+		""
+	];
+	
+	arsenal_crate addAction [
+		"Get Medical Crate",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			["MEDICAL",getPos player, group player] call RTS_fnc_spawnCrate;
+			(group player) setVariable ["INS_medicCrateSpawned", time, true];
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"time > (((group player) getVariable ['INS_medicCrateSpawned',0]) + 120)",
+		10,
+		false,
+		"",
+		""
+	];
+	
+	arsenal_crate addAction [
+		"Get Vehicle Ammo Crate",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			["VEHICLE_AMMO",getPos player, group player] call RTS_fnc_spawnCrate;
+			INS_vehicleAmmoCrateSpawned = time;
+			publicVariable "INS_vehicleAmmoCrateSpawned";
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"time > (INS_vehicleAmmoCrateSpawned + 900)",
+		10,
+		false,
+		"",
+		""
+	];
+	
+	arsenal_crate addAction [
+		"Get Fuel Pallet",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			["FUEL",getPos player, group player] call RTS_fnc_spawnCrate;
+			INS_fuelPalletSpawned = time;
+			publicVariable "INS_fuelPalletSpawned";
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"time > (INS_fuelPalletSpawned + 900)",
+		10,
+		false,
+		"",
+		""
+	];
+	
 	INS_createFob = {
-		[fob_flag, false] remoteExec ["hideObjectGlobal", 2];
+		[fob_flag, false] remoteExecCall ["hideObjectGlobal", 2];
 		private _pos = (getPosATL player) findEmptyPosition [2, 15, typeOf fob_flag];
 		fob_flag setPosATL _pos;
+		player reveal fob_flag;
 		INS_fobMarker = createMarker ["Insurgency_Fob_Marker", _pos ];
 		INS_fobMarker setMarkerColor "ColorBlue";
 		INS_fobMarker setMarkerShape "ICON";

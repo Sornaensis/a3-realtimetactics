@@ -68,36 +68,44 @@ INS_vehicleDespawner = [] spawn {
 					};
 				} forEach _unitSpawners;
 				
+				// Vehicles will stay at the fob indefinitely
+				if ( _baseVeh && ( _vehpos distance2d (getPos fob_flag) ) < 220 ) then {
+					_canBeSeen = true;
+				};
+				
 				if ( !_canBeSeen ) then {
 					if ( _baseVeh ) then { // respawn base vehicles
-						if ( !(alive _veh) || !(canMove _veh) ) then {
-							[_veh getVariable "info_offset",time,_distance] spawn {
-								params ["_offset","_start","_distance"];
+						private _offset = _veh getVariable "info_offset";
+						if ( !isNil "_offset" ) then {					
+							if ( !(alive _veh) || !(canMove _veh) ) then {
+								[_offset,time,_distance] spawn {
+									params ["_offset","_start","_distance"];
+									private _info = INS_baseVehicleSetup select _offset;
+									_info params ["_type","_dir","_pos","_time"];
+									waitUntil { time > (_start + _time) };
+									private _veh = _type createVehicle _pos;
+									_veh setDir _dir;
+									_veh setPosATL _pos;
+									_veh setVariable ["base_veh", true];
+									_veh setVariable ["info_offset",_offset];
+									_veh setVariable ["respawn_distance", _distance];							
+									_veh addEventHandler ["GetIn", {
+										params ["_vehicle", "_role", "_unit", "_turret"];
+										if ( !(_vehicle getVariable ["spawned_vehicle", false]) ) then {
+											_vehicle setVariable ["spawned_vehicle", true, true];
+										};		
+									}];
+								};
+							} else {
+								_canBeSeen = true;
 								private _info = INS_baseVehicleSetup select _offset;
-								_info params ["_type","_dir","_pos","_time"];
-								waitUntil { time > (_start + _time) };
-								private _veh = _type createVehicle _pos;
+								_info params ["","_dir","_pos",""];
+								_veh setVariable ["spawned_vehicle", false, true];
 								_veh setDir _dir;
 								_veh setPosATL _pos;
-								_veh setVariable ["base_veh", true];
-								_veh setVariable ["info_offset",_offset];
-								_veh setVariable ["respawn_distance", _distance];							
-								_veh addEventHandler ["GetIn", {
-									params ["_vehicle", "_role", "_unit", "_turret"];
-									if ( !(_vehicle getVariable ["spawned_vehicle", false]) ) then {
-										_vehicle setVariable ["spawned_vehicle", true, true];
-									};		
-								}];
-							};
-						} else {
-							_canBeSeen = true;
-							private _info = INS_baseVehicleSetup select (_veh getVariable "info_offset");
-							_info params ["","_dir","_pos",""];
-							_veh setVariable ["spawned_vehicle", false, true];
-							_veh setDir _dir;
-							_veh setPosATL _pos;
-							if ( fuel _veh < 0.8 ) then {
-								_veh setFuel 0.8;
+								if ( fuel _veh < 0.8 ) then {
+									_veh setFuel 0.8;
+								};
 							};
 						};
 					};
