@@ -141,10 +141,8 @@ private _excl = (selectRandom _nearestThree) select 0;
 
 {
 	private _zone = _x;
-	if ( _zone select 0 != _excl ) then {
-		private _disp = random [52, 60, 90];
-		(_zone select 2) set [0, _disp];
-	};
+	private _disp = random [52, 60, 90];
+	(_zone select 2) set [0, _disp];
 } forEach _nearestThree;
 
 // Static verification
@@ -154,7 +152,7 @@ publicVariable "INS_areaCount";
 publicVariable "INS_fastTravelFlags";
 publicVariable "INS_controlAreas";
 
-INS_bluforZoneAmount = floor ( count (INS_controlAreas) / 3 );
+INS_bluforZoneAmount = floor ( (count (INS_controlAreas)) * 0.75 );
 publicVariable "INS_bluforZoneAmount";
 
 INS_setupFinished = true;

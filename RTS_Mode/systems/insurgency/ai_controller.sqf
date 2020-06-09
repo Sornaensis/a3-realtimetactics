@@ -77,7 +77,7 @@ INS_vehicleDespawner = [] spawn {
 					if ( _baseVeh ) then { // respawn base vehicles
 						private _offset = _veh getVariable "info_offset";
 						if ( !isNil "_offset" ) then {					
-							if ( !(alive _veh) || !(canMove _veh) ) then {
+							if ( !(alive _veh) || !(canMove _veh) || (count ((crew _veh) select { alive _x }) > 0) ) then {
 								[_offset,time,_distance] spawn {
 									params ["_offset","_start","_distance"];
 									private _info = INS_baseVehicleSetup select _offset;
@@ -100,6 +100,7 @@ INS_vehicleDespawner = [] spawn {
 								_canBeSeen = true;
 								private _info = INS_baseVehicleSetup select _offset;
 								_info params ["","_dir","_pos",""];
+								_veh engineOn false;
 								_veh setVariable ["spawned_vehicle", false, true];
 								_veh setDir _dir;
 								_veh setPosATL _pos;

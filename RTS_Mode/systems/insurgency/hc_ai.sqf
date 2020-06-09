@@ -35,7 +35,7 @@ INS_insurgentAI = [] spawn {
 			
 			switch ( _tasking ) do {
 				case "GARRISON": {
-					private _units = _interestingUnits select { side (group _x) != side _group && count ([_x,units _group,250] call CBA_fnc_getNearest) > 0 && ( _group knowsAbout _x ) > 1 };
+					private _units = _interestingUnits select { side (group _x) != side _group && count ([_x,units _group,150] call CBA_fnc_getNearest) > 0 && ( _group knowsAbout _x ) > 1 };
 					
 					if ( count _units > 0 ) then {
 						private _target = [_leader, _units] call CBA_fnc_getNearest;
@@ -44,7 +44,7 @@ INS_insurgentAI = [] spawn {
 						if ( !isNil "_city" ) then {
 							_group setVariable ["ai_target_group", group _target];
 							_group setVariable ["ai_dest", getPos _target];
-							[_group, getPos _target, 80, _city] call doCounterAttack;
+							[_group, getPos _target, 25, _city] call doCounterAttack;
 							diag_log (format ["Tasking %1 from garrison to counter attack against %2", _group, _target]);
 						};
 						
@@ -61,7 +61,7 @@ INS_insurgentAI = [] spawn {
 						if ( !isNil "_city" ) then {
 							_group setVariable ["ai_target_group", group _target];
 							_group setVariable ["ai_dest", getPos _target];
-							[_group, getPos _target, 80, _city] call doCounterAttack;
+							[_group, getPos _target, 150, _city] call doCounterAttack;
 							diag_log (format ["Tasking %1 from patrol to counter attack against %2", _group, _target]);
 						};
 						
@@ -78,7 +78,7 @@ INS_insurgentAI = [] spawn {
 							if ( count ((units _group) select { alive _x }) > 0 ) then {
 								if ( ( (getPos (leader _group)) distance (getPos (leader _targetGroup)) ) > 150 ) then {
 									_group setVariable ["ai_dest", getPos (leader _targetGroup)];
-									[_group, getPos (leader _targetGroup), 50 + (random 25), _group getVariable "ai_city"] call doCounterAttack;
+									[_group, getPos (leader _targetGroup), 50 + (random 45), _group getVariable "ai_city"] call doCounterAttack;
 									diag_log (format ["Refining %1's counter attack against %2", _group, _targetGroup]);
 								};
 							} else {
@@ -89,18 +89,18 @@ INS_insurgentAI = [] spawn {
 						};
 						
 						if ( _retask ) then {
-							_group setVariable ["ai_status", "PATROL"];
+							_group setVariable ["ai_status", "GARRISON"];
 							_group setVariable ["ai_dest", nil];
 							_group setVariable ["ai_target_group", nil];
 							private _zoneName = _group getVariable "ai_city";
 							private _zone = [_zoneName] call INS_getZone;
 							private _zoneMarker = _zone select 1;
 							(getMarkerSize _zoneMarker) params ["_mx","_my"];
-							private _zoneSize = (_mx max _my) * 1.2;
+							private _zoneSize = (_mx max _my) * 1.25;
 							private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSize] ) 
 												select { (count (_x buildingPos -1)) > 2 };
-							[_group, getPos (selectRandom _buildings), 200 + (random 60), _zoneName] call setupAsPatrol;
-							diag_log (format ["Retasking %1 as a patrol in %2", _group, _zoneName]);
+							[_group, getPos (selectRandom _buildings), 75 + (random 50), _zoneName] call setupAsGarrison;
+							diag_log (format ["Retasking %1 as a garrison in %2", _group, _zoneName]);
 						};
 						
 						_group setVariable ["ai_cooldown", time + 30]; 
