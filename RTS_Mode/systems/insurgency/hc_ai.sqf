@@ -68,6 +68,7 @@ INS_insurgentAI = [] spawn {
 					};
 					[_group, getPos _building, 75 + (random 50), _zoneName] call setupAsHardGarrison;
 					_group setSpeedMode "FULL";
+					setSpee
 					diag_log (format ["Casualties causing %1 to start hiding in %2", _group, _zoneName]);
 				};
 			};
@@ -113,41 +114,43 @@ INS_insurgentAI = [] spawn {
 					case "COUNTER-ATTACK": {
 						private _dest = _group getVariable "ai_dest";
 						
-						if ( ( (getPos (leader _group)) distance _dest ) < 100 ) then {
-							private _targetGroup = _group getVariable "ai_target_group";
-							private _retask = false;
-							if ( !isNull _targetGroup ) then {
-								if ( count ((units _group) select { alive _x }) > 0 ) then {
-									if ( ( (getPos (leader _group)) distance (getPos (leader _targetGroup)) ) > 150 ) then {
-										_group setVariable ["ai_dest", getPos (leader _targetGroup)];
-										[_group, getPos (leader _targetGroup), 50 + (random 45), _group getVariable "ai_city"] call doCounterAttack;
-										diag_log (format ["Refining %1's counter attack against %2", _group, _targetGroup]);
+						if ( !isNil "_dest" ) then {
+							if ( ( (getPos (leader _group)) distance _dest ) < 100 ) then {
+								private _targetGroup = _group getVariable "ai_target_group";
+								private _retask = false;
+								if ( !isNull _targetGroup ) then {
+									if ( count ((units _group) select { alive _x }) > 0 ) then {
+										if ( ( (getPos (leader _group)) distance (getPos (leader _targetGroup)) ) > 150 ) then {
+											_group setVariable ["ai_dest", getPos (leader _targetGroup)];
+											[_group, getPos (leader _targetGroup), 50 + (random 45), _group getVariable "ai_city"] call doCounterAttack;
+											diag_log (format ["Refining %1's counter attack against %2", _group, _targetGroup]);
+										};
+									} else {
+										_retask = true;
 									};
 								} else {
 									_retask = true;
 								};
+								
+								if ( _retask ) then {
+									_group setVariable ["ai_status", "GARRISON"];
+									_group setVariable ["ai_dest", nil];
+									_group setVariable ["ai_target_group", nil];
+									private _zoneName = _group getVariable "ai_city";
+									private _zone = [_zoneName] call INS_getZone;
+									private _zoneMarker = _zone select 1;
+									(getMarkerSize _zoneMarker) params ["_mx","_my"];
+									private _zoneSize = (_mx max _my) * 1.25;
+									private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSize] ) 
+														select { (count (_x buildingPos -1)) > 2 };
+									[_group, getPos (selectRandom _buildings), 75 + (random 50), _zoneName] call setupAsGarrison;
+									diag_log (format ["Retasking %1 as a garrison in %2", _group, _zoneName]);
+								};
+								
+								_group setVariable ["ai_cooldown", time + 30]; 
 							} else {
-								_retask = true;
+								_group setVariable ["ai_cooldown", time + 10]; 
 							};
-							
-							if ( _retask ) then {
-								_group setVariable ["ai_status", "GARRISON"];
-								_group setVariable ["ai_dest", nil];
-								_group setVariable ["ai_target_group", nil];
-								private _zoneName = _group getVariable "ai_city";
-								private _zone = [_zoneName] call INS_getZone;
-								private _zoneMarker = _zone select 1;
-								(getMarkerSize _zoneMarker) params ["_mx","_my"];
-								private _zoneSize = (_mx max _my) * 1.25;
-								private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSize] ) 
-													select { (count (_x buildingPos -1)) > 2 };
-								[_group, getPos (selectRandom _buildings), 75 + (random 50), _zoneName] call setupAsGarrison;
-								diag_log (format ["Retasking %1 as a garrison in %2", _group, _zoneName]);
-							};
-							
-							_group setVariable ["ai_cooldown", time + 30]; 
-						} else {
-							_group setVariable ["ai_cooldown", time + 10]; 
 						};
 					};
 					case "NONE": {
