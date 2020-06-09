@@ -2,7 +2,7 @@
 private _cities = (nearestLocations [ getMarkerPos "map_center", ["NameCityCapital","NameCity","NameVillage"], 13000]) select { !((position _x) inArea "opfor_restriction") };
 
 // locations we may use for opfor areas
-INS_areas = (nearestLocations [ getMarkerPos "map_center", ["NameCityCapital","NameCity","NameVillage","NameLocal"], 13000]) select { !((position _x) inArea "opfor_restriction") };; // these are the different mission areas
+INS_areas = (nearestLocations [ getMarkerPos "map_center", ["NameCityCapital","NameCity","NameVillage","NameLocal"], 13000]) select { !((position _x) inArea "opfor_restriction") }; // these are the different mission areas
 INS_areaMarkers = [];
 INS_bluforPacification = false;
 publicVariable "INS_bluforPacification";
@@ -129,6 +129,23 @@ INS_fastTravelFlags = [];
 	
 	INS_fastTravelFlags pushback [ _flag, _x select 0, _flagmark, _forEachIndex];
 } forEach INS_controlAreas;
+
+// Set two of the three nearest the base to blue zones
+private _nearestZones = [ INS_controlAreas, [], { (getMarkerPos (_x select 1)) distance (getMarkerPos "opfor_restriction")}, "ASCEND"] call BIS_fnc_sortBy;
+private _nearestThree = [];
+for "_i" from 0 to 2 do {
+	_nearestThree pushback (_nearestZones # _i);
+};
+
+private _excl = (selectRandom _nearestThree) select 0;
+
+{
+	private _zone = _x;
+	if ( _zone select 0 != _excl ) then {
+		private _disp = random [52, 60, 90];
+		(_zone select 2) set [0, _disp];
+	};
+} forEach _nearestThree;
 
 // Static verification
 INS_areaCount = count INS_controlAreas;

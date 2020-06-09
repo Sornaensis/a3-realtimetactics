@@ -5,7 +5,7 @@ INS_despawn = 1200; // despawn units this distance from players when they cannot
 INS_spawnPulse = 8; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
 INS_civilianDensity = 11;
-INS_populationDensity = 18; 
+INS_populationDensity = 15; 
 
 
 // track soldier casualties so zones aren't always fully respawning
@@ -297,7 +297,7 @@ INS_spawnCivilian = {
 	
 	_pos = (getPos (selectRandom _buildings));
 	
-	private _spawnfunc = selectRandomWeighted ["Civ",1,"Car",0.18];
+	private _spawnfunc = selectRandomWeighted ["Civ",1,"Car",0.2];
 	
 	private _leader = objnull;
 	
@@ -344,7 +344,7 @@ INS_spawnUnits = {
 	
 	private _spawnlocs = [];
 	
-	private _spawntype = selectRandomWeighted ["Squad",1,"APC",0.1,"Tank",0.009];
+	private _spawntype = selectRandomWeighted ["Squad",1,"APC",0.09,"Tank",0.01];
 	private _spawnfunc = {};
 	
 	switch ( _spawntype ) do {
@@ -355,7 +355,7 @@ INS_spawnUnits = {
 								&& ((position _x) distance _pos) < 1600
 								&& !((position _x) inArea "opfor_restriction")
 								&& count ([position _x, _players,400] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _friendlySoldiers,100] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
 		};
 		case "APC": {
@@ -364,7 +364,7 @@ INS_spawnUnits = {
 							{  !((position _x) inArea "opfor_restriction")
 								&& ((position _x) distance _pos) < 1600
 								&& count ([position _x, _players,400] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _friendlySoldiers,120] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
 		};
 		case "Tank":{
@@ -373,7 +373,7 @@ INS_spawnUnits = {
 							{  !((position _x) inArea "opfor_restriction")
 								&& ((position _x) distance _pos) < 1600
 								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _friendlySoldiers,120] call CBA_fnc_getNearest) == 0
 								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
 		};
 	};
@@ -413,7 +413,7 @@ INS_spawnTownGarrison = {
 		private _soldierList = [_pos,_zone] call INS_spawnUnits;
 		if ( !isNil "_soldierList" ) then {
 			_soldierList params ["_soldier", "_position"];
-			private _task = selectRandomWeighted [setupAsGarrison,0.7,setupAsFullGarrison,0.5,setupAsPatrol,0.2];
+			private _task = selectRandomWeighted [setupAsGarrison,0.7,setupAsFullGarrison,0.6,setupAsPatrol,0.3];
 			private _radius = 75 + (random 50);
 			if ( vehicle _soldier != _soldier ) then {
 				_task = setupAsPatrol;
@@ -442,14 +442,26 @@ INS_spawnPatrol = {
 	(getMarkerSize _zoneMark) params ["_mx","_my"];
 	private _zoneSize = (_mx max _my)*3;
 	
-	private _side = selectRandom ([east,west,resistance] - [[[_zone] call INS_zoneDisposition] call INS_greenforDisposition]);
+	private _sides = ([east,west,resistance] - [[[_zone] call INS_zoneDisposition] call INS_greenforDisposition]);
+	private _sideList = [];
+	{
+		private _side = _x;
+		if ( _side == west ) then {
+			_sideList pushback _side;
+			_sideList pushback 0.4;
+		} else {
+			_sideList pushback _side;
+			_sideList pushback 1;
+		};
+	} forEach _sides;
+	private _side = selectRandomWeighted _sideList;
 	diag_log (format ["Attempting to spawn patrol of side %1 at %2", _side, _zoneName]);
 	
 	// we want to spawn 2-4 squads and 0-2 vehicles
-	private _sqdCt = selectRandom [2,3];
-	private _carCt = selectRandomWeighted [0,1,1,0.3,2,0.05];
+	private _sqdCt = selectRandomWeighted [1,0.5,2,0.7,3,0.25];
+	private _carCt = selectRandomWeighted [0,0.5,1,0.5,2,0.1];
 	
-	private _carFunc = selectRandomWeighted [INS_fnc_spawnAPC,1,INS_fnc_spawnTank,0.01];
+	private _carFunc = selectRandomWeighted [INS_fnc_spawnAPC,1,INS_fnc_spawnTank,0.1];
 	
 	private _enemySoldiers = allUnits select { side (group _x) != civilian && side (group _x) != _side };
 	private _friendlySoldiers = allUnits select { side (group _x) == _side && side (group _x) != civilian };
@@ -466,7 +478,7 @@ INS_spawnPatrol = {
 		while { _tries < 25 && (_pos inArea "opfor_restriction")
 								&& count ([_pos, _players,500] call CBA_fnc_getNearest) > 0
 								&& count ([_pos, _players,1300] call CBA_fnc_getNearest) == 0
-								&& count ([_pos, _friendlySoldiers,40] call CBA_fnc_getNearest) > 0
+								&& count ([_pos, _friendlySoldiers,400] call CBA_fnc_getNearest) > 0
 								&& count ([_pos, _enemySoldiers,400] call CBA_fnc_getNearest) > 0 } do {
 			_pos = [_zonePos, _zoneSize] call CBA_fnc_randPos;
 			_tries = _tries + 1;
@@ -516,8 +528,8 @@ INS_spawnPatrol = {
 			private _sqdRoads =  _roads select 
 								{  !((position _x) inArea "opfor_restriction")
 									&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
-									&& count ([position _x, _players,1200] call CBA_fnc_getNearest) > 0
-									&& count ([position _x, _friendlySoldiers,40] call CBA_fnc_getNearest) == 0
+									&& count ([position _x, _players,1300] call CBA_fnc_getNearest) > 0
+									&& count ([position _x, _friendlySoldiers,400] call CBA_fnc_getNearest) == 0
 									&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
 			if ( count _sqdRoads > 0 ) then {
 				private _road = selectRandom _sqdRoads;
@@ -834,7 +846,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 								private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
 								private _zoneparams = _zone select 2;
 								private _disp = _zoneparams select 0;
-								_zoneparams set [0, _disp + 15];
+								_zoneparams set [0, _disp + 35];
 								publicVariable "INS_controlAreas";
 								
 								

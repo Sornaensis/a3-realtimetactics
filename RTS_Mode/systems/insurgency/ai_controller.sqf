@@ -219,11 +219,11 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 							if ( _time != -1 && time < (_time + _pulse) + 120 ) then {
 								if ( time > (_time + _pulse) ) then {
 									
-									if ( _pulse > 4000 ) then {
+									if ( _pulse > 16000 ) then {
 										_pulse = 0;
 									};
 									
-									_patrols set [1, _pulse + 300 + (floor (random 100))];
+									_patrols set [1, _pulse + 2500 + (floor (random 300))];
 									_patrols set [2, time];
 									if ( call INS_hasHC ) then {
 										private _hc = call INS_getNextHC;

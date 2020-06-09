@@ -54,7 +54,7 @@ if ( !(_crate isEqualTo objnull) ) then {
 	[_crate, ["spawned_vehicle",true]] remoteExecCall ["setVariable", 2];
 	[_crate, ["base_veh",true]] remoteExecCall ["setVariable", 2];
 	if ( _type isEqualTo "AMMO" ) then {
-		_crate setVariable ["crate_grp_src", _group, true, true];
+		_crate setVariable ["crate_grp_src", _group, true];
 		[-1, 
 		{
 			params ["_crate"];
@@ -62,7 +62,7 @@ if ( !(_crate isEqualTo objnull) ) then {
 				"Put Away Ammo Crate",
 				{
 					params ["_target", "_caller", "_actionId", "_arguments"];
-					(_target getVariable "crate_grp_src") setVariable ["INS_ammoCrateSpawned", -300];
+					(_target getVariable "crate_grp_src") setVariable ["INS_ammoCrateSpawned", -300, true];
 					deleteVehicle _target;
 				},
 				nil,

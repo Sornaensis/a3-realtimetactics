@@ -72,9 +72,9 @@ INS_insurgentAI = [] spawn {
 					private _dest = _group getVariable "ai_dest";
 					
 					if ( ( (getPos (leader _group)) distance _dest ) < 100 ) then {
-						private _targetGrp = _group getVariable "ai_target_group";
+						private _targetGroup = _group getVariable "ai_target_group";
 						private _retask = false;
-						if ( !isNull _targetGrp ) then {
+						if ( !isNull _targetGroup ) then {
 							if ( count ((units _group) select { alive _x }) > 0 ) then {
 								if ( ( (getPos (leader _group)) distance (getPos (leader _targetGroup)) ) > 150 ) then {
 									_group setVariable ["ai_dest", getPos (leader _targetGroup)];

@@ -10,6 +10,19 @@ if ( side player == east || isServer ) then {
 	};
 };
 
+// base protection
+
+INS_baseMarker = "opfor_restriction";
+(getMarkerSize INS_baseMarker) params ["_mx","_my"];
+private _baseSize = (_mx max _my);
+
+{
+	_x allowDamage false;
+	_x removeAllEventHandlers "Hit";
+	_x removeAllEventHandlers "HandleDamage";
+	_x removeAllEventHandlers "HitPart";	
+} forEach ( ((getMarkerPos INS_baseMarker) nearObjects ["HOUSE", _baseSize]) select { _x inArea INS_baseMarker });
+
 private _rtsinit = [] spawn (compile preprocessFileLinenumbers "rts\init.sqf");
 
 waitUntil { scriptDone _rtsinit };
@@ -54,7 +67,7 @@ if ( isServer || !hasInterface ) then {
 		[_group] call CBA_fnc_clearWaypoints;
 		_group setVariable ["ai_status", "GARRISON"];
 		_group setVariable ["ai_city", _city, true];
-		[_group, _pos, _radius, 2, 0.4, (random 70)/100 ] call CBA_fnc_taskDefend;
+		[_group, _pos, _radius, 2, 0.5, 0.8 + ((random 2)/10) ] call CBA_fnc_taskDefend;
 	};
 	
 	setupAsFullGarrison = {
