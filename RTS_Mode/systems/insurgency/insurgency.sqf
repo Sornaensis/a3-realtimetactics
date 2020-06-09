@@ -170,9 +170,9 @@ INS_getZoneDensity = {
 	if ( _casIndex != -1 ) then {
 		private _casualties = INS_cityCasualtyTracker # _casIndex;
 		
-		if ( time < ( (_casualties # 2 ) + 600 ) ) then {
+		if ( time < ( (_casualties # 2 ) + 7200 ) ) then {
 			private _count = _casualties # 1;
-			_popAdjust = _count min (([_location] call INS_zoneMaxPop) / 2);
+			_popAdjust = _count min (floor (([_location] call INS_zoneMaxPop) * 0.75));
 		};
 	};
 	
@@ -592,8 +592,8 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 		} else {
 			private _cas = INS_cityCasualtyTracker # _index;
 			private _time = _cas # 2;
-			// reset counter after 20 minutes
-			if ( time > _time + 1200 ) then {
+			// reset counter after 2 hours
+			if ( time > _time + 7200 ) then {
 				_cas set [1, 1];
 				_cas set [2, time];
 			} else {
