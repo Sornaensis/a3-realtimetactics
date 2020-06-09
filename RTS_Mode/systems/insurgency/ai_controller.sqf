@@ -237,7 +237,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 									};
 								};
 							} else {
-								_patrols set [1, 1000 + (floor (random 240))];
+								_patrols set [1, 700 + (floor (random 240))];
 								_patrols set [2, time];
 							};
 							

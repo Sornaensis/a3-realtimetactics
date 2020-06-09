@@ -4,8 +4,8 @@ INS_spawnDist = 800; // distance in meters from buildings a player shall be when
 INS_despawn = 1200; // despawn units this distance from players when they cannot be seen and their zone is inactive
 INS_spawnPulse = 8; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
-INS_civilianDensity = 11;
-INS_populationDensity = 15; 
+INS_civilianDensity = 9;
+INS_populationDensity = 14; 
 
 
 // track soldier casualties so zones aren't always fully respawning
@@ -127,7 +127,7 @@ INS_getZoneCivilianDensity = {
 	private _marker = _location select 1;
 	(getMarkerSize _marker) params ["_mx","_my"];
 	
-	private _size = (_mx max _my) * 1.6;
+	private _size = (_mx max _my) * 1.8;
 	_size = _size*_size; // sq m
 	
 	private _population = count ( (allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.6) && !isPlayer _x && (_x getVariable ["ins_side",east]) == civilian } );
@@ -334,7 +334,7 @@ INS_spawnUnits = {
 	private _zonePos = getMarkerPos _zoneMarker;
 	
 	(getMarkerSize _zoneMarker) params ["_mx","_my"];
-	private _zoneSize = (_mx max _my) * 1.5;
+	private _zoneSize = (_mx max _my) * 1.6;
 		
 	private _side = [[_zone] call INS_zoneDisposition] call INS_greenforDisposition;
 	private _enemySoldiers = allUnits select { side (group _x) != civilian && side (group _x) != _side };
@@ -389,7 +389,9 @@ INS_spawnUnits = {
 		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.4,"VETERAN",0.7]];
 	};
 	(group _leader) setVariable ["ai_city", _zoneName, true];
-	
+	if ( vehicle _leader == _leader ) then {
+		(group _leader) setVariable ["initial_strength", count (units (group _leader))];
+	};
 	{
 		_x setVariable ["ins_side", _side, true];
 		_x call RTS_fnc_aiSkill;
@@ -488,6 +490,7 @@ INS_spawnPatrol = {
 			private _target = leader (group (selectRandom _targets));
 			private _leader = [_pos,_side,true] call INS_fnc_spawnSquad;
 			private _group = group _leader;
+			_group setVariable ["initial_strength", count (units _group)];
 			if ( side _leader == west ) then {
 				_group setVariable ["Experience", selectRandomWeighted ["MILITIA",0.3,"GREEN",0.6, "VETERAN", 0.3]];
 			} else {

@@ -70,6 +70,14 @@ if ( isServer || !hasInterface ) then {
 		[_group, _pos, _radius, 2, 0.5, 0.8 + ((random 2)/10) ] call CBA_fnc_taskDefend;
 	};
 	
+	setupAsHardGarrison = {
+		params ["_group", "_pos", "_radius","_city"];
+		[_group] call CBA_fnc_clearWaypoints;
+		_group setVariable ["ai_status", "GARRISON"];
+		_group setVariable ["ai_city", _city, true];
+		[_group, _pos, _radius, 2, 0, 1 ] call CBA_fnc_taskDefend;
+	};
+	
 	setupAsFullGarrison = {
 		params ["_group", "_pos", "_radius","_city"];
 		[_group] call CBA_fnc_clearWaypoints;
@@ -90,6 +98,8 @@ if ( isServer || !hasInterface ) then {
 	doCounterAttack = {
 		params ["_group", "_pos", "_radius","_city"];
 		[_group] call CBA_fnc_clearWaypoints;
+		
+		_group getVariable ["ai_tough", true]; // fleeing requires lots of casualties
 		_group setVariable ["ai_status", "COUNTER-ATTACK"];
 		_group setVariable ["ai_city", _city, true];
 		if ( vehicle (leader _group) != leader _group ) then {
