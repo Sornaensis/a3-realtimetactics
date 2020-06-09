@@ -442,7 +442,7 @@ INS_spawnPatrol = {
 	private _zoneMark = _zone select 1;
 	private _zonePos = getMarkerPos _zoneMark;
 	(getMarkerSize _zoneMark) params ["_mx","_my"];
-	private _zoneSize = (_mx max _my)*3;
+	private _zoneSize = (_mx max _my)*2.2;
 	
 	private _sides = ([east,west,resistance] - [[[_zone] call INS_zoneDisposition] call INS_greenforDisposition]);
 	private _sideList = [];
@@ -477,7 +477,7 @@ INS_spawnPatrol = {
 	for "_i" from 1 to _sqdCt do {
 		private _tries = 0;
 		private _pos = [_zonePos, _zoneSize] call CBA_fnc_randPos; 
-		while { _tries < 25 && (_pos inArea "opfor_restriction")
+		while { _tries < 5 && (_pos inArea "opfor_restriction")
 								&& count ([_pos, _players,500] call CBA_fnc_getNearest) > 0
 								&& count ([_pos, _players,1300] call CBA_fnc_getNearest) == 0
 								&& count ([_pos, _friendlySoldiers,400] call CBA_fnc_getNearest) > 0
@@ -486,7 +486,7 @@ INS_spawnPatrol = {
 			_tries = _tries + 1;
 		};
 		
-		if ( _tries < 25 ) then {
+		if ( _tries < 5 ) then {
 			private _target = leader (group (selectRandom _targets));
 			private _leader = [_pos,_side,true] call INS_fnc_spawnSquad;
 			private _group = group _leader;
