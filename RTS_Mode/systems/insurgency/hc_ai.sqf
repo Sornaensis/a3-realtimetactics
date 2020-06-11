@@ -37,10 +37,10 @@ INS_insurgentAI = [] spawn {
 			
 			if ( isNil "_hiding" && !isNil "_initStr" ) then {
 				// reduced strength units will hide in buildings
-				private _threshold = (ceil (_initStr / 2));
+				private _threshold = (ceil (_initStr / 2)) max 1;
 				private _tough = _group getVariable ["ai_tough", false];
 				if ( _tough ) then {
-					_threshold = (ceil (_initStr / 3));
+					_threshold = (ceil (_initStr / 3)) max 1;
 				};
 				if ( count ( (units _group) select { alive _x } ) <= _threshold ) then {
 					_group setVariable ["hiding", true];
@@ -58,17 +58,16 @@ INS_insurgentAI = [] spawn {
 					private _players = (call INS_allPlayers) select { side (group _x) != _side };
 					private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSize] ) 
 										select { (count (_x buildingPos -1)) > 2 
-												&& count ([getPos _x, _players,300] call CBA_fnc_getNearest) == 0}; // standoff range of 300m
+												&& count ([getPos _x, _players,250] call CBA_fnc_getNearest) == 0
+												&& ((getPos _x) distance2d (getPos _leader)) < 600 };
 					private _building = objnull;
 					if ( _buildings isEqualTo [] ) then {
-						_building = selectRandom ( ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSize] ) 
-										select { (count (_x buildingPos -1)) > 2 } );
+						_building = nearestBuilding (getPos _leader);
 					} else {
 						_building = selectRandom _buildings;
 					};
 					[_group, getPos _building, 75 + (random 50), _zoneName] call setupAsHardGarrison;
 					_group setSpeedMode "FULL";
-					setSpee
 					diag_log (format ["Casualties causing %1 to start hiding in %2", _group, _zoneName]);
 				};
 			};
@@ -78,7 +77,7 @@ INS_insurgentAI = [] spawn {
 			if ( isNil "_hiding" ) then {			
 				switch ( _tasking ) do {
 					case "GARRISON": {
-						private _units = _interestingUnits select { side (group _x) != side _group && count ([_x,units _group,150] call CBA_fnc_getNearest) > 0 && ( _group knowsAbout _x ) > 1 };
+						private _units = _interestingUnits select { side (group _x) != side _group && count ([_x,units _group,35] call CBA_fnc_getNearest) > 0 && ( _group knowsAbout _x ) > 1 };
 						
 						if ( count _units > 0 ) then {
 							private _target = [_leader, _units] call CBA_fnc_getNearest;
@@ -95,7 +94,7 @@ INS_insurgentAI = [] spawn {
 						};
 					};
 					case "PATROL": {
-						private _units = _interestingUnits select { side (group _x) != side _group && count ([_x,units _group,1000] call CBA_fnc_getNearest) > 0 && ( _group knowsAbout _x ) > 1 };
+						private _units = _interestingUnits select { side (group _x) != side _group && count ([_x,units _group,400] call CBA_fnc_getNearest) > 0 && ( _group knowsAbout _x ) > 1 };
 						
 						if ( count _units > 0 ) then {
 							private _target = [_leader, _units] call CBA_fnc_getNearest;
@@ -112,11 +111,11 @@ INS_insurgentAI = [] spawn {
 						};
 					};
 					case "COUNTER-ATTACK": {
-						private _dest = _group getVariable "ai_dest";
+						private _dest = _group getVariable ["ai_dest",getPos _leader];
 						
 						if ( !isNil "_dest" ) then {
 							if ( ( (getPos (leader _group)) distance _dest ) < 100 ) then {
-								private _targetGroup = _group getVariable "ai_target_group";
+								private _targetGroup = _group getVariable ["ai_target_group",grpnull];
 								private _retask = false;
 								if ( !isNull _targetGroup ) then {
 									if ( count ((units _group) select { alive _x }) > 0 ) then {

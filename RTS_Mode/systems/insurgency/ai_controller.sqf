@@ -224,7 +224,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 										_pulse = 0;
 									};
 									
-									_patrols set [1, _pulse + 2500 + (floor (random 300))];
+									_patrols set [1, _pulse + 1100 + (floor (random 300))];
 									_patrols set [2, time];
 									if ( call INS_hasHC ) then {
 										private _hc = call INS_getNextHC;
@@ -237,7 +237,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 									};
 								};
 							} else {
-								_patrols set [1, 700 + (floor (random 240))];
+								_patrols set [1, 800 + (floor (random 240))];
 								_patrols set [2, time];
 							};
 							

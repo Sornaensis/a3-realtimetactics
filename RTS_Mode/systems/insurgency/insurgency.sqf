@@ -5,7 +5,7 @@ INS_despawn = 1200; // despawn units this distance from players when they cannot
 INS_spawnPulse = 8; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
 INS_civilianDensity = 9;
-INS_populationDensity = 14; 
+INS_populationDensity = 16; 
 
 
 // track soldier casualties so zones aren't always fully respawning
@@ -415,7 +415,7 @@ INS_spawnTownGarrison = {
 		private _soldierList = [_pos,_zone] call INS_spawnUnits;
 		if ( !isNil "_soldierList" ) then {
 			_soldierList params ["_soldier", "_position"];
-			private _task = selectRandomWeighted [setupAsGarrison,0.7,setupAsFullGarrison,0.6,setupAsPatrol,0.3];
+			private _task = selectRandomWeighted [setupAsGarrison,0.5,setupAsFullGarrison,0.5,setupAsFullGarrison,0.5,setupAsPatrol,0.3];
 			private _radius = 75 + (random 50);
 			if ( vehicle _soldier != _soldier ) then {
 				_task = setupAsPatrol;
@@ -425,7 +425,7 @@ INS_spawnTownGarrison = {
 			private _zoneAct = [_zone] call INS_getZone;
 			private _zoneMarker = _zoneAct select 1;
 			(getMarkerSize _zoneMarker) params ["_mx","_my"];
-			private _zoneSize = (_mx max _my) * 1.2;
+			private _zoneSize = (_mx max _my) * 1.6;
 			private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSize] ) 
 								select { (count (_x buildingPos -1)) > 2 };
 			[_group, getPos (selectRandom _buildings), _radius, _zone] call _task;
@@ -442,15 +442,15 @@ INS_spawnPatrol = {
 	private _zoneMark = _zone select 1;
 	private _zonePos = getMarkerPos _zoneMark;
 	(getMarkerSize _zoneMark) params ["_mx","_my"];
-	private _zoneSize = (_mx max _my)*2.2;
+	private _zoneSize = (_mx max _my)*2.4;
 	
-	private _sides = ([east,west,resistance] - [[[_zone] call INS_zoneDisposition] call INS_greenforDisposition]);
+	private _sides = [east,west,resistance];
 	private _sideList = [];
 	{
 		private _side = _x;
 		if ( _side == west ) then {
 			_sideList pushback _side;
-			_sideList pushback 0.4;
+			_sideList pushback 0.3;
 		} else {
 			_sideList pushback _side;
 			_sideList pushback 1;
@@ -459,9 +459,13 @@ INS_spawnPatrol = {
 	private _side = selectRandomWeighted _sideList;
 	diag_log (format ["Attempting to spawn patrol of side %1 at %2", _side, _zoneName]);
 	
-	// we want to spawn 2-4 squads and 0-2 vehicles
-	private _sqdCt = selectRandomWeighted [1,0.5,2,0.7,3,0.25];
-	private _carCt = selectRandomWeighted [0,0.5,1,0.5,2,0.1];
+	private _sqdCt = selectRandomWeighted [1,0.1,2,0.7,3,0.5,4,0.1];
+	private _carCt = selectRandomWeighted [0,0.1,1,0.7,2,0.6,3,0.2];
+	
+	if ( _side == west ) then {
+		_sqdCt = 1;
+		_carCt = 1;
+	};
 	
 	private _carFunc = selectRandomWeighted [INS_fnc_spawnAPC,1,INS_fnc_spawnTank,0.1];
 	
@@ -474,19 +478,17 @@ INS_spawnPatrol = {
 	
 	private _didspawn = false;
 	
+	private _roads = (_zonePos nearRoads _zoneSize);
 	for "_i" from 1 to _sqdCt do {
 		private _tries = 0;
-		private _pos = [_zonePos, _zoneSize] call CBA_fnc_randPos; 
-		while { _tries < 5 && (_pos inArea "opfor_restriction")
-								&& count ([_pos, _players,500] call CBA_fnc_getNearest) > 0
-								&& count ([_pos, _players,1300] call CBA_fnc_getNearest) == 0
-								&& count ([_pos, _friendlySoldiers,400] call CBA_fnc_getNearest) > 0
-								&& count ([_pos, _enemySoldiers,400] call CBA_fnc_getNearest) > 0 } do {
-			_pos = [_zonePos, _zoneSize] call CBA_fnc_randPos;
-			_tries = _tries + 1;
-		};
+		private _sqdRoads =  _roads select { !(_x inArea "opfor_restriction")
+								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _players,1300] call CBA_fnc_getNearest) > 0
+								&& count ([position _x, _friendlySoldiers,400] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 } do {
 		
-		if ( _tries < 5 ) then {
+		if ( count _sqdRoads > 0 ) then {
+			private _pos = getPos (selectRandom _sqdRoads);
 			private _target = leader (group (selectRandom _targets));
 			private _leader = [_pos,_side,true] call INS_fnc_spawnSquad;
 			private _group = group _leader;
@@ -524,7 +526,6 @@ INS_spawnPatrol = {
 	};
 	
 	if ( _carCt == 0 ) exitWith {};
-	private _roads = (_zonePos nearRoads _zoneSize);
 	if ( count _roads > 0 ) then {
 	
 		for "_i" from 1 to _carCt do {
