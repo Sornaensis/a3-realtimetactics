@@ -4,9 +4,9 @@ INS_spawnDist = 800; // distance in meters from buildings a player shall be when
 INS_despawn = 1200; // despawn units this distance from players when they cannot be seen and their zone is inactive
 INS_spawnPulse = 8; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
-INS_civilianDensity = 13;
-INS_carDensity = 9;
-INS_populationDensity = 15; 
+INS_civilianDensity = 11;
+INS_carDensity = 7;
+INS_populationDensity = 17; 
 
 
 // track soldier casualties so zones aren't always fully respawning
@@ -181,7 +181,7 @@ INS_getZoneDensity = {
 	(getMarkerSize _marker) params ["_mx","_my"];
 	
 	private _size = (_mx max _my) * 1.8;
-	_size = _size*_size; // sq m
+	_size = (_size*_size) max 562500; // sq m
 	
 	private _population = count ((allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.8) && !isPlayer _x && (_x getVariable ["ins_side",civilian]) != civilian });
 	private _nominalPop = count ((allUnits + allDeadMen) select { !isPlayer _x && (_x getVariable ["ins_side",civilian]) != civilian && ((group _x) getVariable ["ai_city",""]) == _zoneName });

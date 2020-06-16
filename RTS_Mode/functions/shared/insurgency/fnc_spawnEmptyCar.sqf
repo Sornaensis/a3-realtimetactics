@@ -13,7 +13,7 @@ if ( isNil "_notOnRoad" ) then {
 };
 
 private _type = (INS_carClasses call BIS_fnc_selectRandom);
-private _carpos = (_pos findEmptyPosition [0,50,_type]);
+private _carpos = (_pos findEmptyPosition [10,60,_type]);
 private _car = _type createVehicle _carpos;
 _car setPosATL _carpos;
 _car setDir (random 360);

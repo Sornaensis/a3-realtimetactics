@@ -72,6 +72,22 @@ INS_insurgentAI = [] spawn {
 				};
 			};
 			
+			private _surrenderRoll = _group getVariable "surrender_rolled";
+			
+			if ( !isNil "_initStr" && isNil "surrender_rolled" ) then {
+				private _alive = (units _group) select { alive _x };
+				private _last = _alive # 0;
+				if ( count _alive == 1 && vehicle _last == _last && count ( [_last,(call INS_allPlayers) select { side (group _x) != side _group }, 75] call CBA_fnc_getNearest) > 0 ) then {
+					private _tough = _group getVariable ["ai_tough", false];
+					private _surrender = selectRandomWeighted [true,( if ( _tough ) then { 0.1 } else { 0.4 } ),false,0.8];
+					if ( _surrender ) then {
+						[_last, true] call ace_captives_setSurrendered;
+						diag_log (format ["%1 surrendering to players.",_last]);
+					};
+					_group setVariable ["surrender_rolled",true];
+				};
+			};
+			
 			_hiding = _group getVariable "hiding";
 			
 			if ( isNil "_hiding" ) then {			
