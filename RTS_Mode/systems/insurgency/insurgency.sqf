@@ -4,8 +4,9 @@ INS_spawnDist = 800; // distance in meters from buildings a player shall be when
 INS_despawn = 1200; // despawn units this distance from players when they cannot be seen and their zone is inactive
 INS_spawnPulse = 8; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
-INS_civilianDensity = 9;
-INS_populationDensity = 16; 
+INS_civilianDensity = 13;
+INS_carDensity = 9;
+INS_populationDensity = 15; 
 
 
 // track soldier casualties so zones aren't always fully respawning
@@ -111,13 +112,34 @@ getSpawnedCivilians = {
 getZoneSoldiers = {
 	params ["_zoneName"];
 	
-	(call getSpawnedSoldiers) select { ((group _x) getVariable ["ai_city",""]) == _zoneName}
+	(call getSpawnedSoldiers) select { ((group _x) getVariable ["ai_city",""]) isEqualTo _zoneName}
+};
+
+getZoneCars = {
+	params ["_zoneName"];
+	
+	(vehicles select { (_x getVariable ["ai_city",""]) isEqualTo _zoneName })
 };
 
 getZoneGroups = {
 	params ["_zoneName"];
 	
-	allGroups select { (_x getVariable ["ai_city",""]) == _zoneName}
+	allGroups select { (_x getVariable ["ai_city",""]) isEqualTo _zoneName}
+};
+
+INS_getZoneCarDensity = {
+	params ["_zoneName"];
+	
+	private _location = [_zoneName] call INS_getZone;
+	private _marker = _location select 1;
+	(getMarkerSize _marker) params ["_mx","_my"];
+	
+	private _size = (_mx max _my) * 1.8;
+	_size = _size*_size; // sq m
+	
+	private _cars = count ([_zoneName] call getZoneCars);
+	
+	_cars/(_size/1000/1000)
 };
 
 INS_getZoneCivilianDensity = {
@@ -161,8 +183,8 @@ INS_getZoneDensity = {
 	private _size = (_mx max _my) * 1.8;
 	_size = _size*_size; // sq m
 	
-	private _population = count ((allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.8) && !isPlayer _x && (_x getVariable ["ins_side",east]) != civilian });
-	private _nominalPop = count ((allUnits + allDeadMen) select { !isPlayer _x && (_x getVariable ["ins_side",east]) != civilian && ((group _x) getVariable ["ai_city",""]) == _zoneName });
+	private _population = count ((allUnits + allDeadMen) select { ((getPos _x) distance (getMarkerPos _marker)) < ((_mx max _my)*1.8) && !isPlayer _x && (_x getVariable ["ins_side",civilian]) != civilian });
+	private _nominalPop = count ((allUnits + allDeadMen) select { !isPlayer _x && (_x getVariable ["ins_side",civilian]) != civilian && ((group _x) getVariable ["ai_city",""]) == _zoneName });
 	
 	private _popAdjust = 0;
 	
@@ -290,14 +312,14 @@ INS_spawnCivilian = {
 	private _buildings = (_zonePos nearObjects [ "HOUSE", _zoneSize ]) select 
 							{ 
 								(count (_x buildingPos -1) > 2) 
-								&& count ([position _x, _otherCivs,30] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _otherCivs,50] call CBA_fnc_getNearest) == 0
 								&& ((position _x) distance _pos) < 1600	};
 	
 	if ( count _buildings == 0) exitWith { };
 	
-	_pos = (getPos (selectRandom _buildings));
+	_pos = (selectRandom _buildings) buildingPos 1;
 	
-	private _spawnfunc = selectRandomWeighted ["Civ",1,"Car",0.2];
+	private _spawnfunc = selectRandomWeighted ["Civ",1,"Car",0.22];
 	
 	private _leader = objnull;
 	
@@ -320,7 +342,18 @@ INS_spawnCivilian = {
 		(vehicle _leader) setVariable ["spawned_vehicle", true];
 	};
 	
+	(group _leader) deleteGroupWhenEmpty true;
+	
 	diag_log format ["Spawned %1 civilian at %2 (%3)",count (units (group _leader)),_pos,_zoneName];
+	
+	private _carDensity = [_zoneName] call INS_getZoneCarDensity;
+	// try to spawn a car
+	if ( _carDensity < INS_carDensity ) then {
+		private _car = [getPos (selectRandom _buildings), true] call INS_fnc_spawnEmptyCar;
+		_car setVariable ["ai_city", _zoneName];
+		_car setVariable ["spawned_vehicle", true];
+		diag_log format ["Spawned a car at %1 (%2)",_pos,_zoneName];
+	};
 	
 	[_leader,_pos]
 };
@@ -380,7 +413,7 @@ INS_spawnUnits = {
 	
 	if ( count _spawnlocs == 0) exitWith { };
 	
-	private _spawnpos = getPos (selectRandom _spawnlocs);
+	private _spawnpos = (selectRandom _spawnlocs) buildingPos 1;
 	
 	private _leader = [_spawnpos,_side,true] call _spawnfunc;
 	if ( side _leader == west ) then {
@@ -400,6 +433,8 @@ INS_spawnUnits = {
 	if ( vehicle _leader != _leader ) then {
 		(vehicle _leader) setVariable ["spawned_vehicle", true, true];
 	};
+	
+	(group _leader) deleteGroupWhenEmpty true;
 	
 	diag_log format ["Spawned %1 units of side %2 at %3 (%4)",count (units (group _leader)),_side,_spawnpos,_zoneName];
 	
@@ -442,18 +477,24 @@ INS_spawnPatrol = {
 	private _zoneMark = _zone select 1;
 	private _zonePos = getMarkerPos _zoneMark;
 	(getMarkerSize _zoneMark) params ["_mx","_my"];
-	private _zoneSize = (_mx max _my)*2.4;
+	private _zoneSize = (_mx max _my)*2.7;
 	
+	private _zoneSide = [[_zone] call INS_zoneDisposition] call INS_greenforDisposition;
 	private _sides = [east,west,resistance];
 	private _sideList = [];
 	{
 		private _side = _x;
 		if ( _side == west ) then {
 			_sideList pushback _side;
-			_sideList pushback 0.3;
+			_sideList pushback 0.2;
 		} else {
-			_sideList pushback _side;
-			_sideList pushback 1;
+			if ( _side == _zoneSide ) then {
+				_sideList pushback _side;
+				_sideList pushback 2;
+			} else {
+				_sideList pushback _side;
+				_sideList pushback 0.6;
+			};
 		};
 	} forEach _sides;
 	private _side = selectRandomWeighted _sideList;
@@ -473,7 +514,7 @@ INS_spawnPatrol = {
 	private _friendlySoldiers = allUnits select { side (group _x) == _side && side (group _x) != civilian };
 	private _players = (call INS_allPlayers) select { side (group _x) != _side };
 		
-	private _targets = ( _players select { side (group _x) != _side && ([getPos _x] call getNearestControlZone) == _zoneName }) + ( [_zoneName] call getZoneSoldiers );
+	private _targets = ( _players select { side (group _x) != _side && ([getPos _x] call getNearestControlZone) == _zoneName }) + ( ([_zoneName] call getZoneSoldiers) select { side (group _x) != _side } );
 	if ( count _targets == 0 ) exitWith {};	
 	
 	private _didspawn = false;
@@ -481,11 +522,11 @@ INS_spawnPatrol = {
 	private _roads = (_zonePos nearRoads _zoneSize);
 	for "_i" from 1 to _sqdCt do {
 		private _tries = 0;
-		private _sqdRoads =  _roads select { !(_x inArea "opfor_restriction")
-								&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, _players,1300] call CBA_fnc_getNearest) > 0
+		private _sqdRoads = _roads select { !(_x inArea "opfor_restriction")
+								&& count ([position _x, _players,700] call CBA_fnc_getNearest) == 0
+								&& count ([position _x, _players,1600] call CBA_fnc_getNearest) > 0
 								&& count ([position _x, _friendlySoldiers,400] call CBA_fnc_getNearest) == 0
-								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 } do {
+								&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
 		
 		if ( count _sqdRoads > 0 ) then {
 			private _pos = getPos (selectRandom _sqdRoads);
@@ -521,7 +562,7 @@ INS_spawnPatrol = {
 			params ["_city"];
 			if (!hasInterface) exitWith {};
 			if ( side (group player) != west ) exitWith {};
-			systemChat (format ["SIGINT: Friendly milita operating in the vicinity of %1", _city]);
+			systemChat (format ["HUMINT: Friendly milita operating in the vicinity of %1", _city]);
 		},[_zoneName]] call CBA_fnc_globalExecute;
 	};
 	
@@ -531,8 +572,8 @@ INS_spawnPatrol = {
 		for "_i" from 1 to _carCt do {
 			private _sqdRoads =  _roads select 
 								{  !((position _x) inArea "opfor_restriction")
-									&& count ([position _x, _players,500] call CBA_fnc_getNearest) == 0
-									&& count ([position _x, _players,1300] call CBA_fnc_getNearest) > 0
+									&& count ([position _x, _players,700] call CBA_fnc_getNearest) == 0
+									&& count ([position _x, _players,1600] call CBA_fnc_getNearest) > 0
 									&& count ([position _x, _friendlySoldiers,400] call CBA_fnc_getNearest) == 0
 									&& count ([position _x, _enemySoldiers,800] call CBA_fnc_getNearest) == 0 };
 			if ( count _sqdRoads > 0 ) then {
@@ -570,7 +611,7 @@ INS_spawnPatrol = {
 			params ["_city"];
 			if (!hasInterface) exitWith {};
 			if ( side (group player) != west ) exitWith {};
-			systemChat (format ["SIGINT: Friendly milita operating in the vicinity of %1", _city]);
+			systemChat (format ["HUMINT: Friendly milita operating in the vicinity of %1", _city]);
 		},[_zoneName]] call CBA_fnc_globalExecute;
 	};
 	

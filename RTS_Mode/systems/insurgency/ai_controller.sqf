@@ -220,7 +220,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 							if ( _time != -1 && time < (_time + _pulse) + 120 ) then {
 								if ( time > (_time + _pulse) ) then {
 									
-									if ( _pulse > 16000 ) then {
+									if ( _pulse > 9000 ) then {
 										_pulse = 0;
 									};
 									
@@ -237,7 +237,7 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 									};
 								};
 							} else {
-								_patrols set [1, 800 + (floor (random 240))];
+								_patrols set [1, 650 + (floor (random 180))];
 								_patrols set [2, time];
 							};
 							
