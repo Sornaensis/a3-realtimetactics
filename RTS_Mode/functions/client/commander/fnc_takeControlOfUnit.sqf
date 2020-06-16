@@ -6,7 +6,6 @@ if ( RTS_paused ) exitWith {};
 while { count (_group getVariable ["commands",[]]) > 0 } do {
 	[_group,true] call RTS_fnc_removeCommand;
 };
-terminate RTS_ui;
 [false] call ace_spectator_fnc_cam;
 [false] call RTS_fnc_ui;
 
@@ -53,7 +52,8 @@ RTS_killedEH = player addEventHandler ["killed", {
 		} forEach (units (group _leader));
 	};
 	
-	RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
+
+	[] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
 	
 	_unit removeAction RTS_commandAction;
 	_unit removeEventHandler ["killed", RTS_killedEH];

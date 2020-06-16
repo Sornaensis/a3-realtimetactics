@@ -479,34 +479,16 @@ INS_spawnPatrol = {
 	(getMarkerSize _zoneMark) params ["_mx","_my"];
 	private _zoneSize = (_mx max _my)*2.7;
 	
-	private _zoneSide = [[_zone] call INS_zoneDisposition] call INS_greenforDisposition;
-	private _sides = [east,west,resistance];
-	private _sideList = [];
-	{
-		private _side = _x;
-		if ( _side == west ) then {
-			_sideList pushback _side;
-			_sideList pushback 0.2;
-		} else {
-			if ( _side == _zoneSide ) then {
-				_sideList pushback _side;
-				_sideList pushback 2;
-			} else {
-				_sideList pushback _side;
-				_sideList pushback 0.6;
-			};
-		};
-	} forEach _sides;
-	private _side = selectRandomWeighted _sideList;
+	private _side = [[_zone] call INS_zoneDisposition] call INS_greenforDisposition;
+	
+	if ( _side == west ) then {
+		_side = selectRandom [east,resistance];
+	};
+	
 	diag_log (format ["Attempting to spawn patrol of side %1 at %2", _side, _zoneName]);
 	
 	private _sqdCt = selectRandomWeighted [1,0.1,2,0.7,3,0.5,4,0.1];
 	private _carCt = selectRandomWeighted [0,0.1,1,0.7,2,0.6,3,0.2];
-	
-	if ( _side == west ) then {
-		_sqdCt = 1;
-		_carCt = 1;
-	};
 	
 	private _carFunc = selectRandomWeighted [INS_fnc_spawnAPC,1,INS_fnc_spawnTank,0.1];
 	
@@ -626,7 +608,6 @@ waitUntil { INS_setupFinished };
 INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 	params ["_unit", "_killer", "_instigator", "_useEffects"];
 	
-	// casualities persist for ~20 minutes
 	if ( !(((group _unit) getVariable ["ai_city", objnull]) isEqualTo objnull) && (_unit getVariable ["ins_side", east]) != civilian ) then {
 		private _city = (group _unit) getVariable "ai_city";
 		private _index = INS_cityCasualtyTracker findIf { (_x # 0) == _city };
@@ -660,7 +641,7 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 				publicVariable "INS_controlAreas";
 			};
 		};
-		if ( _unit in INS_spies || (_unit getVariable ["ins_side", east]) == west || (_unit getVariable ["ins_side", east]) == civilian ) then {
+		if ( _unit in INS_spies || (_unit getVariable ["ins_side", east]) == west || (_unit getVariable ["ins_side", east]) == civilian || ( _unit getVariable [ "ai_surrendered", false ] ) ) then {
 			private _city = (group _unit) getVariable ["ai_city",""];
 			
 			if ( _unit in INS_spies ) then {

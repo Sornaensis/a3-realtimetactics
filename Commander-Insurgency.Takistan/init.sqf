@@ -13,6 +13,8 @@ if ( side player == east || isServer ) then {
 // base protection
 
 INS_baseMarker = "opfor_restriction";
+INS_detentionArea = "detention_area";
+INS_detentionArea setMarkerAlpha 0;
 (getMarkerSize INS_baseMarker) params ["_mx","_my"];
 private _baseSize = (_mx max _my);
 
@@ -99,7 +101,7 @@ if ( isServer || !hasInterface ) then {
 		params ["_group", "_pos", "_radius","_city"];
 		[_group] call CBA_fnc_clearWaypoints;
 		
-		_group getVariable ["ai_tough", true]; // fleeing requires lots of casualties
+		_group setVariable ["ai_tough", selectRandomWeighted [true,0.4,false,0.6] ]; // fleeing requires lots of casualties
 		_group setVariable ["ai_status", "COUNTER-ATTACK"];
 		_group setVariable ["ai_city", _city, true];
 		if ( vehicle (leader _group) != leader _group ) then {
@@ -111,7 +113,7 @@ if ( isServer || !hasInterface ) then {
 };
 
 // Headless client strategic AI and spawning
-if ( !hasInterface && !isServer ) then {
+if ( !hasInterface ) then {
 	[] call (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
 	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\insurgency.sqf");
 	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\hc_ai.sqf");

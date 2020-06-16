@@ -2,13 +2,20 @@
 
 waitUntil { RTS_phase == "MAIN" };
 
+RTS_cmdr = objnull;
+if ( !isNil "RTS_commanderUnit" ) then {
+	RTS_cmdr = RTS_commanderUnit;
+};
+
+RTS_opfor_units = allUnits select { _x != RTS_cmdr && side _x != civilian && !( (group _x) in RTS_commandingGroups ) };
+
 RTS_revealSpotted = {
-	private _cmdr = objnull;
+	RTS_cmdr = objnull;
 	if ( !isNil "RTS_commanderUnit" ) then {
-		_cmdr = RTS_commanderUnit;
+		RTS_cmdr = RTS_commanderUnit;
 	};
 	if ( RTS_commanding ) then {
-		private _opfor = allUnits select { _x != _cmdr && side _x != civilian && !( (group _x) in RTS_commandingGroups ) };
+		private _opfor = RTS_opfor_units;
 		{
 			private _spots = _x;
 			{
@@ -25,7 +32,7 @@ RTS_revealSpotted = {
 		
 		_opfor_vehicles = [];
 		{
-			if ( count ((crew _x) select { alive _x } ) == 0 ) then {
+			if ( simulationEnabled _x && count ((crew _x) select { alive _x } ) == 0 ) then {
 				_x hideObject false;
 			} else {
 				_opfor_vehicles pushback _x;
@@ -34,7 +41,7 @@ RTS_revealSpotted = {
 		RTS_opfor_vehicles = _opfor_vehicles;
 		_greenfor_vehicles = [];
 		{
-			if ( count ((crew _x) select { alive _x } ) == 0 ) then {
+			if ( simulationEnabled _x && count ((crew _x) select { alive _x } ) == 0 ) then {
 				_x hideObject false;
 			} else {
 				_greenfor_vehicles pushback _x;
@@ -47,12 +54,8 @@ RTS_revealSpotted = {
 // OPFOR check if they are spotted
 RTS_spottingLoop = [] spawn { 
 	while {true} do {
-		private _cmdr = objnull;
-		if ( !isNil "RTS_commanderUnit" ) then {
-			_cmdr = RTS_commanderUnit;
-		};
 		if ( RTS_commanding && !RTS_godseye ) then {
-			private _enemies = allUnits select { _x != _cmdr && side _x != civilian && !( (group _x) in RTS_commandingGroups ) };
+			private _enemies = RTS_opfor_units;
 			{
 				private _group = _x;
 				private _units = units _group;
@@ -97,6 +100,8 @@ RTS_reveal_deadMen = [] spawn {
 			(vehicle _x) hideObject false;
 		} forEach allDeadMen;
 		
+		RTS_opfor_units = allUnits select { _x != RTS_cmdr && side _x != civilian && !( (group _x) in RTS_commandingGroups ) };
+		
 		sleep 5;
 	};
 };
@@ -114,13 +119,13 @@ RTS_fnc_spotting = {
 		private _terrainBlocked = terrainIntersect [_xPos, _enemyPos];
 		private _spotDistMax = ( if ( (vehicle _x) isKindOf "TANK" ) then { 2000 } else { 1000 } );
 		private _distance = [vehicle _x, vehicle _enemy] call CBA_fnc_getDistance;
+		private _knowsAbout = (_x knowsAbout (vehicle _enemy)) max (_x knowsAbout _enemy);
 		
-		if ( !_terrainBlocked && _distance < _spotDistMax ) then {
+		if ( !_terrainBlocked && _distance < _spotDistMax && _knowsAbout > 0.5 ) then {
 		
 			private _visibility = [vehicle _x, "VIEW", vehicle _enemy] checkVisibility [_xPos, _enemyPos];
 			private _dirTo = _x getRelDir _enemy;
 			private _infrontOf = [vehicle _x, vehicle _enemy] call BIS_fnc_isInFrontOf; 
-			private _knowsAbout = (_x knowsAbout (vehicle _enemy)) max (_x knowsAbout _enemy);
 			
 			// So, at 150 meters or less, any unit can be spotted even if they are just 10% visible
 			// At 150-300 0.5
@@ -135,7 +140,7 @@ RTS_fnc_spotting = {
 						if ( _distance < 500 ) then {
 							0.8
 						} else {
-							1
+							0.95
 						}
 					}
 				} ); 
@@ -143,18 +148,14 @@ RTS_fnc_spotting = {
 			private _weSpotted = false;
 			
 			// True to hide False to show
-			if (_knowsAbout > 0.7 && _visibility > _spottingThreshold*0.9 && !_terrainBlocked ) then { 
+			if (_knowsAbout > 1.2 && _visibility > _spottingThreshold*0.9 ) then { 
 				_groups pushbackunique (group _x);
 			} else {
-				if ( _knowsAbout > 0.5 && _visibility > _spottingThreshold && !_terrainBlocked ) then { 
+				if ( _knowsAbout > 0.7 && _visibility > _spottingThreshold ) then { 
 					_groups pushbackunique (group _x);
 				} else { 
-					if ( _knowsAbout > 0.2 && _visibility > _spottingThreshold*1.2 && !_terrainBlocked ) then { 
+					if ( _knowsAbout > 0.5 && _visibility > _spottingThreshold*1.2 ) then { 
 						_groups pushbackunique (group _x);
-					} else {
-						if ( _visibility > _spottingThreshold  && !_terrainBlocked && _infrontOf && _knowsAbout < 0.6 ) then {
-							(group _x) reveal [_enemy, _knowsAbout + ([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.09,0.1,0.1,0.1,0.1,0.09,0.3,0.09,0.1,0.2] call BIS_fnc_selectRandom)];
-						}; 
 					};
 				};
 			};

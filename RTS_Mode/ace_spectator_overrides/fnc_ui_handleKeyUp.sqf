@@ -43,12 +43,6 @@ if ( _key == DIK_H ) exitWith {
 	true
 };
 
-if ( _key == DIK_E || _key == DIK_R 
-	|| _key == DIK_T || _key == DIK_SPACE ) exitWith {
-	RTS_command = nil;
-	true
-};
-
 if ( _key == DIK_BACKSPACE ) exitWith {
 	RTS_backspace = false;
 	true
@@ -56,24 +50,6 @@ if ( _key == DIK_BACKSPACE ) exitWith {
 
 if ( _key == DIK_DELETE ) exitWith {
 	RTS_delete = false;
-	true
-};
-
-if ( _key == DIK_F ) exitWith {
-	RTS_formationChoose = false;
-	RTS_command = nil;
-	true
-};
-
-if ( _key == DIK_C ) exitWith {
-	RTS_combatChoose = false;
-	RTS_command = nil;
-	true
-};
-
-if ( _key == DIK_V ) exitWith {
-	RTS_stanceChoose = false;
-	RTS_command = nil;
 	true
 };
 

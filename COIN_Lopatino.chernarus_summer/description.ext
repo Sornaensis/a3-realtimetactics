@@ -1,0 +1,5 @@
+#include "rts\ui\Defines.hpp"
+#include "rts\ui\Dialogs.hpp"
+
+respawn_delay = 0;
+respawn = "BASE";

@@ -27,6 +27,11 @@ params ["", "_button"];
 
 // Left click
 if (_button == 0) exitWith {
+	
+	if ( ! (isNull RTS_mouseHoverGrp) ) then {
+		RTS_selectedGroup = RTS_mouseHoverGrp;
+	};
+
 	if !RTS_selecting then {
 		RTS_selecting = true;
 		RTS_selectStart = getMousePosition;

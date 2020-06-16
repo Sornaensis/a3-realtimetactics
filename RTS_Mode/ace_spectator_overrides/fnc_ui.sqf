@@ -21,6 +21,11 @@ TRACE_1("ui",_init);
 
 RTS_commanding = _init;
 
+if ( !RTS_commanding ) then {
+	terminate RTS_ui_loop;
+	call RTS_ui_cleanup;
+};
+
 // No change
 if (_init isEqualTo !isNull SPEC_DISPLAY) exitWith {};
 

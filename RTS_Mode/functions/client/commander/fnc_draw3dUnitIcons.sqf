@@ -37,6 +37,43 @@ if ( RTS_commanding ) then {
 	};
 };		
 
+private _nearestGrp = [];
+private _campos = (if (RTS_commanding) then { (getPos GVAR(camera)) } else { getPos player } );
+
+if ( RTS_commanding ) then {
+	// Get nearest group icon to cursor
+	{
+		private ["_group","_pos","_drawpos"];
+		_group = _x;
+		if ( count ( (units _x) select { alive _x } ) > 0 ) then {
+			_pos = getPosATLVisual (leader _group);
+			_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 3];
+			private _iconpos = worldToScreen _drawpos;
+			
+			// if onscreen
+			if ( count _iconpos > 0 ) then {
+				if ( (_iconpos distance2d getMousePosition) < 0.05 ) then {
+					if ( count _nearestGrp == 0 ) then {
+						_nearestGrp = [ _group, _drawpos ];
+					} else {
+						private _otherPos = _nearestGrp select 1;
+						
+						if ( (_otherPos distance _campos) > (_drawpos distance _campos) ) then {
+							_nearestGrp = [ _group, _drawpos ];
+						};
+					};
+				};
+			};
+		};
+	} forEach RTS_commandingGroups;
+};
+
+if ( count _nearestGrp > 0 ) then {
+	RTS_mouseHoverGrp = _nearestGrp select 0;
+} else {
+	RTS_mouseHoverGrp = grpnull;
+};
+
 // Draw Unit Icons all the time
 {
 	private ["_group","_pos","_drawpos", "_distScale", "_scale"];
@@ -44,7 +81,6 @@ if ( RTS_commanding ) then {
 	if ( count ( (units _x) select { alive _x } ) > 0 ) then {
 		_pos = getPosATLVisual (leader _group);
 		_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 3];
-		private _campos = (if (RTS_commanding) then { (getPos GVAR(camera)) } else { getPos player } );
 		_distance =  _campos distance2D (getPos (leader _group));
 		_distScale = RTS_groupIconMaxDistance - _distance;
 		_scale = 0.3 + (if ( _distScale > 0 ) then { (_distScale/RTS_groupIconMaxDistance) * 0.7 } else { 0 });
@@ -101,6 +137,10 @@ if ( RTS_commanding ) then {
 			};
 		} else {
 			if ( (group (driver (vehicle (leader _group)))) == _group || isNull (driver (vehicle (leader _group))) ) then {
+				if ( _group == RTS_mouseHoverGrp ) then {
+					_unitcolor = +_unitcolor;
+					_unitcolor set [3,0.65];
+				};
 				drawIcon3D [ _group getVariable ["texture", ""], _unitcolor, _drawpos, _scale, _scale, 0];
 				if ( _distance < 500 ) then {
 					drawIcon3D ["", [1,1,1,1], _drawpos, _scale, _scale, 0, _desc,2,0.04];

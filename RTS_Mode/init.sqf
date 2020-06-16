@@ -43,7 +43,6 @@ if ( hasInterface ) then {
 	VCM_AISUPPRESS = true; 
 	Vcm_DrivingActivated = true;
 	Vcm_PlayerAISkills = false; 
-	vcm_fnc_sniperengage = { true };
 } else { 
 	VCM_ACTIVATEAI = true;
 	VCM_SIDESPECIFICSKILL = true;
@@ -68,11 +67,10 @@ if ( hasInterface ) then {
 	VCM_CARGOCHNG = true; 
 	VCM_TURRETUNLOAD = true;
 	VCM_DISEMBARKRANGE = 200;
-	VCM_AISNIPERS = false; 
+	VCM_AISNIPERS = true; 
 	VCM_AISUPPRESS = true; 
 	Vcm_DrivingActivated = true;
 	Vcm_PlayerAISkills = false;
-	vcm_fnc_sniperengage = { true };	
 };
 
 // Skill increase or decrease as a percentage
@@ -188,6 +186,7 @@ RTS_casualties = 0;
 if ( isNil "RTS_restrictionZone" ) then {
 	RTS_restrictionZone = [];
 };
+RTS_mouseHoverGrp = grpnull;
 RTS_phase = "DEPLOY";
 RTS_selecting = false;
 RTS_selectStart = [];
@@ -246,7 +245,6 @@ switch ( RTS_sideEnemy ) do {
 [] call (compile preprocessFileLineNumbers "rts\commands\setup.sqf");
 [] spawn (compile preprocessFileLineNumbers "rts\systems\commander_sys.sqf");
 [] spawn (compile preprocessFileLineNumbers "rts\systems\spotting_system.sqf");
-RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
 RTS_reinforce = [] spawn (compile preprocessFileLineNumbers "rts\systems\reinforcements.sqf");
 [] spawn (compile preprocessFileLineNumbers "rts\systems\objectives_sys.sqf");
 if ( RTS_SingleCommander ) then {
@@ -318,9 +316,7 @@ if ( isNil "RTS_commandObject" ) then {
 
 RTS_commandObject addAction ["Begin Commanding", 
 	{
-		if ( scriptDone RTS_ui ) then {
-			RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
-		};
+		[] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
 		
 		if ( RTS_skipDeployment ) then {
 			RTS_phase = "MAIN";
@@ -343,9 +339,9 @@ RTS_commandObject addAction ["Begin Commanding",
 		},[player]] call CBA_fnc_globalExecute;
 	}];
 
-waitUntil { RTS_setupComplete };
-
 [] call RTS_fnc_setupAllGroups;
+
+waitUntil { RTS_setupComplete };
 
 RTS_mapHandling = [] spawn (compile preprocessFileLineNumbers "rts\systems\map_handling.sqf");
 
@@ -356,10 +352,10 @@ RTS_killedEH = player addEventHandler ["killed", {
 	private _leader = ((units (group player)) select { alive _x }) select 0;
 	(group player) selectLeader _leader;
 	(units (group player)) doFollow _leader;
-	RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
 	player removeAction RTS_commandAction;
 	player removeEventHandler ["killed", RTS_killedEH];
 	selectPlayer RTS_commanderUnit;
+	[] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
 	[true] call ace_spectator_fnc_cam;
 	[true] call RTS_fnc_ui;
 	ace_spectator_camera setPosATL _pos;

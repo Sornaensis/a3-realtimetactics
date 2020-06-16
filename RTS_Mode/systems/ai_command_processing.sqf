@@ -502,7 +502,27 @@
 					_unit doMove ( (getPos (leader _group)) findEmptyPosition [5,30,"MAN"] );
 					_unit setVariable ["returning", true];
 				} else {
-					if ( !_toofar ) then {
+					if ( _toofar && _returning && !(_unit getVariable ["subtasking", false]) ) then {
+						private _speed = speed _unit;
+						
+						if ( _speed == 0 ) then {
+							if ( (_unit getVariable [ "noMoveTime", objnull ]) isEqualTo objnull ) then {
+								_unit setVariable [ "noMoveTime", time ];
+							} else {
+								if ( time - (_unit getVariable "noMoveTime") > 30 ) then {
+									if ( count ( allUnits select { side _x == RTS_sideEnemy && (getPos _x) distance2d (getPos _unit) < 100 } ) == 0 ) then {
+										_unit setPosATL ( (getPosATL (leader _group)) findEmptyPosition [0,25,"Man"]);
+										_unit doFollow (leader _group);
+										_unit setVariable ["returning", false];
+									};
+								};
+							};
+						} else {
+							_unit setVariable [ "noMoveTime", nil];
+						};
+					};
+					if ( !_toofar && _returning ) then {
+						_unit doFollow (leader _group);
 						_unit setVariable ["returning", false];
 					};
 				};

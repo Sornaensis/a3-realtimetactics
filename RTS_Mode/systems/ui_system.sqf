@@ -82,8 +82,10 @@ RTS_targetPhase = RTS_phase;
 		RTS_phaseBox ctrlCommit 0;
 		sleep 0.5;
 	};
+	
 	ctrlDelete RTS_phaseButton;
 	ctrlDelete RTS_phaseBox;
+
 };
 
 waitUntil { RTS_groupSetupComplete };
@@ -128,6 +130,9 @@ RTS_hasRadioText = SPEC_DISPLAY ctrlCreate ["HasRadioText", -1];
 RTS_ammoLevelText = SPEC_DISPLAY ctrlCreate ["AmmoLevelText", -1];
 RTS_passengerInfoText = SPEC_DISPLAY ctrlCreate ["PassengerInfoText", -1];
 
+RTS_deployUndeployBtn = SPEC_DISPLAY ctrlCreate ["DeployUndeployBtn", -1];
+RTS_deployUndeployBtn buttonSetAction "[RTS_selectedGroup] call RTS_fnc_deployUndeploy;";
+
 RTS_selectCommanderBtn = SPEC_DISPLAY ctrlCreate ["SelectCommanderBtn", -1];
 RTS_selectCommanderBtn buttonSetAction "RTS_selectedGroup = RTS_selectedGroup getVariable [""command_element"", grpnull];";
 
@@ -144,7 +149,7 @@ RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 
 {
 	RTS_unitInfoControls pushback _x;
-} forEach [ RTS_unitCallsignText, RTS_controlUnitBtn, RTS_selectCommanderBtn ];
+} forEach [ RTS_unitCallsignText, RTS_controlUnitBtn, RTS_selectCommanderBtn, RTS_deployUndeployBtn ];
 
 
 // General ui controls
@@ -325,8 +330,35 @@ RTS_OOBSelector = {
 	};
 };
 
-[] spawn {
-	while { RTS_commanding } do {
+RTS_ui_cleanup = {
+	ctrlDelete RTS_deployUndeployBtn;
+	ctrlDelete RTS_showOOBBtn;
+	ctrlDelete RTS_OOBTree;
+
+	ctrlDelete RTS_phaseBox;
+	ctrlDelete RTS_phaseButton;
+	ctrlDelete RTS_statusText;
+	ctrlDelete RTS_moraleText;
+	ctrlDelete RTS_commandEffectText;
+	ctrlDelete RTS_combatVictoryText;
+	ctrlDelete RTS_combatModeText;
+	ctrlDelete RTS_casualtyText;
+	ctrlDelete RTS_formationText;
+	ctrlDelete RTS_stanceText;
+	ctrlDelete RTS_hasRadioText;
+	ctrlDelete RTS_ammoLevelText;
+	ctrlDelete RTS_passengerInfoText;
+	
+	ctrlDelete RTS_selectCommanderBtn;
+	
+	ctrlDelete RTS_controlUnitBtn;
+	
+	ctrlDelete RTS_unitNameText;
+	ctrlDelete RTS_unitCallsignText;
+};
+
+RTS_ui_loop = [] spawn {
+	while { true } do {
 		
 		if ( RTS_groupsSize != (count (RTS_commandingGroups select { count (units _x) > 0 })) ) then {
 			RTS_groupsSize = count (RTS_commandingGroups select { count (units _x) > 0 });
@@ -355,6 +387,24 @@ RTS_OOBSelector = {
 				RTS_selectCommanderBtn ctrlEnable true;
 			} else {
 				RTS_selectCommanderBtn ctrlEnable false;
+			};
+			
+			private _veh = RTS_selectedGroup getVariable ["owned_vehicle", grpnull];
+			if ( !(isNull _veh) ) then {
+				if ( _veh isKindOf "StaticWeapon" ) then {
+					RTS_deployUndeployBtn ctrlEnable true;
+					if ( simulationEnabled _veh ) then {
+						RTS_deployUndeployBtn ctrlSetText "Undeploy";
+					} else {
+						RTS_deployUndeployBtn ctrlSetText "Deploy";
+					};
+				} else {
+					RTS_deployUndeployBtn ctrlSetText "Undeploy";
+					RTS_deployUndeployBtn ctrlEnable false;
+				};				
+			} else {
+				RTS_deployUndeployBtn ctrlSetText "Undeploy";
+				RTS_deployUndeployBtn ctrlEnable false;
 			};
 			
 			if ( RTS_phase == "MAIN" || (RTS_selectedGroup getVariable ["morale", 0]) > 1 ) then {
@@ -430,6 +480,8 @@ RTS_OOBSelector = {
 			
 		} else {
 			if ( RTS_showingUnitData ) then {
+				RTS_deployUndeployBtn ctrlSetText "Undeploy";
+				RTS_deployUndeployBtn ctrlEnable false;
 				RTS_selectCommanderBtn ctrlEnable false;
 				RTS_controlUnitBtn ctrlEnable false;
 				RTS_unitNameText ctrlSetText "Select Unit";

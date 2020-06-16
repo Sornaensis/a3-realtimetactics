@@ -1,0 +1,17 @@
+// Mission Header
+class Header
+{
+	gameType = Coop;
+	minPlayers = 1;
+	maxPlayers = 10;
+};
+
+
+author = "Dr Steel (Sornaensis)";
+
+disabledAI = 1;
+
+forceadvancedrotorlib = 1;
+enableDebugConsole = 1;
+respawn_delay = 15;
+respawn = "BASE";

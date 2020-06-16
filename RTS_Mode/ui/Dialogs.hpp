@@ -18,7 +18,7 @@ class UnitNameText: RscText
 	text = "Unit Name"; //--- ToDo: Localize;
 	x = 0.0504765 * safezoneW + safezoneX;
 	y = 0.114439 * safezoneH + safezoneY;
-	w = 0.0661064 * safezoneW;
+	w = 0.0671064 * safezoneW;
 	h = 0.0282118 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 1.35)";
 };
@@ -140,6 +140,16 @@ class PassengerInfoLabel: RscText
 	y = (0.443576 + 0.443576 - 0.415365) * safezoneH + safezoneY;
 	w = 0.0616993 * safezoneW;
 	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class DeployUndeployBtn: RscButton
+{
+	idc = 1601;
+	text = "Deploy"; //--- ToDo: Localize;
+	x = 0.0152198 * safezoneW + safezoneX;
+	y = 0.54 * safezoneH + safezoneY;
+	w = 0.0705135 * safezoneW;
+	h = 0.0282118 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
 class SelectCommanderBtn: RscButton

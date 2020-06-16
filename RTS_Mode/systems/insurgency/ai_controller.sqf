@@ -1,3 +1,37 @@
+// Detention area
+INS_detentionArea = [] spawn {
+	while { true } do {
+		private _detended = allUnits select { _x inArea INS_detentionArea && !(_x getVariable ["detended",false]) && (_x getVariable ["ai_surrendered",false]) };
+		{
+			private _unit = _x;
+			_unit setVariable ["detended", true];
+			_unit setVariable ["despawn_clock", time + 30];
+			private _zone = _unit getVariable ["ai_city",""];
+			diag_log "A unit has been sent to the detention area";
+			if ( _zone != "" ) then {
+				private _insArea = [_zone] call INS_getZone;
+				private _params = _insArea select 2;
+				private _disp = _params select 0;
+				_params set [0,_disp + 5 + (random 15)];
+				diag_log (format ["Changing disposition of %1 due to captive",_zone]);
+			};
+		} forEach _detended;
+		
+		if ( count _detended > 0 ) then {
+			publicVariable "INS_controlAreas";
+		};
+		
+		private _toDespawn = allUnits select { _x getVariable ["detended", false] };
+		
+		{
+			if ( time > (_x getVariable ["despawn_clock",0]) ) then {
+				deleteVehicle _x;
+			};
+		} forEach _toDespawn;
+	};
+};
+
+
 // Despawn
 INS_unitDespawner = [] spawn {
 	while { true } do {
@@ -14,10 +48,11 @@ INS_unitDespawner = [] spawn {
 				{
 					private _playerPos = getPos _x;
 					private _zone = "AI";
+					private _udist = (_unitPos distance2d _playerPos);
 					if ( isPlayer _x ) then {
 						_zone = [_playerPos] call getNearestControlZone;
 					};
-					if ( (_unitPos distance2d _playerPos) > 1800 || ( isNil "_zone" && !(_unit getVariable ["cqb_soldier", false]) ) ) then {
+					if ( _udist > 1800 || ( isNil "_zone" && !(_unit getVariable ["cqb_soldier", false]) && _udist > 250 ) ) then {
 						if ( ([vehicle _x, vehicle _unit] call BIS_fnc_isInFrontOf) && !(terrainIntersect [eyePos _x,eyePos _unit]) ) then {
 							_canBeSeen = true;		
 						};
@@ -59,7 +94,8 @@ INS_vehicleDespawner = [] spawn {
 				{
 					private _playerPos = getPos _x;
 					private _zone = [_playerPos] call getNearestControlZone;
-					if ( (_vehpos distance2d _playerPos) > _distance || ( isNil "_zone" && !_baseVeh && !(_veh getVariable ["cqb_soldier", false]) ) ) then {
+					private _pdist = (_vehpos distance2d _playerPos);
+					if (  _pdist > _distance || ( isNil "_zone" && !_baseVeh && !(_veh getVariable ["cqb_soldier", false]) && _pdist > 350 ) ) then {
 						if ( ([_veh, vehicle _x] call BIS_fnc_isInFrontOf) && !(terrainIntersect [eyePos _x,_vehpos]) ) then {
 							_canBeSeen = true;		
 						};

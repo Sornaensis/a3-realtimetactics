@@ -114,7 +114,13 @@ if ( _key == DIK_T && _shift ) exitWith {
 
 if ( _key == DIK_E || _key == DIK_R 
 	|| _key == DIK_T || _key == DIK_SPACE ) exitWith {
-	if ( isNil "RTS_command" ) then {
+	if ( !isNil "RTS_command" ) then {
+		private _current = +RTS_command;
+		[_key, _alt, _shift, _ctrl] call RTS_fnc_setCommand;
+		if ( (_current select 0) == (RTS_command select 0) ) then {
+			RTS_command = nil;
+		};
+	} else {
 		[_key, _alt, _shift, _ctrl] call RTS_fnc_setCommand;
 	};
 	true
@@ -165,25 +171,46 @@ if ( _key == DIK_H ) exitWith {
 
 // Formation Selection
 
-if ( _key == DIK_F && !RTS_formationChoose && (isNil "RTS_command") ) exitWith {
-	RTS_formationChoose = true;
-	RTS_command = ["Set Formation",{},nil,"<t align='left'>1 - Staggered Column</t><br/><t align='left'>2 - Column</t><br/><t align='left'>3 - Wedge</t><br/><t align='left'>4 - Line</t><br/><t align='left'>5 - Echelon R</t><br/><t align='left'>6 - Echelon L</t><br/><t align='left'>7 - Vee</t><br/><t align='left'>8 - File</t><br/><t align='left'>9 - Diamond</t>"];
+if ( _key == DIK_F ) exitWith {
+	if ( RTS_formationChoose ) then {
+		RTS_formationChoose = false;
+		RTS_command = nil;
+	} else {
+		RTS_stanceChoose = false;
+		RTS_combatChoose = false;
+		RTS_formationChoose = true;
+		RTS_command = ["Set Formation",{},nil,"<t align='left'>1 - Staggered Column</t><br/><t align='left'>2 - Column</t><br/><t align='left'>3 - Wedge</t><br/><t align='left'>4 - Line</t><br/><t align='left'>5 - Echelon R</t><br/><t align='left'>6 - Echelon L</t><br/><t align='left'>7 - Vee</t><br/><t align='left'>8 - File</t><br/><t align='left'>9 - Diamond</t>"];
+	};
 	true
 };
 
 // Combat mode selection
 
-if ( _key == DIK_C && !RTS_combatChoose && (isNil "RTS_command") ) exitWith {
-	RTS_combatChoose = true;
-	RTS_command = ["Set Combat Mode",{}, nil, "<t align='left'>1 - Return Fire</t><br/><t align='left'>2 - Fire at Will</t><br/><t align='left'>3 - CQC</t>"];
+if ( _key == DIK_C ) exitWith {
+	if ( RTS_combatChoose ) then {
+		RTS_combatChoose = false;
+		RTS_command = nil;
+	} else {
+		RTS_stanceChoose = false;
+		RTS_formationChoose = false;
+		RTS_combatChoose = true;
+		RTS_command = ["Set Combat Mode",{}, nil, "<t align='left'>1 - Return Fire</t><br/><t align='left'>2 - Fire at Will</t><br/><t align='left'>3 - CQC</t>"];
+	};
 	true
 };
 
 // Stance selection
 
-if ( _key == DIK_V && !RTS_stanceChoose && (isNil "RTS_command") ) exitWith {
-	RTS_stanceChoose = true;
-	RTS_command = ["Set Stance", {}, nil, "<t align='left'>1 - Discretion</t><br/><t align='left'>2 - Up</t><br/><t align='left'>3 - Crouch</t><br/><t align='left'>4 - Prone</t>"];
+if ( _key == DIK_V ) exitWith {
+	if ( RTS_stanceChoose ) then {
+		RTS_stanceChoose = false;
+		RTS_command = nil;
+	} else {
+		RTS_combatChoose = false;
+		RTS_formationChoose = false;
+		RTS_stanceChoose = true;
+		RTS_command = ["Set Stance", {}, nil, "<t align='left'>1 - Discretion</t><br/><t align='left'>2 - Up</t><br/><t align='left'>3 - Crouch</t><br/><t align='left'>4 - Prone</t>"];
+	};
 	true
 };
 
@@ -293,7 +320,7 @@ if ( _key == DIK_GRAVE && RTS_Phase == "MAIN" && !RTS_paused ) exitWith {
 	true
 };
 
-if( RTS_stanceChoose ) exitWith {
+if( RTS_stanceChoose ) then {
 	private _group = RTS_selectedGroup;
 	if !(isNull _group) then {
 		private _mode = "";
@@ -304,16 +331,17 @@ if( RTS_stanceChoose ) exitWith {
 			case DIK_4: { _mode = "DOWN" };
 		};
 		
-		if ( _mode != "" ) then {
+		if ( _mode != "" ) exitWith {
+			RTS_stanceChoose = false;
 			{
 				_x setUnitPos _mode;
 			} forEach (units _group);
+			true
 		};
 	};
-	true
 };
 
-if( RTS_combatChoose ) exitWith {
+if( RTS_combatChoose ) then {
 	private _group = RTS_selectedGroup;
 	if !(isNull _group) then {
 		private _mode = "";
@@ -323,7 +351,8 @@ if( RTS_combatChoose ) exitWith {
 			case DIK_3: { _mode = "RED" };
 		};
 		
-		if ( _mode != "" ) then {
+		if ( _mode != "" ) exitWith {
+			RTS_combatChoose = false;
 			private _commands = _group getVariable ["commands", []];
 			if ( count _commands > 0 ) then {
 				(_commands select ((count _commands) - 1)) set [3, _mode];
@@ -339,13 +368,13 @@ if( RTS_combatChoose ) exitWith {
 					};
 				};	
 			};
+			true
 		};
 	};
-	true
 };
 
 
-if( RTS_formationChoose ) exitWith {
+if( RTS_formationChoose ) then {
 	private _group = RTS_selectedGroup;
 	if !(isNull _group) then {
 		private _form = "";
@@ -361,7 +390,8 @@ if( RTS_formationChoose ) exitWith {
 			case DIK_9: { _form = if ( (count ((units _group) select {alive _x})) == 4 ) then { "DIAMOND" } else { "" } };
 		};
 		
-		if ( _form != "" ) then {
+		if ( _form != "" ) exitWith {
+			RTS_formationChoose = false;
 			private _commands = _group getVariable ["commands", []];
 			if ( count _commands > 0 ) then {
 				(_commands select ((count _commands) - 1)) set [4, _form];
@@ -369,7 +399,7 @@ if( RTS_formationChoose ) exitWith {
 			if ( count _commands < 2 ) then {
 				_group setFormation _form;
 			};
+			true
 		};
 	};
-	true
 };

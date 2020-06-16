@@ -2,7 +2,7 @@ private _pos = getPosATL player;
 private _dir = getDir player;
 _pos set [2, 5];
 private _group = group player;
-RTS_ui = [] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
+[] spawn (compile preprocessFileLineNumbers "rts\systems\ui_system.sqf");
 player removeAction RTS_commandAction;
 player removeEventHandler ["killed", RTS_killedEH];
 selectPlayer RTS_commanderUnit;

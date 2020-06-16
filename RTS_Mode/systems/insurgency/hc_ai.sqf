@@ -53,38 +53,41 @@ INS_insurgentAI = [] spawn {
 					private _zone = [_zoneName] call INS_getZone;
 					private _zoneMarker = _zone select 1;
 					(getMarkerSize _zoneMarker) params ["_mx","_my"];
-					private _zoneSize = (_mx max _my);
+					private _zoneSize = (_mx max _my)*1.5;
 					private _side = side _group;
 					private _players = (call INS_allPlayers) select { side (group _x) != _side };
 					private _buildings = ( (getMarkerPos _zoneMarker) nearObjects ["HOUSE", _zoneSize] ) 
 										select { (count (_x buildingPos -1)) > 2 
 												&& count ([getPos _x, _players,250] call CBA_fnc_getNearest) == 0
-												&& ((getPos _x) distance2d (getPos _leader)) < 600 };
+												&& ((getPos _x) distance2d (getPos _leader)) < 800 };
 					private _building = objnull;
 					if ( _buildings isEqualTo [] ) then {
 						_building = nearestBuilding (getPos _leader);
 					} else {
 						_building = selectRandom _buildings;
 					};
-					[_group, getPos _building, 75 + (random 50), _zoneName] call setupAsHardGarrison;
-					_group setSpeedMode "FULL";
+					[_group] call CBA_fnc_clearWaypoints;
+					[_group, getPos _building, 75 + (random 50), 2, 0, 1 ] call CBA_fnc_taskDefend;
 					diag_log (format ["Casualties causing %1 to start hiding in %2", _group, _zoneName]);
 				};
 			};
 			
 			private _surrenderRoll = _group getVariable "surrender_rolled";
 			
-			if ( !isNil "_initStr" && isNil "surrender_rolled" ) then {
+			if ( !isNil "_initStr" && isNil "_surrenderRoll" ) then {
 				private _alive = (units _group) select { alive _x };
-				private _last = _alive # 0;
-				if ( count _alive == 1 && vehicle _last == _last && count ( [_last,(call INS_allPlayers) select { side (group _x) != side _group }, 75] call CBA_fnc_getNearest) > 0 ) then {
-					private _tough = _group getVariable ["ai_tough", false];
-					private _surrender = selectRandomWeighted [true,( if ( _tough ) then { 0.1 } else { 0.4 } ),false,0.8];
-					if ( _surrender ) then {
-						[_last, true] call ace_captives_setSurrendered;
-						diag_log (format ["%1 surrendering to players.",_last]);
+				if ( count _alive == 1 ) then {
+					private _last = _alive # 0;
+					if ( vehicle _last == _last && count ( [_last,(call INS_allPlayers) select { side (group _x) != side _group }, 75] call CBA_fnc_getNearest) > 0 ) then {
+						private _tough = _group getVariable ["ai_tough", false];
+						private _surrender = selectRandomWeighted [true,( if ( _tough ) then { 0.1 } else { 0.3 } ),false,0.9];
+						if ( _surrender ) then {
+							["ACE_captives_setSurrendered", [_last, true], _last] call CBA_fnc_targetEvent;
+							_last setVariable [ "ai_surrendered", true, true ];
+							diag_log (format ["%1 surrendering to players.",_last]);
+						};
+						_group setVariable ["surrender_rolled",true];
 					};
-					_group setVariable ["surrender_rolled",true];
 				};
 			};
 			
@@ -106,7 +109,7 @@ INS_insurgentAI = [] spawn {
 								diag_log (format ["Tasking %1 from garrison to counter attack against %2", _group, _target]);
 							};
 							
-							_group setVariable ["ai_cooldown", time + 30]; 						
+							_group setVariable ["ai_cooldown", time + 10]; 						
 						};
 					};
 					case "PATROL": {
@@ -123,7 +126,7 @@ INS_insurgentAI = [] spawn {
 								diag_log (format ["Tasking %1 from patrol to counter attack against %2", _group, _target]);
 							};
 							
-							_group setVariable ["ai_cooldown", time + 30]; 						
+							_group setVariable ["ai_cooldown", time + 10]; 						
 						};
 					};
 					case "COUNTER-ATTACK": {
@@ -162,7 +165,7 @@ INS_insurgentAI = [] spawn {
 									diag_log (format ["Retasking %1 as a garrison in %2", _group, _zoneName]);
 								};
 								
-								_group setVariable ["ai_cooldown", time + 30]; 
+								_group setVariable ["ai_cooldown", time + 10]; 
 							} else {
 								_group setVariable ["ai_cooldown", time + 10]; 
 							};
@@ -176,6 +179,6 @@ INS_insurgentAI = [] spawn {
 				_group setVariable ["ai_cooldown", time + 10];
 			};
 					
-		} forEach (allGroups select { local _x && time > (_x getVariable ["ai_cooldown",0]) });
+		} forEach (allGroups select { local _x && time > (_x getVariable ["ai_cooldown",0]) && (_x getVariable ["rts_setup",grpnull]) isEqualTo grpnull });
 	};
 };

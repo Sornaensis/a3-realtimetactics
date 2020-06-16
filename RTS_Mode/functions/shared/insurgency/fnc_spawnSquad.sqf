@@ -21,11 +21,13 @@ private _group = grpnull;
 	_x params ["_type","_loadout"];
 	if ( isNull _group ) then {
 		private _soldier = (createGroup _side) createUnit [_type, _pos, [], 0, "NONE"];
+		_soldier setPosATL _pos;
 		_soldier setUnitLoadout _loadout;
 		_group = group _soldier;
 	} else {
 		private _soldier = _group createUnit [_type, _pos, [], 0, "NONE"];
 		_soldier setUnitLoadout _loadout;
+		_soldier setPosATL _pos;
 	};
 } forEach _setups;
 

@@ -279,11 +279,7 @@ RTS_ai_commander = [] spawn  {
 		private _incompleteObjectives = ( [RTS_enemySideObjectives, { [_x, _x call assessObjective ] }] call CBA_fnc_filter ) 
 										select {
 													private _val = _x select 1;
-													if ( _val == "UNDER ATTACK" || _val == "NOT HELD" || _val == "NOT COMPLETE" ) then {
-														true
-													} else {
-														false
-													};
+													( _val == "UNDER ATTACK" || _val == "NOT HELD" || _val == "NOT COMPLETE" )
 												};
 		
 		// focus on incomplete objectives
