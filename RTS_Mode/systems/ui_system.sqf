@@ -93,12 +93,15 @@ waitUntil { RTS_groupSetupComplete };
 // Setup Unit Info Screen
 
 RTS_showingUnitData = true;
+RTS_showingArtilleryMenu = false;
 RTS_showingEquipment = false;
 RTS_showingOptions = false;
 RTS_showingOOB = false;
 
 RTS_unitDataControls = [];
 RTS_unitInfoControls = [];
+
+RTS_artilleryMenuControls = [];
 
 RTS_overViewPanel = SPEC_DISPLAY ctrlCreate ["UnitOverViewPanel", -1];
 
@@ -142,6 +145,39 @@ RTS_controlUnitBtn buttonSetAction "if ( RTS_phase == ""MAIN"" ) then { call RTS
 RTS_unitNameText = SPEC_DISPLAY ctrlCreate ["UnitNameText", -1];
 RTS_unitCallsignText = SPEC_DISPLAY ctrlCreate ["UnitCallsignText", -1];
 
+
+// Artillery Menu
+RTS_artMagazineLabel = SPEC_DISPLAY ctrlCreate ["ArtMagazineLabel", -1];
+RTS_artMagazineLabel ctrlShow false;
+
+RTS_artGunCountLabel = SPEC_DISPLAY ctrlCreate ["ArtGunCountLabel", -1];
+RTS_artGunCountLabel ctrlShow false;
+
+RTS_artDurationLabel = SPEC_DISPLAY ctrlCreate ["ArtDurationLabel", -1];
+RTS_artDurationLabel ctrlShow false;
+
+RTS_artDelayLabel = SPEC_DISPLAY ctrlCreate ["ArtDelayLabel", -1];
+RTS_artDelayLabel ctrlShow false;
+
+RTS_artMagazineBox = SPEC_DISPLAY ctrlCreate ["ArtMagazineBox", -1];
+RTS_artMagazineBox ctrlShow false;
+
+RTS_artGunCountBox = SPEC_DISPLAY ctrlCreate ["ArtGunCountBox", -1];
+RTS_artGunCountBox ctrlShow false;
+
+RTS_artDurationBox = SPEC_DISPLAY ctrlCreate ["ArtDurationBox", -1];
+RTS_artDurationBox ctrlShow false;
+
+RTS_artDelayBox = SPEC_DISPLAY ctrlCreate ["ArtDelayBox", -1];
+RTS_artDelayBox ctrlShow false;
+
+RTS_artBackBtn = SPEC_DISPLAY ctrlCreate ["ArtBackBtn", -1];
+RTS_artBackBtn buttonSetAction " RTS_showingUnitData = true; RTS_showingArtilleryMenu = false;";
+////////////
+
+{ 
+	RTS_artilleryMenuControls pushback _x;
+} forEach [ RTS_artMagazineLabel, RTS_artGunCountLabel, RTS_artDurationLabel, RTS_artDelayLabel, RTS_artMagazineBox, RTS_artGunCountBox, RTS_artDurationBox, RTS_artDelayBox, RTS_artBackBtn ];
 
 {
 	RTS_unitDataControls pushback _x;
@@ -355,6 +391,10 @@ RTS_ui_cleanup = {
 	
 	ctrlDelete RTS_unitNameText;
 	ctrlDelete RTS_unitCallsignText;
+	
+	{
+		ctrlDelete _x;
+	} foreach RTS_artilleryControls;
 };
 
 RTS_ui_loop = [] spawn {
@@ -368,11 +408,16 @@ RTS_ui_loop = [] spawn {
 	
 		// hide and show stuff
 		{
-			_x ctrlShow (!RTS_showingEquipment && RTS_showingUnitData);
+			_x ctrlShow (!RTS_showingEquipment && RTS_showingUnitData && !RTS_showingArtilleryMenu);
 		} forEach RTS_unitDataControls;
 		{
-			_x ctrlShow RTS_showingUnitData;
+			_x ctrlShow (RTS_showingUnitData || RTS_showingArtilleryMenu);
 		} forEach RTS_unitInfoControls;
+		{
+			_x ctrlShow RTS_showingArtilleryMenu;
+		} forEach RTS_artilleryMenuControls;
+		
+		RTS_showOOBBtn ctrlShow (!RTS_showingArtilleryMenu);
 		
 		if ( RTS_showingOOB ) then {
 			RTS_showOOBBtn ctrlSetText "Close OOB";
@@ -395,16 +440,28 @@ RTS_ui_loop = [] spawn {
 					RTS_deployUndeployBtn ctrlEnable true;
 					if ( simulationEnabled _veh ) then {
 						RTS_deployUndeployBtn ctrlSetText "Undeploy";
+						RTS_deployUndeployBtn buttonSetAction "[RTS_selectedGroup] call RTS_fnc_deployUndeploy;";
 					} else {
 						RTS_deployUndeployBtn ctrlSetText "Deploy";
+						RTS_deployUndeployBtn buttonSetAction "[RTS_selectedGroup] call RTS_fnc_deployUndeploy;";
 					};
 				} else {
-					RTS_deployUndeployBtn ctrlSetText "Undeploy";
+					RTS_deployUndeployBtn ctrlSetText "-";
 					RTS_deployUndeployBtn ctrlEnable false;
 				};				
 			} else {
-				RTS_deployUndeployBtn ctrlSetText "Undeploy";
+				RTS_deployUndeployBtn ctrlSetText "-";
 				RTS_deployUndeployBtn ctrlEnable false;
+			};
+			
+			private _subordinates = RTS_selectedGroup getVariable ["subordinates", []];
+			
+			if ( count _subordinates > 0 ) then {
+				if ( count (getArtilleryAmmo ( _subordinates apply { vehicle (leader _x) } )) > 0 ) then {
+					RTS_deployUndeployBtn ctrlSetText "Artillery";
+					RTS_deployUndeployBtn buttonSetAction "RTS_showingUnitData = false; RTS_showingArtilleryMenu = true; RTS_artSetup = false;";
+					RTS_deployUndeployBtn ctrlEnable true;
+				};
 			};
 			
 			if ( RTS_phase == "MAIN" || (RTS_selectedGroup getVariable ["morale", 0]) > 1 ) then {
@@ -480,7 +537,7 @@ RTS_ui_loop = [] spawn {
 			
 		} else {
 			if ( RTS_showingUnitData ) then {
-				RTS_deployUndeployBtn ctrlSetText "Undeploy";
+				RTS_deployUndeployBtn ctrlSetText "-";
 				RTS_deployUndeployBtn ctrlEnable false;
 				RTS_selectCommanderBtn ctrlEnable false;
 				RTS_controlUnitBtn ctrlEnable false;
@@ -499,6 +556,70 @@ RTS_ui_loop = [] spawn {
 				RTS_moraleText ctrlSetTextColor [1,1,1,1];			
 				RTS_ammoLevelText ctrlSetText "-";
 				RTS_passengerInfoText ctrlSetText "-";
+			};
+		};
+		
+		if ( !(isNull RTS_selectedGroup) && RTS_showingArtilleryMenu ) then {
+			
+			RTS_unitNameText ctrlSetText "Call Artillery";
+			
+			private _mortars = ( (RTS_selectedGroup getVariable ["subordinates", []]) select { count (getArtilleryAmmo [(vehicle (leader _x))]) > 0 } ) apply { vehicle (leader _x) };
+			private _mags = getArtilleryAmmo _mortars;
+			
+			if ( count _mags > 0 ) then {
+				private _selectedMag = ( if ( RTS_artSetup ) then { _mags select (lbCurSel RTS_artMagazineBox) } else { _mags select 0 } );
+				
+				private _guns = _mortars select { _selectedMag in getArtilleryAmmo [_x] };
+				
+				if ( !RTS_artSetup ) then {
+					RTS_artSelectedMagazine = 0;
+					RTS_artSetup = true;
+					
+					{
+						lbClear _x;
+					} forEach [ RTS_artMagazineBox, RTS_artDurationBox, RTS_artDelayBox, RTS_artGunCountBox  ];
+					
+					{
+						RTS_artMagazineBox lbAdd (getText (configFile >> "CfgMagazines" >> _x >> "displayName"))
+					} forEach _mags;
+					
+					{
+						RTS_artDurationBox lbAdd _x
+					} forEach [ "Light", "Medium", "Heavy" ];
+					
+					{
+						RTS_artDelayBox lbAdd _x;
+					} forEach [ "Immediate", "1 Minute", "5 Minutes", "10 Minutes", "15 Minutes" ];
+					
+					{
+						RTS_artGunCountBox lbAdd (str (_forEachIndex + 1));
+					} forEach _guns;
+					
+					{
+						_x lbSetCurSel 0;
+					} forEach [ RTS_artMagazineBox, RTS_artDurationBox, RTS_artDelayBox, RTS_artGunCountBox  ];
+					
+				};
+				
+				if ( lbCurSel RTS_artMagazineBox != RTS_artSelectedMagazine ) then {
+					RTS_artSelectedMagazine = lbCurSel RTS_artMagazineBox;
+					lbClear RTS_artGunCountBox;
+					{
+						RTS_artGunCountBox lbAdd (str (_forEachIndex + 1));
+					} forEach _guns;
+				};
+			};
+		
+			RTS_deployUndeployBtn ctrlSetText "Call Fire";
+			RTS_deployUndeployBtn ctrlEnable (count _mags > 0);
+			RTS_deployUndeployBtn buttonSetAction "call RTS_fnc_callArtilleryMission;";
+			RTS_deployUndeployBtn ctrlShow true;
+			RTS_deployUndeployBtn ctrlEnable true;
+		
+		} else {
+			if ( RTS_showingArtilleryMenu ) then {
+				RTS_showingArtilleryMenu = false;
+				RTS_showingUnitData = true;
 			};
 		};
 		

@@ -45,7 +45,16 @@ if ( RTS_commanding ) then {
 	{
 		private ["_group","_pos","_drawpos"];
 		_group = _x;
-		if ( count ( (units _x) select { alive _x } ) > 0 ) then {
+		private _draw = true;
+		
+		if ( (vehicle (leader _group)) != (leader _group) ) then {
+			private _veh = (vehicle (leader _group));
+			if ( !((typeOf _veh) isKindOf "StaticWeapon") && (group (driver _veh)) != _group ) then {
+				_draw = false;
+			};
+		};
+		
+		if ( _draw && count ( (units _x) select { alive _x } ) > 0 ) then {
 			_pos = getPosATLVisual (leader _group);
 			_drawpos = [_pos select 0, _pos select 1, (_pos select 2) + 3];
 			private _iconpos = worldToScreen _drawpos;
@@ -128,7 +137,7 @@ if ( count _nearestGrp > 0 ) then {
 					drawIcon3D ["\A3\ui_f\data\map\groupicons\waypoint.paa", RTS_sideColor, (expectedDestination _x) select 0, 0.6, 0.6,0, str (_forEachIndex + 1), 2, 0.04];
 				};
 			} forEach (units _group);
-			if ( (group (driver (vehicle (leader _group)))) == _group || isNull (driver (vehicle (leader _group))) ) then {
+			if ( (group (driver (vehicle (leader _group)))) == _group || isNull (driver (vehicle (leader _group))) || !(alive (driver (vehicle (leader _group)))) ) then {
 				drawIcon3D [_group getVariable ["texture", ""], _unitcolor, _drawpos, _scale, _scale, 0, "", 2, 0.04, "TahomaB", "CENTER", true];
 				drawIcon3D ["\A3\ui_f\data\map\groupicons\selector_selectedFriendly_ca.paa", [1,1,1,1], _drawpos, _scale, _scale, 0, "", 2, 0.04, "TahomaB", "CENTER", true];
 				drawIcon3D ["", [1,1,1,1], _drawpos, _scale, _scale, 0, _desc,2,0.04];

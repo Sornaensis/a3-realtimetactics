@@ -333,6 +333,7 @@ if( RTS_stanceChoose ) then {
 		
 		if ( _mode != "" ) exitWith {
 			RTS_stanceChoose = false;
+			RTS_command = nil;
 			{
 				_x setUnitPos _mode;
 			} forEach (units _group);
@@ -353,6 +354,7 @@ if( RTS_combatChoose ) then {
 		
 		if ( _mode != "" ) exitWith {
 			RTS_combatChoose = false;
+			RTS_command = nil;
 			private _commands = _group getVariable ["commands", []];
 			if ( count _commands > 0 ) then {
 				(_commands select ((count _commands) - 1)) set [3, _mode];
@@ -392,6 +394,7 @@ if( RTS_formationChoose ) then {
 		
 		if ( _form != "" ) exitWith {
 			RTS_formationChoose = false;
+			RTS_command = nil;
 			private _commands = _group getVariable ["commands", []];
 			if ( count _commands > 0 ) then {
 				(_commands select ((count _commands) - 1)) set [4, _form];

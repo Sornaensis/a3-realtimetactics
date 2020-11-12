@@ -19,5 +19,6 @@
 	 Q(RTS_fnc_getAmmoLevel),
 	 Q(RTS_fnc_allUnitsReady),
 	 Q(RTS_fnc_releaseControlOfUnit),
-	 Q(RTS_fnc_deployUndeploy)]
+	 Q(RTS_fnc_deployUndeploy),
+	 Q(RTS_fnc_callArtilleryMission)]
 ] call RTS_setupFunction;

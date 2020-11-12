@@ -16,11 +16,51 @@ class UnitNameText: RscText
 {
 	idc = 1000;
 	text = "Unit Name"; //--- ToDo: Localize;
-	x = 0.0504765 * safezoneW + safezoneX;
+	x = 0.0304765 * safezoneW + safezoneX;
 	y = 0.114439 * safezoneH + safezoneY;
-	w = 0.0671064 * safezoneW;
+	w = 0.0971064 * safezoneW;
 	h = 0.0282118 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 1.35)";
+};
+class ArtMagazineLabel: RscText
+{
+	idc = 1701;
+	text = "Magazine"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.18967 * safezoneH + safezoneY;
+	w = 0.0452567 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ArtGunCountLabel: RscText
+{
+	idc = 1702;
+	text = "# of Guns"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.217882 * safezoneH + safezoneY;
+	w = 0.0452567 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ArtDurationLabel: RscText
+{
+	idc = 1703;
+	text = "Intensity"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.246094 * safezoneH + safezoneY;
+	w = 0.0672922 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ArtDelayLabel: RscText
+{
+	idc = 1704;
+	text = "Time"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.274306 * safezoneH + safezoneY;
+	w = 0.0672922 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
 class StatusLabel: RscText
 {
@@ -28,7 +68,7 @@ class StatusLabel: RscText
 	text = "Status"; //--- ToDo: Localize;
 	x = 0.0108127 * safezoneW + safezoneX;
 	y = 0.18967 * safezoneH + safezoneY;
-	w = 0.0352567 * safezoneW;
+	w = 0.0452567 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
@@ -38,7 +78,7 @@ class MoraleLabel: RscText
 	text = "Morale"; //--- ToDo: Localize;
 	x = 0.0108127 * safezoneW + safezoneX;
 	y = 0.217882 * safezoneH + safezoneY;
-	w = 0.0352567 * safezoneW;
+	w = 0.0452567 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
@@ -48,7 +88,7 @@ class CommandEffectLabel: RscText
 	text = "Command Effect"; //--- ToDo: Localize;
 	x = 0.0108127 * safezoneW + safezoneX;
 	y = 0.246094 * safezoneH + safezoneY;
-	w = 0.0572922 * safezoneW;
+	w = 0.0672922 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
@@ -58,7 +98,7 @@ class CombatVictoriesLabel: RscText
 	text = "Combat Victories"; //--- ToDo: Localize;
 	x = 0.0108127 * safezoneW + safezoneX;
 	y = 0.274306 * safezoneH + safezoneY;
-	w = 0.0572922 * safezoneW;
+	w = 0.0672922 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
@@ -68,7 +108,7 @@ class CasualtyLabel: RscText
 	text = "KIA / Total"; //--- ToDo: Localize;
 	x = 0.0108127 * safezoneW + safezoneX;
 	y = 0.302518 * safezoneH + safezoneY;
-	w = 0.0440709 * safezoneW;
+	w = 0.0540709 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
@@ -78,7 +118,7 @@ class FormationLabel: RscText
 	text = "Formation"; //--- ToDo: Localize;
 	x = 0.0108127 * safezoneW + safezoneX;
 	y = 0.330729 * safezoneH + safezoneY;
-	w = 0.0396638 * safezoneW;
+	w = 0.0596638 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
@@ -88,7 +128,7 @@ class CombatModeLabel: RscText
 	text = "Combat Mode"; //--- ToDo: Localize;
 	x = 0.0108127 * safezoneW + safezoneX;
 	y = 0.358941 * safezoneH + safezoneY;
-	w = 0.048478 * safezoneW;
+	w = 0.058478 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
@@ -98,7 +138,7 @@ class HasRadioLabel: RscText
 	text = "Has Radio"; //--- ToDo: Localize;
 	x = 0.0108127 * safezoneW + safezoneX;
 	y = 0.415365 * safezoneH + safezoneY;
-	w = 0.0396638 * safezoneW;
+	w = 0.0596638 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
@@ -118,7 +158,7 @@ class StanceLabel: RscText
 	text = "Stance"; //--- ToDo: Localize;
 	x = 0.0108127 * safezoneW + safezoneX;
 	y = 0.387153 * safezoneH + safezoneY;
-	w = 0.0308496 * safezoneW;
+	w = 0.0508496 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
@@ -128,7 +168,7 @@ class AmmoLevelLabel: RscText
 	text = "Ammunition Level"; //--- ToDo: Localize;
 	x = 0.0108127 * safezoneW + safezoneX;
 	y = 0.443576 * safezoneH + safezoneY;
-	w = 0.0616993 * safezoneW;
+	w = 0.0716993 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
@@ -160,6 +200,46 @@ class SelectCommanderBtn: RscButton
 	y = 0.5 * safezoneH + safezoneY;
 	w = 0.0705135 * safezoneW;
 	h = 0.0282118 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ArtMagazineBox: RscCombo
+{
+	idc = 1712;
+	text = "WAITING"; //--- ToDo: Localize;
+	x = 0.053362 * safezoneW + safezoneX;
+	y = 0.18967 * safezoneH + safezoneY;
+	w = 0.0916993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ArtGunCountBox: RscCombo
+{
+	idc = 1713;
+	text = "100%"; //--- ToDo: Localize;
+	x = 0.053362 * safezoneW + safezoneX;
+	y = 0.217882 * safezoneH + safezoneY;
+	w = 0.0916993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ArtDurationBox: RscCombo
+{
+	idc = 1714;
+	text = "None"; //--- ToDo: Localize;
+	x = 0.053362 * safezoneW + safezoneX;
+	y = 0.246094 * safezoneH + safezoneY;
+	w = 0.0916993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ArtDelayBox: RscCombo
+{
+	idc = 1715;
+	text = "15"; //--- ToDo: Localize;
+	x = 0.053362 * safezoneW + safezoneX;
+	y = 0.274306 * safezoneH + safezoneY;
+	w = 0.0916993 * safezoneW;
+	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
 class StatusText: RscText
@@ -218,6 +298,16 @@ class ControlBtn: RscButton
 	text = "Take Control"; //--- ToDo: Localize;
 	x = 0.116583 * safezoneW + safezoneX;
 	y = 0.5 * safezoneH + safezoneY;
+	w = 0.0440709 * safezoneW;
+	h = 0.0282118 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ArtBackBtn: RscButton
+{
+	idc = 1901;
+	text = "Back"; //--- ToDo: Localize;
+	x = 0.116583 * safezoneW + safezoneX;
+	y = 0.54 * safezoneH + safezoneY;
 	w = 0.0440709 * safezoneW;
 	h = 0.0282118 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
