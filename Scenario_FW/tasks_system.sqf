@@ -9,6 +9,15 @@ JTF_completeTask = {
 	_script
 };
 
+JTF_completeTask_keep = {
+	params ["_taskName"];
+	private _script = _this spawn {
+		params ["_taskName"];
+		waitUntil { _taskName call BIS_fnc_taskCompleted };
+	};
+	_script
+};
+
 JTF_tasks = [];
 
 JTF_taskChecker = [] spawn {

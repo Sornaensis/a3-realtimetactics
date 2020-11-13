@@ -31,7 +31,8 @@
 				_unit doMove _pos;
 				(group _unit) setSpeedMode _speed;
 				(group _unit) setBehaviour _behaviour;
-				while { alive _unit && ((count _commands) > 0) && !_complete} do {
+				private _attempts = 0;
+				while { alive _unit && ((count _commands) > 0) && !_complete && _attempts < 4 } do {
 					_unit doMove _pos;
 					(group _unit) setSpeedMode _speed;
 					(group _unit) setBehaviour _behaviour;
@@ -44,6 +45,7 @@
 						_unit doMove (getPos _unit);
 					};
 					_commands = (group _unit) getVariable ["commands", []];
+					_attempts = _attempts + 1;
 				};
 				if ( _group getVariable ["waypoint_canceled", false] ) then { 
 					_group setVariable ["waypoint_canceled", false ]; 
@@ -571,9 +573,22 @@
 			{
 				private _enemy = _x;
 				{
-					_x setVariable ["assigned_target", _enemy];
-					_x doTarget _enemy;
-					_x doFire _enemy;
+					private _fire = true;
+					if ( count (assignedVehicleRole _x) > 0 ) then {
+						private _role = (assignedVehicleRole _x) select 0;
+						_fire = ( switch ( _role ) do {
+									case "Gunner": { true };
+									case "gunner": { true };
+									case "Turret": { true };
+									case "turret": { true };
+									default { false } });
+					};
+					
+					if ( _fire ) then {
+						_x setVariable ["assigned_target", _enemy];
+						_x doTarget _enemy;
+						_x doFire _enemy;
+					};
 				} forEach ( _units select { isNull (_x getVariable "assigned_target") } );
 			} forEach ( _targets select { (getPos _x) distance (getPos _mainTarget) < 100 } );
 		};

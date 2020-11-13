@@ -62,6 +62,26 @@ class ArtDelayLabel: RscText
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
 };
+class ArtSizeLabel: RscText
+{
+	idc = 1705;
+	text = "Radius"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.302518 * safezoneH + safezoneY;
+	w = 0.1940709 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ArtStatusLabel: RscText
+{
+	idc = 1706;
+	text = "WAITING"; //--- ToDo: Localize;
+	x = 0.0108127 * safezoneW + safezoneX;
+	y = 0.330729 * safezoneH + safezoneY;
+	w = 0.1996638 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
 class StatusLabel: RscText
 {
 	idc = 1001;
@@ -238,6 +258,16 @@ class ArtDelayBox: RscCombo
 	text = "15"; //--- ToDo: Localize;
 	x = 0.053362 * safezoneW + safezoneX;
 	y = 0.274306 * safezoneH + safezoneY;
+	w = 0.0916993 * safezoneW;
+	h = 0.0188079 * safezoneH;
+	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";
+};
+class ArtSizeBox: RscCombo
+{
+	idc = 1016;
+	text = "-  /  8"; //--- ToDo: Localize;
+	x = 0.053362 * safezoneW + safezoneX;
+	y = 0.302518 * safezoneH + safezoneY;
 	w = 0.0916993 * safezoneW;
 	h = 0.0188079 * safezoneH;
 	sizeEx = "(((((safezoneW / safezoneH) min 1.2) / 1.2) / 25) * 0.8)";

@@ -186,6 +186,7 @@ RTS_casualties = 0;
 if ( isNil "RTS_restrictionZone" ) then {
 	RTS_restrictionZone = [];
 };
+RTS_checkingVisibility = false;
 RTS_mouseHoverGrp = grpnull;
 RTS_phase = "DEPLOY";
 RTS_selecting = false;

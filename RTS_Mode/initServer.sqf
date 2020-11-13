@@ -77,3 +77,6 @@ RTS_phaseButton = "";
 	
 	};
 };
+
+call compile preprocessFileLineNumbers "scen_fw\tasks_system.sqf";
+call compile preprocessFileLineNumbers "scen_fw\checkpoint_system.sqf";

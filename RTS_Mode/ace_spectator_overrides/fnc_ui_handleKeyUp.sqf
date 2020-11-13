@@ -64,4 +64,10 @@ if ( _key == DIK_X ) exitWith {
 	RTS_command = nil;
 	true
 };
+
+if ( _key == DIK_T && RTS_checkVisibility ) exitWith {
+	RTS_checkVisibility = false;
+	RTS_command = nil;
+};
+
 false

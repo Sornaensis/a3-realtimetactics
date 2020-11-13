@@ -95,17 +95,35 @@ _group setVariable ["owned_vehicle",
 							then { 
 								private _driver = (driver (vehicle (leader _group)));
 								if ( _driver != objnull ) then {
-									_driver spawn {
-										private _vehicle = vehicle _this;
-										_this disableAi "MOVE";
-										waitUntil { ! (alive _this) || !(canMove _vehicle) };
-										if ( alive _this ) then {
-											doStop _this;
-											_this enableAi "MOVE";
-											[group _this] call RTS_fnc_removeCommand;
+									_driver doMove (getPos _driver);
+									[_driver, vehicle _driver, _group] spawn {
+										params [ "_driver", "_vehicle", "_group" ];
+										waitUntil { ! (alive _driver) || !(canMove _vehicle) };
+										if ( alive _driver ) then {
+											doStop _driver;
+											_driver enableAi "MOVE";
+											[_group] call RTS_fnc_removeCommand;
+											
+											_group leaveVehicle _vehicle;
+											commandGetOut (units _group);
+											(units _group) allowGetIn false;
+											
+											{
+												moveOut _x;
+												_x enableAI "MOVE";
+											} forEach ( units _group );
+											
 										};
 									};
 								};
+								
+								(units _group) allowGetIn true;
+								
+								{
+									_x commandMove (getPosATL _x);
+									[_x] commandFollow (leader _group);
+								} forEach (units _group);
+								
 								vehicle (leader _group) 
 							} else { 
 								(units _group) allowGetIn false;

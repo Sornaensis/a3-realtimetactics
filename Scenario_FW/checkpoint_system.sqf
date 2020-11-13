@@ -32,9 +32,7 @@ JTF_checkpointLoop = [] spawn {
 			
 			"checkpoint_marker" setMarkerPos _location;
 			"checkpoint_marker" setMarkerAlpha 1;
-			
-			hint "New Checkpoint Reached";
-			
+						
 			if ( _chIdx < count JTF_checkPointLogic ) then {
 				_condition = (JTF_checkPointLogic select _chIdx) select 0;
 			} else {

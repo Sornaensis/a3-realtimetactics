@@ -179,7 +179,9 @@ while { _i < 10 } do {
 				_newMark setMarkerDir (markerDir _mark);
 				_newMark setMarkerColor ([(side player)] call objectiveInitialColor);
 				
-				RTS_enemySideObjectives pushBack ( [_x, _newMark, _objText, false] );								
+				RTS_enemySideObjectives pushBack ( [_x, _newMark, _objText, false] );
+				
+				_newMark setMarkerAlpha 0;				
 			};	
 		} forEach _objectiveTypes;
 		_j = _j + 1;
@@ -198,7 +200,7 @@ for "_i" from 0 to ( (count _objectives) - 1 ) do {
 
 	private _taskName = format ["%1%2", _type, _i];
 
-	[ RTS_sidePlayer, [_taskName], [ [_type] call objectiveDescription, _name, _marker ], getMarkerPos _marker, "CREATED" ] call BIS_fnc_taskCreate;
+	[ RTS_sidePlayer, [_taskName], [ [_type] call objectiveDescription, _name, "" ], getMarkerPos _marker, "ASSIGNED" ] call BIS_fnc_taskCreate;
 	
 	(_objectives select _i) pushback _taskName;
 	

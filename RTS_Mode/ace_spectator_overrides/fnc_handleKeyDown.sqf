@@ -85,7 +85,8 @@ if (_key == DIK_ESCAPE) exitWith {
 
 // Movement commands
 
-if ( _key == DIK_T && _shift ) exitWith {
+if (  _key == DIK_T && _shift ) exitWith {
+	RTS_checkVisibility = true;
 	private _group = RTS_selectedGroup;
 	if ( !(isNull _group) ) then {
 		private _leader = leader _group;
