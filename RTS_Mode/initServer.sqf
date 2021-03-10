@@ -80,3 +80,23 @@ RTS_phaseButton = "";
 
 call compile preprocessFileLineNumbers "scen_fw\tasks_system.sqf";
 call compile preprocessFileLineNumbers "scen_fw\checkpoint_system.sqf";
+
+
+// Setup map placed AI
+
+RTS_mapAI = [["aimingAccuracy",0.09],["aimingShake",0.05],["aimingSpeed",0.25],["commanding",1],["courage",0.8],["endurance",0.7],["general",0.5],["reloadSpeed",1],["spotDistance",0.55],["spotTime",0.2]];
+
+{
+	_x setUnitLoadout (getUnitLoadout _x);
+	if ( !(_x getVariable ["noskill", false]) ) then {
+		private _unit = _x;
+		{
+			_x params ["_name","_val"];
+			_unit setSkill [_name, _val];
+		} forEach RTS_mapAI;
+	};
+	(group _x) setVariable ["Vcom_skilldisable", true, true];
+	if ( !( ((group _x) getVariable ["RTS_setup",[]]) isEqualTo [] ) ) then {
+		(group _x) setVariable ["Vcm_disable", true, true];
+	};
+} forEach allUnits;

@@ -4,24 +4,13 @@ waitUntil { time > 0 };
 sleep 10;
 if ( isNull (getAssignedCuratorLogic player) ) exitWith {};
 
-SOCOM_CURATOR_VCOM = [] spawn {
-	while { true } do {
-		{
-			private _group = _x;
-			_group setVariable ["SOCOM_CURATOR_SETUP",true]; // vcom disabled by default
-			_group setVariable ["SOCOM_HEADLESS_TOGGLE", false]; // no headless
-			_group setVariable ["VCM_Disable", true];
-		} forEach (allGroups select { local _x && (_x getVariable ["SOCOM_CURATOR_SETUP",objnull]) isEqualTo objnull });
-	};
-};
 
 SOCOM_fnc_enableAdvancedAI = {
 	curatorSelected params ["","_groups"];
 	if ( !isNil "_groups" ) then {
 		{
 			private _group = _x;
-			_group setVariable ["VCM_Disable", false];
-			_group setVariable ["SOCOM_HEADLESS_TOGGLE", true, true];
+			_group setVariable ["VCM_Disable", !(_group getVariable ["VCM_disable", false]) ];
 		} forEach _groups;
 	};
 };
@@ -44,8 +33,18 @@ SOCOM_CURATOR_UI = [] spawn {
 				curatorSelected params ["","_groups"];
 				private _enable = false;
 				if ( !isNil "_groups" ) then {
+					private _vcomon = true;
+					private _vcomoff = true;
 					if ( count _groups > 0 ) then {
 						_enable = true;
+						_vcomon = (_group getVariable ["VCM_disable", false]) && _vcomon;
+						_vcomoff = !(_group getVariable ["VCM_disable", true]) && _vcomoff;
+					};
+					if ( _vcomon && _enable ) then {
+						CURATOR_TRANSFER_BRN ctrlSetText "Disable VCOM";
+					};
+					if ( _vcomoff && _enable ) then {
+						CURATOR_TRANSFER_BRN ctrlSetText "Enable VCOM";
 					};
 				};
 				CURATOR_TRANSFER_BTN ctrlEnable _enable;

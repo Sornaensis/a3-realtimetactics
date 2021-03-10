@@ -1,5 +1,5 @@
 #include "..\..\..\RTS_defines.hpp"
-params ["_group", "_description", "_commandelement", "_grouptexture", "_icon", "_exp", "_leaderfactor" ];
+params ["_group", "_description", "_commandelement", "_grouptexture", "_icon", "_exp", "_leaderfactor", ["_opticQuality",1], ["_thermals",false] ];
 
 if ( _group in RTS_commandingGroups ) exitWith {};
 
@@ -32,7 +32,7 @@ _group setVariable ["VCM_DisableForm",true];
 _group setVariable ["VCM_NORESCUE",true];
 _group setVariable ["VCM_TOUGHSQUAD",true];
 _group setVariable ["VCM_SkillDisable",true];
-//_group setVariable ["VCM_DISABLE",true];
+_group setVariable ["VCM_DISABLE",false];
 
 if ( (vehicle (leader _group)) == (leader _group) ) then {
 	[_group, true] call RTS_fnc_autoCombat;
@@ -50,6 +50,8 @@ _group enableAttack false;
 	_x setUnitPos "AUTO";
 	_x setSpeedMOde "AUTO";
 	[_x] call RTS_setupUnit;
+	_x setVariable ["has_thermals", _thermals];
+	_x setVariable ["optic_quality", _opticQuality];
 	private _unit = _x;
 	{
 		_x disableCollisionWith _unit;

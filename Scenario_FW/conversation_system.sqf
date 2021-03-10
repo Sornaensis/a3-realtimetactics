@@ -24,7 +24,9 @@ if ( isServer ) then {
 			
 						_conversation params [ "_title", "_variable", "_condition", "_sentences" ]; 
 						[[_target,((name _target) splitString " ") select 0,_title,_variable,_sentences],JTF_fnc_renderSpeech] remoteExec [ "spawn", 0 ];
+						_target setRandomLip true;
 						waitUntil { !(_target getVariable ["starting_conversing", false]) };
+						_target setRandomLip false;
 						_target doWatch objNull;
 						if ( _variable != "" ) then {
 							_target setVariable [_variable, true, true ];

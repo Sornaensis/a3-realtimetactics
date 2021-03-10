@@ -104,7 +104,7 @@ INS_cqbAreaReveal = [] spawn {
 					if ( (_unit knowsAbout _player) < 2.5 ) then {
 						_unit reveal [ _player, 2.5 ];
 					};
-				} forEach ( (call INS_getCqbSoldiersAlive) select { ( (getPos _x) distance2d (getPos _player) ) < 50 } );
+				} forEach ( (call INS_getCqbSoldiersAlive) select { ( (getPos _x) distance2d (getPos _player) ) < 100 } );
 			} forEach ( (call INS_allPlayers) select { _x inArea INS_cqbArea } );
 			sleep 5;
 		};

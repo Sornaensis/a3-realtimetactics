@@ -1,10 +1,11 @@
 { 
-	private ["_group", "_status", "_commands"];
+	private ["_group", "_status", "_commands", "_scriptSpawned"];
 	_group = _x;
 	_status = _group getVariable ["status", "WAITING"];
 	_commands = _group getVariable ["commands", []];
 	// Setup next waypoint
 	if ( _status == "WAITING" && (count _commands) > 0 ) then {
+		_group setVariable ["waypoint_canceled", false];
 		_group setVariable ["status", "OTM"];
 		(_commands select 0) params ["_pos", "_type", "_behaviour", "_combat", "_form", "_speed"];
 		private _pausetime = 0;
@@ -22,15 +23,16 @@
 		} forEach (units _group);
 		_group setFormDir ((leader _group) getDir _pos);
 		if ( (vehicle (leader _group)) != (leader _group) && ( (group (driver (vehicle (leader _group)))) == _group ) ) then {
-			[(driver (vehicle (leader _group))), _pos, _type, _speed, _behaviour, _pausetime] spawn {
+			private _unit = (driver (vehicle (leader _group)));
+			_unit enableAi "MOVE";
+			_unit doMove _pos;
+			(group _unit) setSpeedMode _speed;
+			(group _unit) setBehaviour _behaviour;
+			_scriptSpawned = [(driver (vehicle (leader _group))), _pos, _type, _speed, _behaviour, _pausetime] spawn {
 				params ["_unit", "_pos", "_type", "_speed", "_behaviour","_pausetime"];
-				_unit enableAi "MOVE";
 				private _commands = (group _unit) getVariable ["commands", []];
 				private _complete = false;
 				private _group = group _unit;
-				_unit doMove _pos;
-				(group _unit) setSpeedMode _speed;
-				(group _unit) setBehaviour _behaviour;
 				private _attempts = 0;
 				while { alive _unit && ((count _commands) > 0) && !_complete && _attempts < 4 } do {
 					_unit doMove _pos;
@@ -124,19 +126,18 @@
 				};
 			} else {	
 				if ( _type == "SEARCH" ) then {
-					[_group, (_commands select 0) select 7,_pausetime] spawn {
+					[_group] call CBA_fnc_clearWaypoints;
+					{
+						_x doWatch objnull;
+						_x disableAI "COVER";
+						_x setVariable ["subtasking", true];
+						if ( _x !=  leader _group ) then {
+							doStop _x;
+						};
+					} forEach (units _group);
+					_scriptSpawned = [_group, (_commands select 0) select 7,_pausetime] spawn {
 					    params ["_group", "_building","_pausetime"];
 					    private _leader = leader _group;
-					    [_group] call CBA_fnc_clearWaypoints;
-					
-						{
-							_x doWatch objnull;
-							_x disableAI "COVER";
-							_x setVariable ["subtasking", true];
-							if ( _x !=  leader _group ) then {
-								doStop _x;
-							};
-						} forEach (units _group);
 					
 					    // Prepare group to search
 					    _group setFormDir ([_leader, _building] call BIS_fnc_dirTo);
@@ -204,12 +205,16 @@
 				    		sleep 1;
 				    	} forEach ( (units _group) - [leader _group]);
 					    
+					    _group setVariable ["subscripts", _scripts];
+					    
 					    waitUntil { (_group getVariable ["waypoint_canceled", false]) || [_group,"PARTIAL"] call RTS_fnc_allUnitsReady };
 						
 						{
 							terminate _x;
 						} forEach _scripts;
 						
+						
+						_group setVariable ["subscripts", []];
 						_group setBehaviour "AWARE";
 						(leader _group) doMove (getPos (leader _group));
 						(leader _group) enableAI "COVER";
@@ -242,21 +247,20 @@
 					};
 				} else {
 					if ( _type == "GARRISON" ) then {
-						[_group, (_commands select 0) select 7,_pausetime] spawn {
+					    [_group] call CBA_fnc_clearWaypoints;
+						_group setBehaviour "AWARE";						    
+					    {
+					    	_x doMove (getPos _x);
+							_x doWatch objnull;
+							_x disableAI "COVER";
+							_x setVariable ["subtasking", true];
+							if ( _x != (leader _group) ) then {
+								doStop _x;
+							};
+						} forEach (units _group);
+						_scriptSpawned = [_group, (_commands select 0) select 7,_pausetime] spawn {
 						    params ["_group", "_building","_pausetime"];
-						    private _leader = leader _group;
-						    [_group] call CBA_fnc_clearWaypoints;
-							_group setBehaviour "AWARE";						    
-						    {
-						    	_x doMove (getPos _x);
-								_x doWatch objnull;
-								_x disableAI "COVER";
-								_x setVariable ["subtasking", true];
-								if ( _x != (leader _group) ) then {
-									doStop _x;
-								};
-							} forEach (units _group);
-							    
+						    private _leader = leader _group;							    
 						    
 						    private _positions = _building buildingPos -1;
 						    private _units = units _group - [leader _group];
@@ -315,6 +319,8 @@
 						    	_group move (selectRandom _positions);
 						    };
 						    
+						    _group setVariable ["subscripts", _scripts];
+						    
 							(_group getVariable ["commands", []]) deleteAt 0;
 							_group setVariable ["status", "GARRISONED" ]; 
 						    waitUntil { (_group getVariable ["waypoint_canceled", false]) || ! ( (_group getVariable ["commands", []]) isEqualTo [] ) };
@@ -336,6 +342,8 @@
 								{
 									terminate _x;
 								} forEach _scripts;
+								
+								_group setVariable ["subscripts", []];
 								
 								[_group] call CBA_fnc_clearWaypoints;
 								(leader _group) doMove (getPos (leader _group));
@@ -382,7 +390,7 @@
 								_x doFollow (leader _group);
 							};
 						} forEach (units _group);
-						[_group, _pos, _behaviour, _combat, _speed, _form, _pausetime] spawn {
+						_scriptSpawned = [_group, _pos, _behaviour, _combat, _speed, _form, _pausetime] spawn {
 							params ["_group", "_pos", "_behaviour", "_combat", "_speed", "_form", "_pausetime"];
 							private _commands = _group getVariable ["commands", []];
 							private _complete = false;
@@ -463,6 +471,7 @@
 				};
 			};
 		};
+		_group setVariable ["mainScript", _scriptSpawned];
 	};
 	
 	if ( vehicle (leader _group) != (leader _group) ) then {
@@ -501,11 +510,13 @@
 			if ( _unit != (leader _group) ) then {
 				private _toofar =  ((getPos (leader _group)) distance (getPos _unit)) > _distancefactor*0.8;
 				if ( _toofar && !_returning && !(_unit getVariable ["subtasking", false]) ) then {
+					_unit enableAI "MOVE";
 					_unit doMove ( (getPos (leader _group)) findEmptyPosition [5,30,"MAN"] );
 					_unit setVariable ["returning", true];
 				} else {
 					if ( _toofar && _returning && !(_unit getVariable ["subtasking", false]) ) then {
 						private _speed = speed _unit;
+						_unit enableAI "MOVE";
 						
 						if ( _speed == 0 ) then {
 							if ( (_unit getVariable [ "noMoveTime", objnull ]) isEqualTo objnull ) then {
@@ -559,39 +570,66 @@
 	
 	// Assign Targets
 	if ( combatMode _group != "GREEN" ) then {
-		private _lead = leader _group;
-		private _targets = ( [ _group getVariable ["spotted",[]], [], { (getPos _x) distance (getPos _lead)  }, "ASCEND"] call BIS_fnc_sortBy ) select { side _x != civilian && side _x != RTS_sidePlayer };
+		private _leader = leader _group;
+		private _targettime = _group getVariable ["SettargetTime", 0];
 		
-		if ( count _targets > 0 ) then {
-			private _units = (units _group) select { ! ( (_x getVariable ["assigned_target", objnull]) in _targets ) };
-			private _mainTarget = _targets deleteAt 0;
-			
-			{
-				_x setVariable ["assigned_target", objnull];
-			} forEach _units;
-			
-			{
-				private _enemy = _x;
+		if ( time - _targettime > 5 ) then {
+			private _targets = ( [ _group getVariable ["spotted",[]], [], { (getPos _x) distance (getPos _leader)  }, "ASCEND"] call BIS_fnc_sortBy ) select { side _x != civilian && side _x != RTS_sidePlayer };
+			if ( count _targets > 0 ) then { 
+				_group setVariable ["SettargetTime", time];
+				private _units = (units _group) select { ! ( (_x getVariable ["assigned_target", objnull]) in _targets ) };
+				private _tanks = _targets select { (typeOf (vehicle _x)) isKindOf "Tank" };
+				private _otherVeh = _targets select { (vehicle _x) != _x };
+				private _orderedTargets = (_tanks + _otherVeh + _targets);
+				
 				{
-					private _fire = true;
-					if ( count (assignedVehicleRole _x) > 0 ) then {
-						private _role = (assignedVehicleRole _x) select 0;
-						_fire = ( switch ( _role ) do {
-									case "Gunner": { true };
-									case "gunner": { true };
-									case "Turret": { true };
-									case "turret": { true };
-									default { false } });
-					};
+					_x setVariable ["assigned_target", objnull];
+				} forEach _units;
+				
+				(vehicle _leader) setVariable ["assigned_target", objnull];
+				
+				if ( _leader == (vehicle _leader) ) then {
+					{
+						private _unit = _x;
+						{
+							_unit setVariable ["assigned_target", vehicle _unit ];
+						} forEach (  _orderedTargets select { !(terrainIntersectASL [eyePos _unit, aimPos _x]) } );
+					} forEach ( _units select { isNull (_x getVariable "assigned_target") } );
+				} else {
 					
-					if ( _fire ) then {
-						_x setVariable ["assigned_target", _enemy];
-						_x doTarget _enemy;
-						_x doFire _enemy;
+					private _target = vehicle ( ( _tanks + _otherVeh + _targets ) # 0 );
+					
+					if ( !(terrainIntersectASL [eyePos (gunner (vehicle _leader)), aimPos _target]) ) then {
+						(vehicle _leader) setVariable ["assigned_target",  _target];
 					};
-				} forEach ( _units select { isNull (_x getVariable "assigned_target") } );
-			} forEach ( _targets select { (getPos _x) distance (getPos _mainTarget) < 100 } );
+				};
+			} else {
+				if ( !isNull ((vehicle _leader) getVariable ["assigned_target", objnull]) ) then {
+					(vehicle _leader) setVariable ["assigned_target", objnull];
+					(vehicle _leader) doWatch objnull;
+				};
+			};
 		};
+		
+		{ 
+			private _unit = _x;
+			private _target = _x getVariable "assigned_target";
+			_unit doFire _target;
+		} forEach ( _units select {	!isNull (_x getVariable ["assigned_target", objnull]) } );
+		
+		if ( vehicle _leader != _leader ) then {
+			private _veh = vehicle _leader;
+			private _target = _veh getVariable ["assigned_target",objnull];
+			if ( !isNull _target ) then {
+				if ( (_veh aimedAtTarget [_target]) > 0 ) then {
+					_veh fireAtTarget [_target];
+				} else {
+					_veh doWatch _target;
+					(gunner _veh) doWatch _target;
+				};
+			};
+		};
+		
 	} else {
 		{
 			_x setVariable ["assigned_target", objnull];

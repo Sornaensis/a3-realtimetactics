@@ -8,6 +8,26 @@ if ( _group in RTS_commandingGroups ) then {
 			_tempcommands set [count _tempcommands, _commands select _i];
 		};
 		_group setVariable ["commands", _tempcommands, true];
+		
+		if ( !isNil "_deleted" ) then {
+			_group setVariable ["waypoint_canceled", true];
+			
+			private _script = _group getVariable "mainScript";
+			if ( !isNil "_script" ) then {
+				terminate _script;
+			};
+			
+			{
+				terminate _x;
+			} forEach ( _group getVariable ["subscripts", []]);
+			
+			if ( vehicle (leader _group) == (leader _group) ) then {
+				[_group, getPos (leader _group)] call RTS_fnc_addMoveCommand;
+			};
+			
+			_group setVariable ["status", "WAITING"];
+		};
+		
 		if ( ( (vehicle (leader _group)) != (leader _group) ) && ( (group (driver (vehicle (leader _group)))) == _group ) && _type != "DISMOUNT" ) then {
 			(driver (vehicle (leader _group))) disableAi "MOVE";
 		} else {
@@ -36,7 +56,6 @@ if ( _group in RTS_commandingGroups ) then {
 		if ( vehicle (leader _group) == (leader _group) ) then {
 			[_group, getPos (leader _group)] call RTS_fnc_addMoveCommand;
 		};
-		_group setVariable ["waypoint_canceled", true];
 	} else {	
 		_group setVariable ["pause_remaining", 0];
 		if ( _group getVariable ["status", "WAITING"] != "HOLDING" ) then {

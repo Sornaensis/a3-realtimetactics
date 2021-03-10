@@ -1,8 +1,9 @@
-if ( hasInterface ) then {
+if ( hasInterface && !isServer ) then {
 	disableUserInput true;
 };
 
 RTS_greenAI   = [["aimingAccuracy",0.09],["aimingShake",0.05],["aimingSpeed",0.25],["commanding",1],["courage",0.8],["endurance",0.7],["general",0.5],["reloadSpeed",1],["spotDistance",0.55],["spotTime",0.2]];
+RTS_crackAI   = [["aimingAccuracy",0.9],["aimingShake",0.6],["aimingSpeed",0.5],["commanding",1],["courage",0.8],["endurance",0.7],["general",0.5],["reloadSpeed",1],["spotDistance",0.55],["spotTime",0.2]];
 
 if ( isServer ) then {
 	{
@@ -272,35 +273,6 @@ spawnReinforcements = {
 
 call compile preprocessFileLineNumbers "scen_fw\conversation_system.sqf";
 
-if ( hasInterface ) then {
-	hintSilent "Waiting on server init...";
-	waitUntil { !isNil "JTF_server_init" };
-	waitUntil { !(isNull player) && isPlayer player };
-	waitUntil { time > 1 };
-	JTF_player_loadout = getUnitLoadout player;
-	
-	JTF_respawn_h = {
-		player removeAllEventHandlers "Killed";
-		player removeAllEventHandlers "Respawn";
-		player setUnitLoadout JTF_player_loadout;
-		player removeWeapon "tf_microdagr";
-		player setVariable [ "JTF_playerIsDead", true, true];
-		JTF_playerDeathHandler = player addEventHandler ["Killed", { [allPlayers select { alive _x }, [player]] call ace_spectator_fnc_updateUnits; JTF_playerIsDead = true; [true] call ace_spectator_fnc_setSpectator; }];
-		JTF_player_respawnHandler = player addEventHandler ["respawn", JTF_respawn_h ];
-	};
-	
-	JTF_player_respawnHandler = player addEventHandler ["respawn", JTF_respawn_h ];
-	
-	// Spectator stuff and whatnot
-	JTF_playerIsDead = false;
-	JTF_playerDeathHandler = player addEventHandler ["Killed", { [allPlayers select { alive _x }, [player]] call ace_spectator_fnc_updateUnits; [true] call ace_spectator_fnc_setSpectator; }];
-	[[west], [east,civilian,resistance]] call ace_spectator_fnc_updateSides;
-	
-	call compile preprocessFileLineNumbers "briefing.sqf";
-	hintSilent "Server init complete...";
-	disableUserInput false;
-};
-
 if ( isServer ) then {
 	JTF_spawnloop = [] spawn {
 		JTF_waves = JTF_unit_waves_blufor + JTF_unit_waves_greenfor + JTF_unit_waves_opfor;
@@ -358,4 +330,62 @@ if ( isServer ) then {
 	
 	JTF_server_init = true;
 	publicVariable "JTF_server_init";
+};
+
+if ( hasInterface ) then {
+	hintSilent "Waiting on server init...";
+	waitUntil { !isNil "JTF_server_init" };
+	waitUntil { !(isNull player) && isPlayer player };
+	waitUntil { time > 1 };
+	JTF_player_loadout = getUnitLoadout player;
+	
+	if ( !isNil "JTF_adminNames" ) then {
+		if ( profileName in JTF_adminNames ) then {
+			player addAction [
+				"Start Mission",
+				{
+					params ["_target", "_caller", "_actionId", "_arguments"];
+					JTF_missionStart = true;
+					publicVariable "JTF_missionStart";
+				},
+				nil,
+				1.5,
+				true,
+				true,
+				"",
+				"!JTF_missionStart", 
+				3.1,
+				false,
+				"",
+				""];
+		};
+	};
+	
+	JTF_respawn_h = {
+		player removeAllEventHandlers "Killed";
+		player removeAllEventHandlers "Respawn";
+		player setUnitLoadout JTF_player_loadout;
+		player setVariable [ "JTF_playerIsDead", true, true];
+		JTF_playerDeathHandler = player addEventHandler ["Killed", { [allPlayers select { alive _x }, [player]] call ace_spectator_fnc_updateUnits; JTF_playerIsDead = true; [true] call ace_spectator_fnc_setSpectator; }];
+		JTF_player_respawnHandler = player addEventHandler ["respawn", JTF_respawn_h ];
+	};
+	
+	JTF_player_respawnHandler = player addEventHandler ["respawn", JTF_respawn_h ];
+	
+	// Spectator stuff and whatnot
+	JTF_playerIsDead = false;
+	JTF_playerDeathHandler = player addEventHandler ["Killed", { JTF_playerIsDead = true; [allPlayers select { alive _x }, [player]] call ace_spectator_fnc_updateUnits; [true] call ace_spectator_fnc_setSpectator; }];
+	[[west], [east,civilian,resistance]] call ace_spectator_fnc_updateSides;
+	
+	addMissionEventHandler [ "Draw3d",
+	{
+		if ( player in ([] call ace_spectator_fnc_players) ) then {
+			[1] call ace_spectator_fnc_setCameraAttributes;
+			[ allUnits select { side _x == west }, [player] ] call ace_spectator_fnc_updateUnits;
+		};
+	}];
+	
+	call compile preprocessFileLineNumbers "briefing.sqf";
+	hintSilent "Server init complete...";
+	disableUserInput false;
 };

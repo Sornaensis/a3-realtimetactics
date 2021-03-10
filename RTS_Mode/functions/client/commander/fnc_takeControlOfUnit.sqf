@@ -17,7 +17,9 @@ selectPlayer _unit;
 
 {
 	_x enableAI "MOVE";
-	_x commandMove (getPosATL _x);
+	if ( vehicle _x == _x ) then {
+		_x commandMove (getPosATL _x);
+	};
 	[_x] commandFollow _unit;
 } forEach (units (group _unit));
 

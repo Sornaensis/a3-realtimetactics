@@ -1,5 +1,5 @@
 // Detention area
-INS_detentionArea = [] spawn {
+INS_detention = [] spawn {
 	while { true } do {
 		private _detended = allUnits select { _x inArea INS_detentionArea && !(_x getVariable ["detended",false]) && (_x getVariable ["ai_surrendered",false]) };
 		{

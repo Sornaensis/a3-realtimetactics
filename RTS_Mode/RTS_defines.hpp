@@ -9,6 +9,10 @@
 	#define RTS_SingleCommander false
 #endif
 
+#ifndef RTS_Spectator
+	#define RTS_Spectator false
+#endif
+
 #ifndef RTS_skipBriefing
 	#define RTS_skipBriefing false
 #endif

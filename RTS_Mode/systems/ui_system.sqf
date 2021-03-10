@@ -404,6 +404,10 @@ RTS_ui_cleanup = {
 	{
 		ctrlDelete _x;
 	} foreach RTS_artilleryControls;
+	
+	{
+		ctrlDelete _x;
+	} foreach RTS_unitDataControls;
 };
 
 RTS_ui_loop = [] spawn {

@@ -112,13 +112,6 @@ if ( isServer || !hasInterface ) then {
 	};
 };
 
-// Headless client strategic AI and spawning
-if ( !hasInterface ) then {
-	[] call (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
-	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\insurgency.sqf");
-	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\hc_ai.sqf");
-};
-
 
 if ( isDedicated || _runsetup ) then {
 
@@ -567,8 +560,14 @@ if ( isServer && isNil "INS_caches" ) then {
 	publicVariable "INS_spySetups";	
 	
 	// Spawn stuff
-	INS_setupFinished = false;
+	INS_setupFinished = false;	
 	[] spawn INS_fnc_setupCaches;
+	
+	// Headless client strategic AI and spawning
+	[] call (compile preprocessFileLineNumbers "rts\functions\shared\insurgency\setup.sqf");
+	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\insurgency.sqf");
+	[] call (compile preprocessFileLineNumbers "rts\systems\insurgency\hc_ai.sqf");
+	
 	waitUntil { INS_setupFinished };
 	// Give control to player
 	[-1, 
