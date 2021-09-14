@@ -2,10 +2,10 @@
 #include "\A3\ui_f\hpp\defineDIKCodes.inc"
 #include "RTS_defines.hpp"
 
-_east = createCenter east;
-_west = createCenter west;
+_east 	= createCenter east;
+_west 	= createCenter west;
 _resist = createCenter resistance;
-_civ = createCenter civilian;
+_civ 	= createCenter civilian;
 
 mapAnimAdd [0, 0.1, getMarkerPos "map_center"];
 mapAnimCommit;
@@ -55,22 +55,22 @@ if ( hasInterface ) then {
 	VCM_FullSpeed = true; 
 	VCM_HEARINGDISTANCE = 1200; 
 	VCM_WARNDIST = 1000; 
-	VCM_WARNDELAY = 10; 
+	VCM_WARNDELAY = 30; 
 	VCM_STATICARMT = 300;
-	VCM_StealVeh = true;
-	VCM_ClassSteal = false;
-	VCM_AIDISTANCEVEHPATH = 150; 
-	VCM_ADVANCEDMOVEMENT = true; 
+	VCM_StealVeh = false;
+	VCM_ClassSteal = true;
+	VCM_AIDISTANCEVEHPATH = 0; 
+	VCM_ADVANCEDMOVEMENT = false; 
 	VCM_FRMCHANGE = true; 
 	VCM_SKILLCHANGE = true;
 	VCM_USECBASETTINGS = true;
 	VCM_CARGOCHNG = true; 
 	VCM_TURRETUNLOAD = true;
 	VCM_DISEMBARKRANGE = 200;
-	VCM_AISNIPERS = true; 
+	VCM_AISNIPERS = false; 
 	VCM_AISUPPRESS = true; 
 	Vcm_DrivingActivated = true;
-	Vcm_PlayerAISkills = false;
+	Vcm_PlayerAISkills = false; 
 };
 
 // Skill increase or decrease as a percentage

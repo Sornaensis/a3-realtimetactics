@@ -159,6 +159,9 @@ if ( isDedicated || _runsetup ) then {
 								 		private _pos = (getPos _f) findEmptyPosition [2,25,"MAN"];
 								 		player setPosATL _pos;
 								 		player setDir ((getPos player) getDir (getPos _f));
+								 		"opfor_target" setMarkerPos (getPos player);
+										private _mrkStart = (getPos player) vectorAdd ((vectorDir player) vectorMultiply -50);
+										"opfor_start" setMarkerPos _mrkStart;
 								 	};
 								 },_dest,1.5,true,true,"","true",5,false,"",""];
 			} forEach (_flags select { (_x select 0) != _flag });
@@ -264,6 +267,19 @@ if ( isDedicated || _runsetup ) then {
 						publicVariable "INS_playerMaterials";
 						private _spawnpos = (getPos player) findEmptyPosition [5,20, "MAN"];
 						private _soldier = [_spawnpos] call _spawner;
+						private _rtsSetup = (group _soldier) getVariable "RTS_Setup";
+						(group _soldier) setVariable [ "RTS_Setup", [ _rtsSetup # 0,
+																	  _rtsSetup # 1,
+																	  _rtsSetup # 2,
+																	  _rtsSetup # 3,
+																	  _rtsSetup # 4,
+																	  selectRandomWeighted ["GREEN", 0.2, "VETERAN", 0.8, "ELITE", 0.3 ],
+																	  selectRandomWeighted [ 2,0.5,
+																						     3,0.2,
+																							 1,0.8,
+																							 -1,0.3,
+																							 -2,0.1,
+																							 0,0.9 ] ], true ];
 						[] call RTS_fnc_setupAllGroups;
 					};
 				} else {
@@ -350,7 +366,7 @@ if ( isDedicated || _runsetup ) then {
 						_marktype = "mil_flag";
 					};
 					
-					private _marker = INS_rscMarks select _forEachIndex;
+					private _marker = format ["__resource_mark__%1", _name];
 					_marker setMarkerTypeLocal _marktype;
 					
 				} forEach INS_controlAreas;
@@ -364,26 +380,26 @@ if ( isDedicated || _runsetup ) then {
 		INS_maxMen = 45;
 		
 		// Costs in [manpower, materials]
-		INS_spyCost = [2, 5];
-		INS_squadCost = [10,20];
-		INS_mgCost = [5, 20];
-		INS_sniperCost = [10, 15];
-		INS_carCost = [5, 50];
-		INS_apcCost = [10, 100];
-		INS_tankCost = [30, 250];		
+		INS_spyCost = [3, 10];
+		INS_squadCost = [6,8];
+		INS_mgCost = [5, 12];
+		INS_sniperCost = [4, 8];
+		INS_carCost = [5, 25];
+		INS_apcCost = [10, 65];
+		INS_tankCost = [30, 150];		
 		
-		INS_mpMax = 75;
-		INS_matMax = 300;
+		INS_mpMax = 85;
+		INS_matMax = 400;
 		INS_lastMen = 0;
-		INS_menPulse = 300;
+		INS_menPulse = 220;
 		INS_lastMat = 0;
-		INS_matPulse = 400;
+		INS_matPulse = 300;
 		
 		// Starting materials and manpower
 		if ( isNil "INS_playerMaterials" ) then {
-			INS_playerMaterials = 100;
+			INS_playerMaterials = 250;
 			publicVariable "INS_playterMaterials";
-			INS_playerManpower = 50;
+			INS_playerManpower = 75;
 			publicVariable "INS_playerManpower";
 		};
 		
@@ -468,6 +484,24 @@ if ( isDedicated || _runsetup ) then {
 			
 				INS_infoBox2 ctrlSetFontHeight 0.07;
 				INS_infoBox2 ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-0.15),safeZoneY+0.01,0.3,0.07]; 
+				
+				INS_refundButton = SPEC_DISPLAY ctrlCreate ["RscButton", -1];
+				INS_refundButton ctrlSetText "Refund Unit";
+				INS_refundButton buttonSetAction "[RTS_selectedGroup] call INS_fnc_refundUnit";
+				INS_refundButton ctrlEnable false;
+				INS_refundButton ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-0.05) - 0.152,safeZoneY+0.073,0.15,0.07]; 
+				
+				INS_moveButton = SPEC_DISPLAY ctrlCreate ["RscButton", -1];
+				INS_moveButton ctrlSetText "Deploy On Commander";
+				INS_moveButton buttonSetAction "[RTS_selectedGroup] call INS_fnc_moveUnitToCommander";
+				INS_moveButton ctrlEnable false;
+				INS_moveButton ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-0.05),safeZoneY+0.073,0.20,0.07];
+				
+				INS_repairRearm = SPEC_DISPLAY ctrlCreate ["RscButton", -1];
+				INS_repairRearm ctrlSetText "Repair & Rearm";
+				INS_repairRearm buttonSetAction "[RTS_selectedGroup] call INS_fnc_repairRearmUnit";
+				INS_repairRearm ctrlEnable false;
+				INS_repairRearm ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-0.05) + 0.2,safeZoneY+0.073,0.15,0.07];
 			};
 
 			true			
@@ -494,35 +528,60 @@ if ( isDedicated || _runsetup ) then {
 	
 			_box ctrlCommit 0;
 			
+			if ( INS_disp ) then { 
+				if ( !(isNull RTS_selectedGroup) ) then {
+					([RTS_selectedGroup] call INS_fnc_calculateRefundRearmCost) params [ "_mat", "_man" ];
+					private _leaderPos = getPosATL (leader RTS_selectedGroup);
+					private _nearEnemies = count (allUnits select { side _x != civilian && side _x != east && ((getPos _x) distance2d _leaderPos) < 650 }) > 0;
+					INS_refundButton ctrlEnable ( !_nearEnemies );
+					INS_refundButton ctrlSetTooltip ( format ["Manpower: %1 / Materials: %2", _man, _mat] );
+					INS_moveButton ctrlEnable ( !_nearEnemies );
+					INS_repairRearm ctrlEnable ( !_nearEnemies && _mat <= INS_playerMaterials && _man <= INS_playerManpower );
+				} else {
+					INS_refunButton ctrlSetTooltip "";
+					INS_refundButton ctrlEnable false;
+					INS_moveButton ctrlEnable false;
+					INS_repairRearm ctrlEnable false;
+				};
+				INS_refundButton ctrlCommit 0;
+				INS_moveButton ctrlCommit 0;
+				INS_repairRearm ctrlCommit 0;
+			};
+			
 			// Process income
-			if ( count ((call INS_allPlayers) select { side _x == west }) > 0 ) then {
-				INS_controlled = INS_controlAreas select { ((_x select 2) select 0) < -51 };
-				// manpower
-				if ( time > (INS_lastMen + INS_menPulse) && INS_playerManpower < INS_mpMax ) then {
-					INS_lastMen = time;
-					private _amount = 0;
-					{
-						INS_playerManpower = INS_playerManpower + _x;
-						_amount = _amount + _x;
-					} forEach ( INS_controlled apply { floor ( ( (_x select 2) select 1 ) / 10 ) } );
-					publicVariable "INS_playerManpower";
-					titleText [ format [ "<t size='1.5'>%1 MANPOWER Income received!</t>", _amount ], "PLAIN", 1, true, true];
-				};
-				
-				// material 
-				if ( time > (INS_lastMat + INS_matPulse) && INS_playerMaterials < INS_matMax ) then {
-					INS_lastMat = time;
-					private _amount = 0;
-					{
-						INS_playerMaterials = INS_playerMaterials + _x;
-						_amount = _amount + _x;
-					} forEach ( INS_controlled apply { floor ( ( (_x select 2) select 2 ) / 15 ) } );
-					publicVariable "INS_playerMaterials";
-					titleText [ format [ "<t size='1.5'>%1 MATERIALS Income received!</t>", _amount ], "PLAIN", 1, true, true];
-				};
+
+			INS_controlled = INS_controlAreas select { ((_x select 2) select 0) < -51 };
+			// manpower
+			if ( time > (INS_lastMen + INS_menPulse) && INS_playerManpower < INS_mpMax ) then {
+				INS_lastMen = time;
+				private _amount = 0;
+				{
+					INS_playerManpower = INS_playerManpower + _x;
+					_amount = _amount + _x;
+				} forEach ( INS_controlled apply { floor ( ( (_x select 2) select 1 ) / 10 ) } );
+				publicVariable "INS_playerManpower";
+				titleText [ format [ "<t size='1.5'>%1 MANPOWER Income received!</t>", _amount ], "PLAIN", 1, true, true];
+			};
+			
+			// material 
+			if ( time > (INS_lastMat + INS_matPulse) && INS_playerMaterials < INS_matMax ) then {
+				INS_lastMat = time;
+				private _amount = 0;
+				{
+					INS_playerMaterials = INS_playerMaterials + _x;
+					_amount = _amount + _x;
+				} forEach ( INS_controlled apply { floor ( ( (_x select 2) select 2 ) / 15 ) } );
+				publicVariable "INS_playerMaterials";
+				titleText [ format [ "<t size='1.5'>%1 MATERIALS Income received!</t>", _amount ], "PLAIN", 1, true, true];
 			};
 			
 		}];
+		if ( isNil "RTS_postCmmand_Finished" ) then {
+			[] spawn (compile preprocessFileLineNumbers "commander_post_setup.sqf");
+			
+			RTS_postCommand_Finished = true;
+			publicVariable "RTS_postCommand_Finished";
+		};
 	};
 };
 
@@ -608,8 +667,8 @@ if ( isServer && isNil "INS_caches" ) then {
 									[-1, { 
 											titleText ["HUMINT has revealed new information about weapons cache", "PLAIN"];
 										}] call CBA_fnc_globalExecute;
-									_pos = getPosATL ( if (INS_caches == 2) then { INS_cache1 } else { INS_cache2 } );
-									_distance = 1100 - (INS_intelLevel*25);
+									private _pos = getPosATL ( if (INS_caches == 2) then { INS_cache1 } else { INS_cache2 } );
+									private _distance = 1100 - (INS_intelLevel*25);
 									[format ["__cache___marker_intel_%1-%2", _distance, INS_caches], [_pos,_distance] call CBA_fnc_randPos, "ICON", [1, 1], "COLOR:", "ColorRED", "TYPE:", "hd_dot", "TEXT:", format ["%1m",_distance], "PERSIST"] call CBA_fnc_createMarker;
 									deleteVehicle _case;
 								};
@@ -650,11 +709,61 @@ if ( side player == west ) then {
 		};
 	};
 	
+	{
+		_x params ["_name","_marker"];
+		private _localMarker = createMarkerLocal [ _marker + "__local_blufor", getMarkerPos _marker ];
+		_localMarker setMarkerShapeLocal ( markerShape _marker );
+		_localMarker setMarkerColorLocal ( getMarkerColor _marker );
+		_localMarker setMarkerBrushLocal ( markerBrush _marker );
+		_localMarker setMarkerSizeLocal ( getMarkerSize _marker );
+		_localMarker setMarkerDirLocal ( markerDir _marker );
+		_marker setMarkerAlphaLocal 0;
+	} forEach INS_controlAreas;
+	
+	FOB_arsenal_Class = "CargoNet_01_box_F";
+	FOB_layout = [
+	    ["Land_CamoNetVar_NATO_EP1",[0.866211,-2.41064,0],0,1,0,[],"","",true,false], 
+	    ["Land_Laptop_02_unfolded_F",[2.6416,-0.231445,0.0104232],75.4494,1,0,[],"","",true,false], 
+	    ["FoldTable",[2.88916,-0.17334,0],74.7982,1,0,[],"","",true,false], 
+	    ["Land_Sacks_goods_F",[-3.1001,0.0649414,0],30,1,0,[],"","",true,false], 
+	    ["Land_CratesPlastic_F",[3.89453,0.455566,0],270,1,0,[],"","",true,false], 
+	    ["Land_Sacks_heap_F",[-3.90234,1.43213,0],330,1,0,[],"","",true,false], 
+	    ["Land_CratesShabby_F",[-4.25977,0.0966797,0],0,1,0,[],"","",true,false], 
+	    ["Land_Sacks_heap_F",[4.64258,-0.797363,0],195,1,0,[],"","",true,false], 
+	    ["Land_CampingChair_V2_F",[3.81641,-3.71289,-1.90735e-006],227.615,1,0,[],"","",true,false], 
+	    ["PowerGenerator_EP1",[-3.73242,-3.79736,0],165,1,0,[],"","",true,false], 
+	    ["Land_HBarrier5",[-5.55811,-2.05371,0],270,1,0,[],"","",true,false], 
+	    ["Land_CampingChair_V2_F",[5.15039,-2.06982,-1.43051e-006],15.7636,1,0,[],"","",true,false], 
+	    ["Land_CratesWooden_F",[5.51758,0.452637,0],0,1,0,[],"","",true,false], 
+	    ["Land_HBarrier5",[3.26123,2.15381,0],0,1,0,[],"","",true,false], 
+	    ["Land_Sacks_heap_F",[5.89258,-0.797363,0],0,1,0,[],"","",true,false], 
+	    ["CargoNet_01_box_F",[3.51367,-5.57471,0],218.481,1,0,[],"","",true,false], 
+	    ["Land_CampingChair_V2_F",[5.03613,-4.56201,2.38419e-006],200.587,1,0,[],"","",true,false], 
+	    ["Land_CampingChair_V2_F",[6.24902,-2.7417,-1.90735e-006],52.2189,1,0,[],"","",true,false], 
+	    ["Land_HBarrier5",[-4.22119,-7.24707,0],255,1,0,[],"","",true,false], 
+	    ["AmmoCrateNoInteractive",[-6.75,-3.20068,0],90,1,0,[],"","",true,false], 
+	    ["Land_HBarrier5",[7.59326,0.833984,0],90,1,0,[],"","",true,false], 
+	    ["Land_PaperBox_closed_F",[-6.7417,-4.68018,0],240,1,0,[],"","",true,false], 
+	    ["AmmoCrates_NoInteractive_Medium",[-6.08301,-6.0332,0],345,1,0,[],"","",true,false], 
+	    ["Land_HBarrier5",[4.24365,-7.33984,0],315,1,0,[],"","",true,false], 
+	    ["M1130_HQ_unfolded_Base_EP1",[-0.982422,8.57764,0],0,1,0,[],"","",true,false], 
+	    ["Land_HBarrier_large",[4.55713,9.59033,0],90,1,0,[],"","",true,false], 
+	    ["MetalBarrel_burning_F",[-8.35742,6.70264,0],315,1,0,[],"","",true,false], 
+	    ["Land_PaperBox_open_empty_F",[2.39258,12.9521,0],180,1,0,[],"","",true,false], 
+	    ["Land_HBarrier5",[1.95459,17.8188,0],60,1,0,[],"","",true,false], 
+	    ["Land_PaperBox_closed_F",[0.900879,16.3179,0],150,1,0,[],"","",true,false], 
+	    ["NDS_6x6_ATV_MIL2_LR",[-3.98486,15.8545,-0.0351567],337.386,0.984764,0,[],"","",true,false], 
+	    ["NDS_6x6_ATV_MIL2_LR",[-1.97168,16.561,-0.0342455],336.495,1,0,[],"","",true,false], 
+	    ["Land_HBarrier1",[-6.3584,16.3184,0],75,1,0,[],"","",true,false], 
+	    ["Land_BagFence_End_F",[1.8042,17.9248,-0.000999928],60,1,0,[],"","",true,false], 
+	    ["Land_BagFence_Round_F",[0.427734,19.605,-0.00130129],195,1,0,[],"","",true,false]
+	];
+	
 	player addMPEventHandler [ "MPRespawn",
 							{ 
-								private _condition = { !INS_fobDeployed && !((getPos player) inArea "opfor_restriction") && (leader (group player)) == player };
-								private _action = ["Create FOB","Deploy FOB at your location.","",INS_createFob,_condition] call ace_interact_menu_fnc_createAction;
-								[player, 1, ["ACE_SelfActions"], _action] call ace_interact_menu_fnc_addActionToObject;
+								//private _condition = { !INS_fobDeployed && !((getPos player) inArea "opfor_restriction") && (leader (group player)) == player };
+								//private _action = ["Create FOB","Deploy FOB at your location.","",INS_createFob,_condition] call ace_interact_menu_fnc_createAction;
+								//[player, 1, ["ACE_SelfActions"], _action] call ace_interact_menu_fnc_addActionToObject;
 								[0, { INS_bluforCasualties = INS_bluforCasualties + 1; publicVariable "INS_bluforCasualties"; }] call CBA_fnc_globalExecute
 							}];
 	
@@ -694,6 +803,93 @@ if ( side player == west ) then {
 		""
 	];
 	
+	// CQB Settings
+	//// Civilian Enable
+	CQB_flag addAction [
+		"Toggle Civilians: <t color='#FF0000'>DISABLED</t>",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			[[],{ 
+				INS_civilians = true;
+				publicVariable "INS_civilians";
+			}] remoteExec ["call",2];
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"!INS_civilians",
+		5,
+		false,
+		"",
+		""
+	];
+	//// Civilian Disable
+	CQB_flag addAction [
+		"Toggle Civilians: <t color='#00FF00'>ENABLED</t>",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			[[],{ 
+				INS_civilians = false;
+				publicVariable "INS_civilians";
+			}] remoteExec ["call",2];
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"INS_civilians",
+		5,
+		false,
+		"",
+		""
+	];
+	//// Shootback Enable
+	CQB_flag addAction [
+		"Toggle Live-Fire: <t color='#FF0000'>DISABLED</t>",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			[[],{ 
+				INS_shootback = true;
+				publicVariable "INS_shootback";
+			}] remoteExec ["call",2];
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"!INS_shootback",
+		5,
+		false,
+		"",
+		""
+	];
+	//// Shootback Disable
+	CQB_flag addAction [
+		"Toggle Live-Fire: <t color='#00FF00'>ENABLED</t>",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			[[],{ 
+				INS_shootback = false;
+				publicVariable "INS_shootback";
+			}] remoteExec ["call",2];
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"INS_shootback",
+		5,
+		false,
+		"",
+		""
+	];
+	
+	// TP
 	base_flag addAction [
 		"Deploy to FOB",
 		{
@@ -706,7 +902,7 @@ if ( side player == west ) then {
 		true,
 		"",
 		"INS_fobDeployed && count ([fob_flag, allUnits select { side (group _x) != civilian && side (group _x) != west }, 500] call CBA_fnc_getNearest) == 0",
-		5,
+		10,
 		false,
 		"",
 		""
@@ -721,6 +917,16 @@ if ( side player == west ) then {
 			deleteMarker INS_fobMarker;
 			INS_fobDeployed = false;
 			publicVariable "INS_fobDeployed";
+			{
+				if ( _x isKindOf "AIR" || _x isKindOf "CAR" || _x isKindOf "TANK" ) then {
+					if ( count (crew _x) == 0 ) then {
+						deleteVehicle _x;
+					};
+				} else {
+					deleteVehicle _x;
+				};
+			} forEach INS_fob_Objects;
+			INS_fob_Objects = [];
 		},
 		nil,
 		1.5,
@@ -830,19 +1036,25 @@ if ( side player == west ) then {
 		""
 	];
 	
+	INS_fobMarker = createMarkerLocal ["Insurgency_Fob_Marker", getPos fob_flag ];
+	INS_fobMarker setMarkerColorLocal "ColorBlue";
+	INS_fobMarker setMarkerShapeLocal "ICON";
+	INS_fobMarker setMarkerTypeLocal "mil_flag";
+	INS_fobMarker setMarkerTextLocal "FOB Sentinel";
+	INS_fobMarker setMarkerAlphaLocal 0;
+	
 	INS_createFob = {
+		private _pos = (getPosATL player) findEmptyPosition [2, 5, typeOf fob_flag];
 		[fob_flag, false] remoteExecCall ["hideObjectGlobal", 2];
-		private _pos = (getPosATL player) findEmptyPosition [2, 15, typeOf fob_flag];
 		fob_flag setPosATL _pos;
 		player reveal fob_flag;
-		INS_fobMarker = createMarker ["Insurgency_Fob_Marker", _pos ];
-		INS_fobMarker setMarkerColor "ColorBlue";
-		INS_fobMarker setMarkerShape "ICON";
-		INS_fobMarker setMarkerType "mil_flag";
-		INS_fobMarker setMarkerText "FOB Sentinel";
 		publicVariable "INS_fobMarker";
 		INS_fobDeployed = true;
 		publicVariable "INS_fobDeployed";
+		INS_fob_Objects = [ _pos, getDir player, FOB_layout ] call BIS_fnc_ObjectsMapper;
+		{
+			[_x, true] call ace_arsenal_fnc_initBox;	
+		} forEach (INS_fob_Objects select { _x isKindOf FOB_arsenal_Class });
 	};
 	
 	private _condition = { !INS_fobDeployed && !((getPos player) inArea "opfor_restriction") && (leader (group player)) == player };
@@ -862,6 +1074,10 @@ if ( side player == west ) then {
 	INS_localTruckMarker setMarkerColorLocal "ColorBlue";
 	INS_localTruckMarker setMarkerTypeLocal "select";
 	INS_localTruckMarker setMarkerAlphaLocal 0;
+
+	INS_bluforGrpMarkers = [];
+
+	INS_markerUpdate = 0;
 
 	addMissionEventHandler ["Draw3d",
 	{
@@ -886,6 +1102,74 @@ if ( side player == west ) then {
 		INS_infoBox ctrlSetPosition [safeZoneX + (safeZoneWAbs/2-(ctrlTextWidth INS_infoBox)/2-0.015),safeZoneY+0.01,ctrlTextWidth INS_infoBox+0.03,0.07];
 
 		INS_infoBox ctrlCommit 0;
+		
+		if ( INS_markerUpdate < time - 3 ) then {
+			{
+				_x params ["_name","_marker","_stats"];
+				if ( (_stats # 4) < 50 ) then {
+					if ( ( (_x select 2) select 0 ) >= 51 ) then {
+						( _marker + "__local_blufor" ) setMarkerColorLocal "ColorBlue";
+					} else {
+						( _marker + "__local_blufor" ) setMarkerColorLocal "ColorRed";
+					};
+				} else {
+					( _marker + "__local_blufor" ) setMarkerColorLocal (getMarkerColor _marker);
+				};
+			} forEach INS_controlAreas;
+			INS_markerUpdate = time;
+		};
+		
+		private _humanPlayers = call INS_allPlayers;
+		private _bluformarks = [];
+		{
+			private _group = _x;
+			
+			
+			if ( count ( (units _group) select { alive _x } ) == 0 ) then {
+				private _marker = _group getVariable ["blufor_tracker", createMarkerLocal [ str _group, [0,0,0] ] ];
+				deleteMarkerLocal _marker;
+			};
+			private _leader = leader _group;
+		
+			if ( !( _leader in _humanPlayers ) && !((getPos _leader) inArea "opfor_restriction") ) then {
+				private _marker = _group getVariable ["blufor_tracker", createMarkerLocal [ str _group, getPos _leader ]];
+				_marker setMarkerShapeLocal "ICON";
+				_marker setMarkerPosLocal (getPos _leader);
+				private _veh = vehicle _leader;
+				if ( _veh isKindOf "Car" ) then {
+					_marker setMarkerTypeLocal "b_motor_inf";
+				};
+				if ( _veh isKindOf "APC" ) then {
+					_marker setMarkerTypeLocal "b_mech_inf";
+				};
+				if ( _veh isKindOf "Tank" ) then {
+					_marker setMarkerTypeLocal "b_armor";
+				};
+				if ( _veh isKindOf "StaticWeapon" ) then {
+					_marker setMarkerTypeLocal "b_support";
+				};
+				if ( _veh isKindOf "Man" ) then {
+					_marker setMarkerTypeLocal "b_inf";
+				};
+				_marker setMarkerColorLocal "ColorBlufor";
+				_bluformarks pushback _marker;
+				
+			};
+		} forEach ( allGroups select { side _x == west && ((getPos (leader _x)) distance2d (getPos player)) < 1500  } );
+		
+		{
+			if ( !( _x in _bluformarks ) ) then {
+				deleteMarkerLocal _x;
+			};
+		} forEach INS_bluforGrpMarkers;
+		INS_bluforGrpMarkers = _bluformarks;
+		
+		if ( !( isObjectHidden fob_flag ) ) then {
+			INS_fobMarker setMarkerAlphaLocal 1;
+			INS_fobMarker setMarkerPosLocal (getPos fob_flag);
+		} else {
+			INS_fobMarker setMarkerAlphaLocal 0;
+		};
 	}];
 	
 };

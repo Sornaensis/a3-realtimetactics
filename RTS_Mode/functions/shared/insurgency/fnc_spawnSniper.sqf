@@ -17,3 +17,5 @@ private _group = grpnull;
 } forEach _setups;
 
 _group setVariable ["RTS_setup", [_group, "Sniper Team", grpnull, "\A3\ui_f\data\map\markers\nato\o_inf.paa", "o_inf"],true];
+
+leader _group

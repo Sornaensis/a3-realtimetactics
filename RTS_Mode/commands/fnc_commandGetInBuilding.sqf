@@ -18,7 +18,7 @@ private _pos = _positions select _i;
 
 _commands = _group getVariable ["commands", []];
 
-private _newcommand = [getPos RTS_selectedBuilding,"GARRISON", "","","","NORMAL", nil, RTS_selectedBuilding ];
+private _newcommand = [_pos,"GARRISON", "","","","NORMAL", nil, RTS_selectedBuilding ];
 
 _commands set [count _commands, _newcommand];
 

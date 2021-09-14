@@ -27,6 +27,7 @@ if ( RTS_phase == "MAIN" || RTS_phase == "INITIALORDERS" ) then {
 								{
 									params ["_group", "_pos"];
 									_group setFormDir ((leader _group) getDir _pos);
+									_group setVariable ["WatchPos", _pos];
 									{
 										_x doWatch _pos
 									} forEach (units _group);

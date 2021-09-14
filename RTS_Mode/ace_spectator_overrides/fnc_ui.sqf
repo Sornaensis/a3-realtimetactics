@@ -13,7 +13,6 @@
  *
  * Public: No
  */
- 
 #include "\z\ace\addons\spectator\script_component.hpp"
 
 params ["_init"];
@@ -24,6 +23,9 @@ RTS_commanding = _init;
 if ( !RTS_commanding ) then {
 	terminate RTS_ui_loop;
 	call RTS_ui_cleanup;
+	[false] call acre_api_fnc_setSpectator;
+} else {
+	[true] call acre_api_fnc_setSpectator;
 };
 
 // No change
@@ -125,6 +127,7 @@ if (_init) then {
         [] call FUNC(ui_updateWidget);
     }, 5] call CBA_fnc_addPerFrameHandler;
 	ace_spectator_camMode = 0;
+	
 } else {
 	
 	setGroupIconsVisible [false, false];

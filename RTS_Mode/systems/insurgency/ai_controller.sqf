@@ -12,7 +12,7 @@ INS_detention = [] spawn {
 				private _insArea = [_zone] call INS_getZone;
 				private _params = _insArea select 2;
 				private _disp = _params select 0;
-				_params set [0,_disp + 5 + (random 15)];
+				_params set [0,_disp + 20 + (random 15)];
 				diag_log (format ["Changing disposition of %1 due to captive",_zone]);
 			};
 		} forEach _detended;
@@ -209,11 +209,16 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 					private _zone2 = [_pos] call getNearestControlZone2;
 					
 					if ( !isNil "_zone" ) then {					
+						private _densityModifier = ( if ( (side _player) == east && [_zone] call INS_zoneIsOpfor ) then {
+														0.1
+													 } else {
+														1
+												     } );
 						// record zone
 						_player setVariable ["insurgency_zone", _zone];
 						if ( [_zone] call INS_canZoneSpawnAndUpdate ) then {
 							private _density = [_zone] call INS_getZoneDensity;
-							if ( _density < INS_populationDensity ) then {
+							if ( _density < ( INS_populationDensity * _densityModifier ) ) then {
 								_params pushback [_zone,_pos];
 							};
 						};
@@ -221,10 +226,15 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 						_player setVariable ["insurgency_zone", nil];
 					};
 					
-					if ( !isNil "_zone2" ) then {
+					if ( !isNil "_zone2" && (side _player) != east ) then {
+						private _densityModifier = ( if ( (side _player) == east && [_zone2] call INS_zoneIsOpfor ) then {
+														0.1
+													 } else {
+														1
+												     } );
 						if ( [_zone2] call INS_canZoneSpawnAndUpdate ) then {
 							private _density = [_zone2] call INS_getZoneDensity;
-							if ( _density < INS_populationDensity ) then {
+							if ( _density < ( INS_populationDensity * _densityModifier ) ) then {
 								_params pushback [_zone2,_pos];
 							};
 						};
@@ -252,15 +262,15 @@ INS_opforAiSpawner = addMissionEventHandler ["EachFrame",
 						if ( _patrolZone != -1 ) then {
 							private _patrols = INS_patrolTable # _patrolZone;
 							_patrols params ["","_pulse","_time"];
-							// reset patrols after 2min zone absence
-							if ( _time != -1 && time < (_time + _pulse) + 120 ) then {
+							// reset patrols after 10min zone absence
+							if ( _time != -1 && time < (_time + _pulse) + 600 ) then {
 								if ( time > (_time + _pulse) ) then {
 									
-									if ( _pulse > 9000 ) then {
-										_pulse = 0;
+									if ( _pulse > 4000 ) then {
+										_pulse = 650 + (floor (random 180));
 									};
 									
-									_patrols set [1, _pulse + 1100 + (floor (random 300))];
+									_patrols set [1, _pulse + 600 + (floor (random 180))];
 									_patrols set [2, time];
 									if ( call INS_hasHC ) then {
 										private _hc = call INS_getNextHC;

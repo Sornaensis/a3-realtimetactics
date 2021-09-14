@@ -22,6 +22,9 @@
 	 Q(INS_fnc_spawnAPC),
 	 Q(INS_fnc_spawnTank),
 	 Q(INS_fnc_setupCaches),
+	 Q(INS_fnc_refundUnit),
+	 Q(INS_fnc_moveUnitToCommander),
+	 Q(INS_fnc_calculateRefundRearmCost),
 	 Q(INS_fnc_spawnReinforcements),
 	 Q(INS_fnc_spawnStartingUnits),
 	 Q(INS_fnc_spawnRandomSoldier)]

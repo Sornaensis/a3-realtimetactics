@@ -261,7 +261,7 @@ if ( RTS_commanding ) then {
 					};
 			if _draw then {
 				drawIcon3D ["\A3\ui_f\data\map\markers\handdrawn\dot_CA.paa", [0,0,0,1], _drawpos, 0.8, 0.8,0];
-				drawIcon3D ["\A3\ui_f\data\map\markers\handdrawn\dot_CA.paa", RTS_greenColor, _drawpos, 0.6, 0.6,0];
+				drawIcon3D ["\A3\ui_f\data\map\markers\handdrawn\dot_CA.paa", RTS_GreenColor, _drawpos, 0.6, 0.6,0];
 			};
 		};
 	} forEach ( allUnits select {side _x == RTS_sideGreen} );
@@ -307,7 +307,7 @@ if ( RTS_commanding ) then {
 					};
 			if _draw then {
 				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", [0,0,0,1], _drawpos, 0.8, 0.8,0];
-				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", ( if ( side (driver _x) != RTS_sidePlayer ) then { RTS_Greenfor_GreenColor } else { RTS_sideColor }), _drawpos, 0.6, 0.6,0];
+				drawIcon3D ["\A3\ui_f\data\map\markers\military\triangle_CA.paa", ( if ( side (driver _x) != RTS_sidePlayer ) then { RTS_GreenColor } else { RTS_sideColor }), _drawpos, 0.6, 0.6,0];
 			};
 		};
 	} forEach ( RTS_greenfor_vehicles );

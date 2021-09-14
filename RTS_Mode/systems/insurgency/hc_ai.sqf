@@ -80,9 +80,10 @@ INS_insurgentAI = [] spawn {
 					private _last = _alive # 0;
 					if ( vehicle _last == _last && count ( [_last,(call INS_allPlayers) select { side (group _x) != side _group }, 75] call CBA_fnc_getNearest) > 0 ) then {
 						private _tough = _group getVariable ["ai_tough", false];
-						private _surrender = selectRandomWeighted [true,( if ( _tough ) then { 0.1 } else { 0.3 } ),false,0.9];
+						private _surrender = selectRandomWeighted [true,( if ( _tough ) then { 0.3 } else { 0.7 } ),false,0.5];
 						if ( _surrender ) then {
 							["ACE_captives_setSurrendered", [_last, true], _last] call CBA_fnc_targetEvent;
+							_last setCaptive true;
 							_last setVariable [ "ai_surrendered", true, true ];
 							diag_log (format ["%1 surrendering to players.",_last]);
 						};

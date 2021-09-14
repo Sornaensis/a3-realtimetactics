@@ -77,14 +77,12 @@ doCounterAttack = {
 waitUntil { RTS_objectivesSetupInitial };
 
 RTS_enemyGroups = [];
-RTS_enemyTotalStrength = 0;
 
 {
 	if ( count (_x getVariable ["RTS_setup", []]) > 0 ) then {
 		RTS_enemyGroups pushbackunique _x;
-		RTS_enemyTotalStrength = RTS_enemyTotalStrength + (count (units _x));
 	};
-} forEach ( allGroups select { side _x == RTS_sideEnemy } );
+} forEach ( allGroups select { side _x == RTS_sideEnemy && simulationEnabled (leader _x) } );
 
 private _leaders = [RTS_enemyGroups, { leader _x }] call CBA_fnc_filter;
 
@@ -124,7 +122,7 @@ totalStrength = {
 };
 
 reserveGroups = {
-	( (call totalStrength) select { (_x getVariable ["opfor_status",""]) == "RESERVE" } )
+	( (call totalStrength) select { (_x getVariable ["opfor_status","RESERVE"]) == "RESERVE" } )
 };
 
 sum_list = {
@@ -230,7 +228,7 @@ assessObjective = {
 
 
 // About 20% reserves to start, then task counterattacks and such from there
-RTS_targetReserveCoeff = 20;
+RTS_targetReserveCoeff = 25;
 
 RTS_counterAttacks = [];
 
@@ -274,6 +272,24 @@ counterAttack = {
 
 RTS_ai_commander = [] spawn  {
 	while { true } do {
+	
+		{
+			if ( count (_x getVariable ["RTS_setup", []]) > 0 ) then {
+				RTS_enemyGroups pushbackunique _x;
+			};
+		} forEach ( allGroups select { side _x == RTS_sideEnemy && simulationEnabled (leader _x) } );
+	
+		private _groups = [];
+		{
+			if ( !(_x isEqualTo grpnull) ) then {
+				if ( count ((units _x) select { alive _x }) > 0 ) then {
+					_groups pushbackUnique _x;
+				};
+			};
+		} forEach RTS_enemyGroups;
+		
+		RTS_enemyGroups = _groups;
+	
 		// Assess our own objectives for attacks
 
 		private _incompleteObjectives = ( [RTS_enemySideObjectives, { [_x, _x call assessObjective ] }] call CBA_fnc_filter ) 
@@ -310,18 +326,21 @@ RTS_ai_commander = [] spawn  {
 		
 		private _reserveCoeff = floor ( _reserveUnits / (_totalUnits max 1) * 100 );
 		
-		if ( _reserveCoeff >= RTS_targetReserveCoeff ) then {
+		if ( _reserveCoeff > RTS_targetReserveCoeff ) then {
 			private _taskGroup = selectRandom _reserveGroups;
 			
 			private _strength = count (units _taskGroup);
 			
-			if ( (floor ( (_reserveUnits - _strength) / (_totalUnits max 1) * 100 )) >= RTS_targetReserveCoeff ) then {
+			if ( (floor ( (_reserveUnits - _strength) / (_totalUnits max 1) * 100 )) > RTS_targetReserveCoeff ) then {
 					
 				private _nearestObj = [leader _taskGroup, [RTS_enemySideObjectives,{_x select 1}] call CBA_fnc_filter] call CBA_fnc_getNearest;
 				
-				( [ getMarkerSize _nearestObj,{ _x * 2.2 }] call CBA_fnc_filter ) params ["_mx","_my"];
-						
-				[_taskGroup, _nearestObj, _mx max _my] call setupAsPatrol;			
+				if ( !isNil "_nearestObj" ) then {
+					
+					( [ getMarkerSize _nearestObj,{ _x * 2.2 }] call CBA_fnc_filter ) params ["_mx","_my"];
+							
+					[_taskGroup, _nearestObj, _mx max _my] call setupAsPatrol;			
+				};
 			};
 		};	
 		

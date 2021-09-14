@@ -380,8 +380,6 @@ RTS_ui_cleanup = {
 	ctrlDelete RTS_showOOBBtn;
 	ctrlDelete RTS_OOBTree;
 
-	ctrlDelete RTS_phaseBox;
-	ctrlDelete RTS_phaseButton;
 	ctrlDelete RTS_statusText;
 	ctrlDelete RTS_moraleText;
 	ctrlDelete RTS_commandEffectText;
@@ -395,7 +393,6 @@ RTS_ui_cleanup = {
 	ctrlDelete RTS_passengerInfoText;
 	
 	ctrlDelete RTS_selectCommanderBtn;
-	
 	ctrlDelete RTS_controlUnitBtn;
 	
 	ctrlDelete RTS_unitNameText;
@@ -408,6 +405,11 @@ RTS_ui_cleanup = {
 	{
 		ctrlDelete _x;
 	} foreach RTS_unitDataControls;
+	
+	ctrlDelete RTS_overViewPanel;
+	
+	ctrlDelete RTS_phaseBox;
+	ctrlDelete RTS_phaseButton;
 };
 
 RTS_ui_loop = [] spawn {

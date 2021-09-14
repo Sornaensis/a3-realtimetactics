@@ -61,3 +61,15 @@ publicVariable "INS_fobDeployed";
 ["Land_HelipadCircle_F",1]
 
 ]] call acex_fortify_fnc_registerObjects;
+
+
+{
+	private _veh = _x;
+	private _vec = vectorDir _veh;
+	private _up  = vectorUp _veh;
+	private _type = typeOf _veh;
+	private _pos = getPos _veh;
+	deleteVehicle _x;
+	private _simple = createSimpleObject [ _type, _pos ];
+	_simple setVectorDir [ _vec, _up ];
+} forEach (vehicles select { _x inArea "opfor_restriction" && !( _x isKindOf "AIR" || _x isKindOf "CAR" || _x isKindOf "StaticWeapon" || _x isKindOf "TANK" || (_x getVariable ["no_optimize",false]) ) });

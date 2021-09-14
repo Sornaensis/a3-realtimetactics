@@ -5,7 +5,7 @@ INS_despawn = 1200; // despawn units this distance from players when they cannot
 INS_spawnPulse = 8; // seconds to pulse spawns
 INS_initialSquads = 3; // spawn this many squads
 INS_civilianDensity = 11;
-INS_carDensity = 7;
+INS_carDensity = 4;
 INS_populationDensity = 17; 
 
 
@@ -377,7 +377,7 @@ INS_spawnUnits = {
 	
 	private _spawnlocs = [];
 	
-	private _spawntype = selectRandomWeighted ["Squad",1,"APC",0.09,"Tank",0.01];
+	private _spawntype = selectRandomWeighted ["Squad",1,"APC",0.15,"Tank",0.02];
 	private _spawnfunc = {};
 	
 	switch ( _spawntype ) do {
@@ -417,9 +417,9 @@ INS_spawnUnits = {
 	
 	private _leader = [_spawnpos,_side,true] call _spawnfunc;
 	if ( side _leader == west ) then {
-		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.2,"GREEN",0.5, "VETERAN", 0.3]];
+		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.5, "VETERAN", 0.3, "ELITE", 0.18 ] ];
 	} else {
-		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.4,"VETERAN",0.7]];
+		(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.4,"VETERAN",0.7,"ELITE",0.1] ];
 	};
 	(group _leader) setVariable ["ai_city", _zoneName, true];
 	if ( vehicle _leader == _leader ) then {
@@ -517,9 +517,9 @@ INS_spawnPatrol = {
 			private _group = group _leader;
 			_group setVariable ["initial_strength", count (units _group)];
 			if ( side _leader == west ) then {
-				_group setVariable ["Experience", selectRandomWeighted ["MILITIA",0.3,"GREEN",0.6, "VETERAN", 0.3]];
+				(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.5, "VETERAN", 0.3, "ELITE", 0.18 ] ];
 			} else {
-				_group setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.7,"VETERAN",0.5]];
+				(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.4,"VETERAN",0.7,"ELITE",0.1] ];
 			};
 			_group setVariable ["ai_city", _zoneName, true];
 			_group setVariable ["ai_status", "COUNTER-ATTACK"];
@@ -566,9 +566,9 @@ INS_spawnPatrol = {
 				private _group = group _leader;
 				(vehicle _leader) setVariable ["spawned_vehicle", true, true];
 				if ( side _leader == west ) then {
-					_group setVariable ["Experience", selectRandomWeighted ["MILITIA",0.3,"GREEN",0.6, "VETERAN", 0.3]];
+					(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.5, "VETERAN", 0.3, "ELITE", 0.18 ] ];
 				} else {
-					_group setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.7,"VETERAN",0.5]];
+					(group _leader) setVariable ["Experience", selectRandomWeighted ["MILITIA",0.1,"GREEN",0.4,"VETERAN",0.7,"ELITE",0.1] ];
 				};
 				_group setVariable ["ai_city", _zoneName, true];
 				_group setVariable ["ai_status", "COUNTER-ATTACK"];
@@ -637,7 +637,7 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 				private _zone = [_city] call INS_getZone;
 				private _zoneparams = zone select 2;
 				private _disp = _zoneparams select 0;
-				_zoneparams set [0, _disp + 0.5];
+				_zoneparams set [0, _disp + 1];
 				publicVariable "INS_controlAreas";
 			};
 		};
@@ -656,8 +656,8 @@ INS_killedHandler = addMissionEventHandler ["EntityKilled", {
 				private _zoneparams = _zone select 2;
 				private _aggression = _zoneparams select 3;
 				private _disp = _zoneparams select 0;
-				_zoneparams set [3, _aggression + 10];
-				_zoneparams set [0, _disp - 5];
+				_zoneparams set [3, _aggression + 20];
+				_zoneparams set [0, _disp - 15];
 				publicVariable "INS_controlAreas";				
 				[-1,
 				{
@@ -687,11 +687,11 @@ addMissionEventHandler ["BuildingChanged", {
 			private _aggression = _zoneparams select 3;
 			private _disp = _zoneparams select 0;
 			if ( _isRuin ) then {
-				_zoneparams set [3, _aggression + 15];
-				_zoneparams set [0, _disp - 10];
+				_zoneparams set [3, _aggression + 25];
+				_zoneparams set [0, _disp - 20];
 			} else {
-				_zoneparams set [3, _aggression + 5];
-				_zoneparams set [0, _disp - 5];
+				_zoneparams set [3, _aggression + 10];
+				_zoneparams set [0, _disp - 10];
 			};
 			publicVariable "INS_controlAreas";
 			
@@ -727,6 +727,20 @@ INS_currentMissionName = { format ["blufor_task_%1",INS_currentMission] };
 
 INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 	{
+		
+		{
+			private _unit = _x;
+			private _pos = getPos _x;
+			{
+				if ( _pos inArea _x ) then {
+					if ( vehicle _unit != _unit ) then {
+						deleteVehicle (vehicle _unit);
+					};
+					deleteVehicle _unit;
+				};
+			} forEach RTS_restrictionZone;
+		} forEach ( allUnits select { (side (group _x)) == east && !(captive _x) && !(_x getVariable ["cqb_soldier", false]) } );
+	
 		if ( INS_bluforMission == "NONE" ) then {
 			// Setup aid delivery mission
 			
@@ -872,7 +886,7 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 								private _zone = (INS_controlAreas select { (_x select 0) == INS_taskZone }) select 0;
 								private _zoneparams = _zone select 2;
 								private _disp = _zoneparams select 0;
-								_zoneparams set [0, _disp + 35];
+								_zoneparams set [0, _disp + 85];
 								publicVariable "INS_controlAreas";
 								
 								
@@ -1032,7 +1046,7 @@ INS_getCapZone = {
 INS_insurgencyZoneCapping = [] spawn {
 	while { true } do {
 		private _humanPlayers = call INS_allPlayers;
-		private _insurgents = ( if ( count ( _humanPlayers select { side _x == west }) > 0 ) then { ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } } else { [] });
+		private _insurgents = ( ( allGroups select { !( (_x getVariable ["rts_setup", objnull]) isEqualTo objnull ) } ) apply { leader _x } );
 		private _unitSpawners = ( _humanPlayers + _insurgents );
 		
 		{
@@ -1092,25 +1106,27 @@ INS_insurgencyZoneCapping = [] spawn {
 					_beingCapped = true;
 					_capzone params ["","_capside","_captime"];
 					if ( _capside == _side ) then {
-						if ( time > ( _captime + 180 ) ) then {
+						if ( time > ( _captime + 25 ) ) then {
 							diag_log (format ["%1 is being capped by %2", _name, _side]);
 							_capzone set [2, time];
 							private _zoneparams = _zone select 2;
 							
 							private _zoneadjustment = 0;
-							
+							private _intelAdjust    = 0;
 							switch ( _side ) do {
 								case east: {
-									_zoneadjustment = -5;
+									_zoneadjustment = -15;
 								};
 								case west: {
 									_zoneadjustment = 5;
+									_intelAdjust    = 1;
 								};
 							};
 							
-							_zoneparams params ["_disp"];
-							_zoneparams set [0, ((_disp + _zoneadjustment) min 100) max -100 ];
+							_zoneparams params ["_disp","","","","_intel"];
+							_zoneparams set [0, ((_disp + _zoneadjustment) min 100) max -100, (_intel + _intelAdjust) min 100 ];
 							publicVariable "INS_controlAreas";
+							_capzone set [2, time];
 						};
 					} else {
 						_capzone set [1, _side];

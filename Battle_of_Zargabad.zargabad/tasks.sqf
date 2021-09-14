@@ -79,7 +79,7 @@ BOZ_captured_military_complex = true;
 
 [1] call JTF_fnc_reviveGroups;
 
-private _yarum = ["occupy0"] call JTF_completeTask_keep;
+private _yarum = ["occupy1"] call JTF_completeTask_keep;
 
 waitUntil { scriptDone _yarum || triggerActivated wave_2_trigger };
 

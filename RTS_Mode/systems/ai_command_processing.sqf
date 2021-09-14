@@ -17,6 +17,7 @@
 		};
 		{
 			_x doWatch objnull;
+			_x enableAi "MOVE";
 			if ( _x != (leader _group) ) then {
 				[_x] doFollow leader _group;
 			};	
@@ -25,7 +26,8 @@
 		if ( (vehicle (leader _group)) != (leader _group) && ( (group (driver (vehicle (leader _group)))) == _group ) ) then {
 			private _unit = (driver (vehicle (leader _group)));
 			_unit enableAi "MOVE";
-			_unit doMove _pos;
+			//_unit doMove _pos;
+			_group move _pos;
 			(group _unit) setSpeedMode _speed;
 			(group _unit) setBehaviour _behaviour;
 			_scriptSpawned = [(driver (vehicle (leader _group))), _pos, _type, _speed, _behaviour, _pausetime] spawn {
@@ -41,8 +43,8 @@
 					private _future = time + 15;
 					waitUntil { (_group getVariable ["waypoint_canceled", false]) || speed (vehicle _unit) > 0 || (time > _future && !RTS_paused) || ([_unit, _pos] call CBA_fnc_getDistance) < 9 || !(alive _unit) };
 					sleep 3;
-					waitUntil { (_group getVariable ["waypoint_canceled", false]) || (speed (vehicle _unit) == 0 && !RTS_paused) || ([_unit, _pos] call CBA_fnc_getDistance) < 9 || !(alive _unit) };
-					if ( ([_unit, _pos] call CBA_fnc_getDistance) < 9 || (_group getVariable ["waypoint_canceled", false]) ) then {
+					waitUntil { (_group getVariable ["waypoint_canceled", false]) || (speed (vehicle _unit) == 0 && !RTS_paused && ([_unit, _pos] call CBA_fnc_getDistance) < 20 ) || ([_unit, _pos] call CBA_fnc_getDistance) < 15 || !(alive _unit) };
+					if ( ([_unit, _pos] call CBA_fnc_getDistance) < 20 || (_group getVariable ["waypoint_canceled", false]) ) then {
 						_complete = true;
 						_unit doMove (getPos _unit);
 					};
@@ -93,36 +95,37 @@
 			};
 		} else {
 			if ( _type == "GETIN" || _type == "MOUNT" ) then {
-				(units _group) allowGetIn true;
-				private _candidates = [];
-				{
-					if ( ! (isNil "_x") ) then {
-						_candidates set [count _candidates, _x];
-					};
-				} forEach ([RTS_commandingGroups, 
-									{ _x getVariable ["owned_vehicle", nil] }] call CBA_fnc_filter);
+				private _candidates = vehicles;
 				private _cond = 
 					if ( _type == "MOUNT" ) then {
 							{ 	private _crew = (crew _x) select { alive _x }; 
 								(count _crew) == 0 
 							}
 					} else { 
-							{ true } 
+							{ private _crew = (crew _x) select { alive _x }; 
+								(count _crew) > 0 } 
 					};
 				private _wpveh = [_pos,[_pos, _candidates, 10, _cond] call CBA_fnc_getNearest] call CBA_fnc_getNearest;
 				if ( ! isNil "_wpveh" ) then {
-					private _wp =
-						if (_type == "GETIN") then {
-							{ 
-								_x assignAsCargo _wpveh;
-							} forEach ( units _group);
-							[_group, getPosATL _wpveh, 0, "GETIN", _behaviour, _combat, _speed, _form, 
-								"[group this] call RTS_fnc_removeCommand", [0,0,0], 0] call CBA_fnc_addWaypoint;
-						} else {
-							[_group, getPosATL _wpveh, 0, "GETIN", _behaviour, _combat, _speed, _form, 
-								"[group this] call RTS_fnc_removeCommand; [group this] call RTS_fnc_autoCombat;", [0,0,0], 0] call CBA_fnc_addWaypoint;
+					if ( !(isNull (driver _wpveh)) || _type == "MOUNT" ) then {
+						if ( ( (group (driver _wpveh)) in RTS_commandingGroups ) || _type == "MOUNT" ) then {
+							(units _group) allowGetIn true;
+							_group addVehicle _wpveh;
+							private _wp =
+								(if (_type == "GETIN") then {
+									{ 
+										_x assignAsCargo _wpveh;
+									} forEach ( units _group );
+									[_group, getPosATL _wpveh, 0, "GETIN", _behaviour, _combat, _speed, _form, 
+										"[group this] call RTS_fnc_removeCommand;", [0,0,0], 0] call CBA_fnc_addWaypoint
+								} else {
+									_group setVariable ["owned_vehicle", _wpveh];
+									[_group, getPosATL _wpveh, 0, "GETIN", _behaviour, _combat, _speed, _form, 
+										"[group this] call RTS_fnc_removeCommand; [group this] call RTS_fnc_autoCombat;", [0,0,0], 0] call CBA_fnc_addWaypoint
+								});
+							_wp waypointAttachVehicle _wpveh;
 						};
-					_wp waypointAttachVehicle _wpveh;
+					};
 				};
 			} else {	
 				if ( _type == "SEARCH" ) then {
@@ -131,16 +134,15 @@
 						_x doWatch objnull;
 						_x disableAI "COVER";
 						_x setVariable ["subtasking", true];
-						if ( _x !=  leader _group ) then {
+						//if ( _x !=  leader _group ) then {
 							doStop _x;
-						};
+						//};
 					} forEach (units _group);
 					_scriptSpawned = [_group, (_commands select 0) select 7,_pausetime] spawn {
 					    params ["_group", "_building","_pausetime"];
-					    private _leader = leader _group;
 					
 					    // Prepare group to search
-					    _group setFormDir ([_leader, _building] call BIS_fnc_dirTo);
+					    _group setFormDir ([leader _group, _building] call BIS_fnc_dirTo);
 					    
 					    private _positions = _building buildingPos -1;
 					    while {!(_positions isEqualTo []) && !(_group getVariable ["waypoint_canceled", false])} do {
@@ -203,7 +205,7 @@
 				    		};
 			    			_scripts pushback _script;
 				    		sleep 1;
-				    	} forEach ( (units _group) - [leader _group]);
+				    	} forEach ( units _group );
 					    
 					    _group setVariable ["subscripts", _scripts];
 					    
@@ -258,14 +260,32 @@
 								doStop _x;
 							};
 						} forEach (units _group);
-						_scriptSpawned = [_group, (_commands select 0) select 7,_pausetime] spawn {
-						    params ["_group", "_building","_pausetime"];
+						_scriptSpawned = [_group, (_commands select 0) select 7,_pausetime, (_commands select 0) select 0] spawn {
+						    params ["_group", "_building","_pausetime","_leaderPos"];
 						    private _leader = leader _group;							    
 						    
-						    private _positions = _building buildingPos -1;
+						    private _positions = [(_building buildingPos -1) - (_leaderPos)] call CBA_fnc_shuffle;
 						    private _units = units _group - [leader _group];
 						    private _inbuilding = [];
 						    private _scripts = [];
+						    
+						    private _tmpPos = [];
+						    
+						    {
+								private _pos = _x;
+								private _above = +_pos;
+								private _checkPos = +_pos;
+							    _above set [2, (_above # 2) + 20];
+								_checkPos set [2, (_checkPos # 2) + 1.7];
+								
+								private _isRoofTop = ([objnull, "VIEW"] checkVisibility [AGLToASL _checkPos, AGLToASL _above]) > 0;
+								
+								if ( !_isRoofTop ) then {
+									_tmpPos pushback _pos;
+								};
+							} forEach _positions;
+						    
+						    _positions = _tmpPos;
 						    
 						    while { !(_units isEqualTo []) && !(_positions isEqualTo []) } do {
 						    	private _unit = _units deleteAt 0;
@@ -279,6 +299,7 @@
 						    		private _script = [_unit,_pos] spawn {
 						    			params ["_unit", "_pos"];
 						    			_unit moveTo _pos;
+						    			private _group = group _unit;
 						    			private _ct = 0;
 						    			private _done = false;
 						    			while { alive _unit && !_done && _ct < 10 } do {
@@ -286,11 +307,18 @@
 							    			waitUntil { !(alive _unit) || speed _unit > 0 };
 							    			sleep 3;
 						    				waitUntil { !(alive _unit) || speed _unit == 0 || moveToCompleted _unit || moveToFailed _unit || unitReady _unit || ( (getPosATL _unit) distance _pos ) < 2 };
-						    				if ( speed _unit > 0 && ( (getPosATL _unit) distance _pos ) > 2 ) then {
+						    				if ( speed _unit > 0 && ( (getPosATL _unit) distance2d _pos ) > 5 ) then {
 						    					_ct = _ct + 1;
 						    				} else {
-						    					if ( ( (getPosATL _unit) distance _pos ) < 2 ) then {
-						    					 	_done = true;
+						    					if ( ( (getPosATL _unit) distance2d _pos ) < 5 ) then {
+						    					 	if ( count (allUnits select { side (group _x) != (side _group) && (getPosATL _x) distance2d (getPosATL _unit) < 100}) == 0 ) then {
+						    					 		_unit setPosATL _pos;
+						    					 		_done = true;
+						    					 	} else {
+						    					 		_ct = _ct + 1;
+						    					 	};
+						    					} else {
+						    						_ct = _ct + 1;
 						    					};
 						    				};
 						    				
@@ -307,7 +335,6 @@
 						    					};
 						    				};
 						    			};
-						    			_unit enableAI "COVER";
 						    		};
 						    		
 						    		_scripts pushback _script;
@@ -315,9 +342,8 @@
 						    	sleep 1;
 						    };
 						    
-						    if ( !(_positions isEqualTo []) ) then {
-						    	_group move (selectRandom _positions);
-						    };
+						    _group move _leaderPos;
+						    
 						    
 						    _group setVariable ["subscripts", _scripts];
 						    
@@ -383,6 +409,14 @@
 							if ( behaviour (leader _group) == "COMBAT" ) then {
 								_group setBehaviour "AWARE";
 							};
+						};
+						if ( _speed != "LIMITED" ) then {
+							{
+								_x setUnitPos "AUTO";
+								_x setUnitPosWeak "AUTO";
+								_x doWatch objnull;
+							} forEach ( units _group );
+							_group setVariable ["WatchPos", objnull];
 						};
 						{
 							_x doWatch objnull;
@@ -557,7 +591,7 @@
 			_group setVariable ["command_bonus", 1];
 		};
 		
-		_group setVariable ["morale", _maxmorale min ( (_group getVariable ["morale",0]) + ( if ( (_group getVariable ["morale",0]) > 0 ) then { 0.1 } else { 0.03 } ) * _commandbonus )];
+		_group setVariable ["morale", _maxmorale min ( (_group getVariable ["morale",0]) + ( if ( (_group getVariable ["morale",0]) > 0 ) then { 0.01 } else { 0.003 } ) * _commandbonus )];
 		
 		if ( (_group getVariable ["morale",0]) > 0 ) then {
 			_group setVariable ["commandable", true];
@@ -573,31 +607,40 @@
 		private _leader = leader _group;
 		private _targettime = _group getVariable ["SettargetTime", 0];
 		
-		if ( time - _targettime > 5 ) then {
+		if ( time - _targettime > 0 ) then {
 			private _targets = ( [ _group getVariable ["spotted",[]], [], { (getPos _x) distance (getPos _leader)  }, "ASCEND"] call BIS_fnc_sortBy ) select { side _x != civilian && side _x != RTS_sidePlayer };
+			
+			private _watchPos = (_group getVariable "WatchPos");
+			if ( !isNil "_watchPos" ) then {
+				_group setFormDir ((leader _group) getDir _watchPos);
+			};
+			
 			if ( count _targets > 0 ) then { 
 				_group setVariable ["SettargetTime", time];
 				private _units = (units _group) select { ! ( (_x getVariable ["assigned_target", objnull]) in _targets ) };
 				private _tanks = _targets select { (typeOf (vehicle _x)) isKindOf "Tank" };
 				private _otherVeh = _targets select { (vehicle _x) != _x };
 				private _orderedTargets = (_tanks + _otherVeh + _targets);
-				
-				{
-					_x setVariable ["assigned_target", objnull];
-				} forEach _units;
+				if ( !(_group getVariable ["CanEngageAirUnits", false]) ) then {
+					_orderedTargets = _orderedTargets select { !((typeOf (vehicle _x)) isKindOf "Air") };
+				};
 				
 				(vehicle _leader) setVariable ["assigned_target", objnull];
 				
 				if ( _leader == (vehicle _leader) ) then {
 					{
 						private _unit = _x;
-						{
-							_unit setVariable ["assigned_target", vehicle _unit ];
-						} forEach (  _orderedTargets select { !(terrainIntersectASL [eyePos _unit, aimPos _x]) } );
-					} forEach ( _units select { isNull (_x getVariable "assigned_target") } );
+						private _targets = _orderedTargets select { !(terrainIntersectASL [eyePos _unit, aimPos _x]) };
+						if ( count _targets > 0 ) then {
+							_unit setVariable ["assigned_target", vehicle (_targets # 0 ) ];
+						} else {
+							_unit setVariable ["assigned_target", objnull ];
+							_unit doWatch _watchPos;
+						};
+					} forEach ( _units select { isNull (_x getVariable ["assigned_target", objnull]) } );
 				} else {
 					
-					private _target = vehicle ( ( _tanks + _otherVeh + _targets ) # 0 );
+					private _target = vehicle ( _orderedTargets # 0 );
 					
 					if ( !(terrainIntersectASL [eyePos (gunner (vehicle _leader)), aimPos _target]) ) then {
 						(vehicle _leader) setVariable ["assigned_target",  _target];
@@ -610,22 +653,49 @@
 				};
 			};
 		};
+
+		private _shootStuff = true;
 		
-		{ 
-			private _unit = _x;
-			private _target = _x getVariable "assigned_target";
-			_unit doFire _target;
-		} forEach ( _units select {	!isNull (_x getVariable ["assigned_target", objnull]) } );
+		if ( count _commands > 0 && _group getVariable ["status", "Waiting"] == "OTM") then {
+			(_commands select 0) params ["_pos", "_type", "_behaviour", "_combat", "_form", "_speed"];
+			
+			
+			if ( ( _group getVariable ["status", "WAITING"] == "OTM" && speedMode _group != "LIMITED" ) && (vehicle (leader _group)) == (leader _group) ) then {
+				_shootStuff = false;
+			};
+			if ( !isNil "_speed" ) then {
+				// If dismounted only shoot when walking
+				if ( _speed != "LIMITED" && (vehicle (leader _group)) == (leader _group) ) then {
+					_shootStuff = false;
+				};
+			};			
+			
+		};
+		
+		if ( _shootStuff ) then {
+			{ 
+				private _unit = _x;
+				private _target = _x getVariable "assigned_target";
+				_unit doFire _target;
+			} forEach ( _units select {	!isNull (_x getVariable ["assigned_target", objnull]) } );
+		} else {
+			{
+				_x setVariable ["assigned_target", objnull];
+				_x doWatch (_group getVariable ["WatchPos", objnull]);
+			} forEach _units;
+		};
 		
 		if ( vehicle _leader != _leader ) then {
-			private _veh = vehicle _leader;
-			private _target = _veh getVariable ["assigned_target",objnull];
-			if ( !isNull _target ) then {
-				if ( (_veh aimedAtTarget [_target]) > 0 ) then {
-					_veh fireAtTarget [_target];
-				} else {
-					_veh doWatch _target;
-					(gunner _veh) doWatch _target;
+			if ( (group (driver (vehicle _leader))) == _group ) then {
+				private _veh = vehicle _leader;
+				private _target = _veh getVariable ["assigned_target",objnull];
+				if ( !isNull _target ) then {
+					if ( (_veh aimedAtTarget [_target]) > 0 ) then {
+						_veh fireAtTarget [_target];
+					} else {
+						_veh doWatch _target;
+						(gunner _veh) doWatch _target;
+					};
 				};
 			};
 		};
@@ -633,6 +703,7 @@
 	} else {
 		{
 			_x setVariable ["assigned_target", objnull];
+			_x doWatch (_group getVariable ["WatchPos", objnull]);
 		} forEach _units;
 	};
 	

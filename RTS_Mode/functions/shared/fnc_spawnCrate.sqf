@@ -6,6 +6,40 @@ switch ( _type ) do {
 	case "MEDICAL": {
 		_crate = "ACE_medicalSupplyCrate_advanced" createVehicle (_pos findEmptyPosition [2, 40, "ACE_medicalSupplyCrate_advanced"]);
 	};
+	case "CAR": {
+		private _veh = vehicle player;
+		clearWeaponCargoGlobal _crate;
+		clearMagazineCargoGlobal _crate;
+		clearItemCargoGlobal _crate;
+		clearBackpackCargoGlobal _crate;
+		
+		// populate crate with relevant ammunition
+		private _magazines = [];
+		private _launchers = [];
+		{
+			private _unit = _x;
+			private _mags = [];
+			{
+				_mags pushbackunique _x;
+			} forEach (magazines _unit);
+			{
+				_magazines pushback _x;
+			} forEach _mags;
+			{
+				private _weapon = _x;
+				if ( _weapon isKindOf "Launcher_Base_F" ) then {
+					_launchers pushbackunique _x;
+				};
+			} forEach (weapons player);
+		} forEach (units _group);
+		
+		{
+			_veh addMagazineCargoGlobal [ _x, 10 ];
+		} forEach _magazines;
+		{
+			_veh addWeaponCargoGlobal [ _x, 3 ];
+		} forEach _launchers;
+	};
 	case "AMMO": {
 		_crate = "CUP_BAF_BasicAmmunitionBox" createVehicle (_pos findEmptyPosition [2, 40, "CUP_BAF_BasicAmmunitionBox"]);
 		clearWeaponCargoGlobal _crate;

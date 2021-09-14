@@ -1,5 +1,5 @@
 #include "..\..\..\RTS_defines.hpp"
-params ["_group", "_description", "_commandelement", "_grouptexture", "_icon", "_exp", "_leaderfactor", ["_opticQuality",1], ["_thermals",false] ];
+params ["_group", "_description", "_commandelement", "_grouptexture", "_icon", "_exp", "_leaderfactor", "_opticQuality", "_thermals" ];
 
 if ( _group in RTS_commandingGroups ) exitWith {};
 
@@ -17,6 +17,14 @@ if ( !isNil "_leaderfactor" ) then {
 	_group setVariable [ "LeaderFactor", _leaderfactor ];
 };
 
+if ( isNil "_opticQuality" ) then {
+	_opticQuality = 1;
+};
+
+if ( isNil "_thermals" ) then {
+	_thermals = false;
+};
+
 [-1, 
 	{
 		params ["_group", "_icon"];
@@ -32,7 +40,7 @@ _group setVariable ["VCM_DisableForm",true];
 _group setVariable ["VCM_NORESCUE",true];
 _group setVariable ["VCM_TOUGHSQUAD",true];
 _group setVariable ["VCM_SkillDisable",true];
-_group setVariable ["VCM_DISABLE",false];
+_group setVariable ["VCM_DISABLE",true];
 
 if ( (vehicle (leader _group)) == (leader _group) ) then {
 	[_group, true] call RTS_fnc_autoCombat;
@@ -130,7 +138,7 @@ _group setVariable ["owned_vehicle",
 							} else { 
 								(units _group) allowGetIn false;
 								nil 
-							}, false];  // Group may own one vehicle if the leader is in said vehicle
+							}, true];  // Group may own one vehicle if the leader is in said vehicle
 
 [0, { params ["_obj", "_owner"]; _obj setGroupOwner _owner; }, [_group, clientOwner]] call CBA_fnc_globalExecute;
 
@@ -191,7 +199,6 @@ if !(isNil "_veh") then {
 				} forEach (units _group);
 			};
 		} else {
-			_group setCombatMode "RED";
 			{
 				if ( random 2 > 0.85 ) then {
 					_x suppressFor ( 5 + random 5 );
@@ -207,9 +214,6 @@ if !(isNil "_veh") then {
 			private _side = _unit getVariable ["HandleDamageSide", side _unit];
 			
 			if ( side _instigator != _side && !(_source isEqualTo "") ) then {	
-				if ( ( (getPos _instigator) distance (getPos _unit) ) < 175 ) then {
-					_group setCombatMode "RED";
-				};
 				{
 					if ( random 2 > 0.4 ) then {
 						_x doSuppressiveFire _source;
@@ -217,4 +221,6 @@ if !(isNil "_veh") then {
 				} forEach (units _group);
 			};
 	}];
+	_x call RTS_fnc_aiSkill;
 } forEach (units _group);
+

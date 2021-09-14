@@ -16,10 +16,15 @@ if ( vehicle (leader _group) == (leader _group) ) then {
 	private _veh = [_pos,[_pos, _candidates, 10, _cond] call CBA_fnc_getNearest] call CBA_fnc_getNearest;
 	
 	if ( !(isNil "_veh") ) then {
-		(units _group) allowGetIn true;
-		{
-			_x moveInCargo _veh;
-		} forEach (units _group);
+		
+		if ( !(isNull (driver _veh)) ) then {
+			if ( group (driver _veh) in RTS_commandingGroups ) then {
+				(units _group) allowGetIn true;
+				{
+					_x moveInCargo _veh;
+				} forEach (units _group);
+			};
+		};
 	};
 } else {
 	_vehicle = vehicle (leader _group);

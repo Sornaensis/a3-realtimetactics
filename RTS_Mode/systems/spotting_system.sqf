@@ -7,10 +7,35 @@ if ( !isNil "RTS_commanderUnit" ) then {
 	RTS_cmdr = RTS_commanderUnit;
 };
 
-RTS_opfor_units = allUnits select { simulationEnabled _x && _x != RTS_cmdr && side _x != civilian && !( (group _x) in RTS_commandingGroups ) };
+RTS_opfor_units = allUnits select { simulationEnabled _x && _x != RTS_cmdr && side (group _x) != civilian && !( (group _x) in RTS_commandingGroups ) };
+
+RTS_opforUpdate = time;
 
 RTS_revealSpotted = {
+	
+	private _nullIndex = RTS_commandingGroups findif { isNil "_x" || isNull _x || count ( (units _x) select { alive _x } ) == 0 };
+	while { _nullIndex != -1 } do {
+		private _deadgrp = RTS_commandingGroups select _nullIndex;
+		RTS_commandingGroups deleteAt _nullIndex;
+		if ( !isNil "_deadgrp" && !isNull _deadgrp ) then {
+			_deadgrp setVariable ["spotted",[]];
+			terminate (_deadgrp getVariable ["los_task",scriptNull]);
+			
+			{
+				terminate _x;
+			} forEach ( _group getVariable ["subscripts", []] );
+			deleteGroup _deadgrp;
+		};
+		_nullIndex = RTS_commandingGroups findif { isNil "_x" || isNull _x || count ( (units _x) select { alive _x } ) == 0 };
+	};
+	
 	RTS_cmdr = objnull;
+	
+	if ( time > RTS_opforUpdate + 1 ) then {
+		RTS_opfor_units = allUnits select { simulationEnabled _x && _x != RTS_cmdr && side (group _x) != civilian && !( (group _x) in RTS_commandingGroups ) };
+		RTS_opforUpdate = time;
+	};
+	
 	if ( !isNil "RTS_commanderUnit" ) then {
 		RTS_cmdr = RTS_commanderUnit;
 	};
@@ -25,9 +50,12 @@ RTS_revealSpotted = {
 			} forEach _spots;
 		} forEach (RTS_commandingGroups apply { _x getVariable ["spotted",[]] });
 		
+		// Hide units that were last spotted more than 3 seconds ago
 		{
-			(vehicle _x) hideObject true;
-			_x hideObject true;
+			if ( ((vehicle _x) getVariable ["last_spotted_time",0]) < time - 3 ) then {
+				(vehicle _x) hideObject true;
+				_x hideObject true;
+			};
 		} forEach _opfor;
 		
 		_opfor_vehicles = [];
@@ -49,22 +77,35 @@ RTS_revealSpotted = {
 		} forEach RTS_greenfor_vehicles;
 		RTS_greenfor_vehicles = _greenfor_vehicles; 
 	};
+	
+	call RTS_spottingLoop;
 };
 
 // OPFOR check if they are spotted
-RTS_spottingLoop = [] spawn {
-	while {true} do {
+RTS_spottingLoop = /*[] spawn*/ {
+	//while {true} do {
 		if ( RTS_commanding && !RTS_godseye ) then {
 			private _enemies = RTS_opfor_units;
 			{
 				private _grp = _x;
 				private _current = (_grp getVariable ["los_task", scriptNull]);
+				private _started = _grp getVariable ["los_task_started_at", time];
+				private _leader = leader _grp;
+				// cleanup unseen spots
+				{
+					private _spotted = _grp getVariable ["spotted", []];
+					_spotted deleteAt (_spotted find _enemy);
+				} forEach ( _enemies select { ((getPos _x) distance (getPos _leader)) >= _spotDistMax } );
+				if ( _started < time - 3 ) then {
+					terminate _current;
+				};
 				if ( scriptDone _current || isNull _current ) then {
+					_grp setVariable ["los_task_started_at", time];
 					private _script = ( [_grp,_enemies] spawn {
 						params ["_group", "_enemies" ];
 						private _leader = leader _group;
 						private _veh = vehicle _leader;
-						private _spotDistMax = ( if ( _veh isKindOf "TANK" ) then { 2000 } else { ( if ( _veh isKindOf "MAN" ) then { 1000 } else { 1500 } ) } );
+						private _spotDistMax = ( if ( _veh isKindOf "TANK" ) then { 3000 } else { ( if ( _veh isKindOf "MAN" ) then { 1000 } else { 1500 } ) } );
 						private _units = units _group;
 						private _spotters = [];
 						{
@@ -79,12 +120,14 @@ RTS_spottingLoop = [] spawn {
 								};
 							};
 				
-							private _near = _units select { !(terrainIntersectASL [eyePos _x, eyePos _enemy]) && (time - (_x getVariable ["last_spot",0])) > 8 };
+							private _near = ( 
+												if ( ( (getPos _enemy) distance (getPos _leader) ) < 220 ) 
+													then { _units } else { [_leader] } 
+											) select { !(terrainIntersectASL [eyePos _x, eyePos _enemy]) };
 							if ( count _near > 0 ) then {
 								{
 									_spotters pushbackunique _x;
 								} forEach _near;
-								(vehicle _enemy) setVariable ["spottedbyselectedgroup", grpnull];
 								[_enemy, _near] call RTS_fnc_spotting;
 							} else {
 								private _spotted = _group getVariable ["spotted", []];
@@ -94,13 +137,10 @@ RTS_spottingLoop = [] spawn {
 						{
 							_x setVariable ["last_spot", time];
 						} forEach _spotters;
-						if ( count _spotters > 0 ) then {
-							_group setVariable ["spotting_cycle_count", (_group getVariable ["spotting_cycle_count",0]) + 1 ];
-						};
 					});
 					_grp setVariable ["los_task", _script];
 				};
-			} forEach RTS_commandingGroups;
+			} forEach ( RTS_commandingGroups select { count ((units _x) select { alive _x }) > 0 } ) ;
 		} else {
 			{
 				(vehicle _x) hideObject false;
@@ -113,7 +153,7 @@ RTS_spottingLoop = [] spawn {
 				_x hideObject false;
 			} forEach ( RTS_greenfor_vehicles select { simulationEnabled _x } );
 		};
-	};
+	//};
 };
 
 RTS_reveal_deadMen = [] spawn {
@@ -122,8 +162,6 @@ RTS_reveal_deadMen = [] spawn {
 			_x hideObject false;
 			(vehicle _x) hideObject false;
 		} forEach allDeadMen;
-		
-		RTS_opfor_units = allUnits select { simulationEnabled _x && _x != RTS_cmdr && side _x != civilian && !( (group _x) in RTS_commandingGroups ) };
 		
 		sleep 5;
 	};
@@ -202,67 +240,44 @@ RTS_fnc_spotting = {
 		private _knowsAbout = (_x knowsAbout (vehicle _enemy)) max (_x knowsAbout _enemy);
 		private _veh = vehicle _x;
 		private _leader = _x == (leader (group _x));
-		private _canSpot = ( if ( _veh != _x ) then { !(driver _veh != _x && effectiveCommander _veh !=  _x && gunner _x != _x) } else { _leader || ( _distance < 600 ) } );
+		private _canSpot = ( if ( _veh != _x ) then { !(driver _veh != _x && effectiveCommander _veh !=  _x && gunner _x != _x) } else { _leader || ( (_distance < 220) || (random 1 < 0.01) ) } );
 		
 		if ( _distance < _spotDistMax && _canSpot ) then {
-	
-			private _infrontOf = 
-				( 
-					if ( (vehicle _x) == _x && (vehicle _enemy) == _enemy ) then { 
-						[vehicle _x, vehicle _enemy] call BIS_fnc_isInFrontOf
-					} else { true } );
-			
-			if ( _infrontOf || _distance < 250 ) then {
 				
-				private _spottingThreshold = (
-					if ( _distance < 150 ) then {
-						0.1
-					} else {
-						if ( _distance < 300 ) then {
-							0.3
-						} else {
-							if ( _distance < 500 ) then {
-								0.6
-							} else {
-								0.8
-							}
-						}
-					} ); 
-					
-				if ( _knowsAbout > 0.9 ) then {
-					private _visibility = ( if ( !(((_x targetKnowledge (vehicle _enemy)) select 6) isEqualTo [0,0,0]) ) then {
-												100 - (_x targetKnowledge (vehicle _enemy) select 5) 
-											} else { 
-												0 
-											} 
-										  );
-					if (_knowsAbout > 2 && _visibility > _spottingThreshold*0.6 ) then { 
-						_groups pushbackunique (group _x);
-					} else {
-						if ( _knowsAbout > 1.5 && _visibility > _spottingThreshold*0.9 ) then { 
-							_groups pushbackunique (group _x);
-						} else { 
-							if ( _knowsAbout > 1 && _visibility > _spottingThreshold ) then { 
-								_groups pushbackunique (group _x);
-							};
-						};
-					};
+			private _spottingThreshold = 5; 
+				
+			if ( _knowsAbout > 0.5 ) then {
+				private _visibility = ( if ( !(((_x targetKnowledge (vehicle _enemy)) select 6) isEqualTo [0,0,0]) ) then {
+											( ((_x targetKnowledge (vehicle _enemy)) select 6) distance _enemyPos ) 
+										} else { 
+											100 
+										} 
+									  );
+				if ( _visibility < _spottingThreshold && ((_x targetKnowledge (vehicle _enemy)) select 2) > (time - 10) ) then { 
+					_groups pushbackunique (group _x);
 				} else {
-					if ( (random 1.0) > 0.5 ) then {
+					if ( ( random 1.8 ) > 1.7 ) then {
 						private _visibility = [vehicle _x, "VIEW", vehicle _enemy] checkVisibility [_xPos, _enemyPos];		
 						if ( _visibility > 0.9 ) then {
-							private _unitCoeff = [_x, _distance] call RTS_spottingCoeff;
-							private _spotCoeff = selectRandom [0.1,0.2,0.5,0.2,0.1,0.1,0.1,0.3,0.5,0.3];
-							private _speedCoeff = 1 max (speed (vehicle _enemy));
-							private _enemyCoeff = [_enemy] call RTS_enemyCoeff;
-							_x setVariable ["last_spotted_info", [ "unit", _unitCoeff, 
-																   "spot", _spotCoeff, 
-																   "speed", _speedCoeff, 
-																   "enemy", _enemyCoeff, 
-																   "total", (_unitCoeff * _spotCoeff * _speedCoeff * _enemyCoeff)
-																   ] ];
-							(group _x) reveal [ (vehicle _enemy), _knowsAbout + (_unitCoeff * _spotCoeff * _speedCoeff * _enemyCoeff)  ];
+							_groups pushbackunique (group _x);
 						};
+					};
+				};
+			} else {
+				if ( (random 1.0) < 0.13 ) then {
+					private _visibility = [vehicle _x, "VIEW", vehicle _enemy] checkVisibility [_xPos, _enemyPos];		
+					if ( _visibility > 0.9 ) then {
+						private _unitCoeff = [_x, _distance] call RTS_spottingCoeff;
+						private _spotCoeff = selectRandom [0.1,0.2,0.5,0.2,0.1,0.1,0.1,0.3,0.5,0.3];
+						private _speedCoeff = 1 max (speed (vehicle _enemy));
+						private _enemyCoeff = [_enemy] call RTS_enemyCoeff;
+						/*_x setVariable ["last_spotted_info", [ "unit", _unitCoeff, 
+															   "spot", _spotCoeff, 
+															   "speed", _speedCoeff, 
+															   "enemy", _enemyCoeff, 
+															   "total", (_unitCoeff * _spotCoeff * _speedCoeff * _enemyCoeff)
+															   ] ];*/
+						(group _x) reveal [ (vehicle _enemy), _knowsAbout + (_unitCoeff * _spotCoeff * _speedCoeff * _enemyCoeff)  ];
 					};
 				};
 			};
@@ -276,6 +291,11 @@ RTS_fnc_spotting = {
 		_spotted pushBackUnique _enemy;
 		_group setVariable ["spotted", _spotted];
 	} forEach _groups;
+	
+	if ( count _groups > 0 ) then {
+		(vehicle _enemy) setVariable ["last_spotted_time", time];
+		_enemy setVariable ["last_spotted_time", time];
+	};
 	
 	{
 		private _group = group _x;

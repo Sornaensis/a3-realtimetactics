@@ -18,7 +18,7 @@ for "_i" from 0 to 100 do {
 INS_controlAreas = []; // format:
 						/*
 						 * [ name, marker name,
-						 *   [ side allegiance value, manpower value, material value, blufor aggression ]
+						 *   [ side allegiance value, manpower value, material value, blufor aggression, blufor intel ]
 						 * ]
 						 *
 						 * Side Allegiance:
@@ -32,18 +32,17 @@ INS_controlAreas = []; // format:
 						 */
 
 private _areas = count INS_areaMarkers;
-private _greenforLight = floor (_areas * 0.3);
-private _greenforHeavy = floor (_areas * 0.2);
-private _opforLight = floor (_areas * 0.3);
-private _opforHeavy = floor (_areas * 0.2);
+private _greenforLight = floor (_areas * 0.4);
+private _greenforHeavy = floor (_areas * 0.4);
+private _opforHeavy = ceil (_areas * 0.2);
 
-private _leftover = _areas - (_greenforLight + _greenforHeavy + _opforLight + _opforHeavy);
+private _leftover = _areas - (_greenforLight + _greenforHeavy + _opforHeavy);
 
 if ( _leftover > 0 ) then {
-	_opforHeavy = _opforHeavy + _leftover;
+	_greenforLight = _greenforLight + _leftover;
 };
 
-private _zoneSetups = ["GLIGHT","GHEAVY","OLIGHT","OHEAVY"];
+private _zoneSetups = ["GLIGHT","GHEAVY","OHEAVY"];
 
 // Create control areas
 {
@@ -54,19 +53,12 @@ private _zoneSetups = ["GLIGHT","GHEAVY","OLIGHT","OHEAVY"];
 	private _allegiance = 0;
 	
 	switch ( _zoneType ) do {
-		case "OLIGHT": {
-			_opforLight = _opforLight - 1;
-			if ( _opforLight == 0 ) then {
-				_zoneSetups deleteAt (_zoneSetups find "OLIGHT");
-			};
-			_allegiance = random [-50,-40,-25];
-		};
 		case "OHEAVY": {
 			_opforHeavy = _opforHeavy - 1;
 			if ( _opforHeavy == 0 ) then {
 				_zoneSetups deleteAt (_zoneSetups find "OHEAVY");
 			};
-			_allegiance = random [-100,-80,-51];
+			_allegiance = random [-100,-80,-75];
 		};
 		case "GLIGHT": {
 			_greenforLight = _greenforLight - 1;
@@ -100,7 +92,7 @@ private _zoneSetups = ["GLIGHT","GHEAVY","OLIGHT","OHEAVY"];
 	
 	private _roads = ((getMarkerPos _marker) nearRoads (_mx max _my)) select { _x inArea _marker };
 	
-	INS_controlAreas pushback [text _location, _marker, [_allegiance,floor ((count _buildings)/3),floor ((count _roads)/2),0]];
+	INS_controlAreas pushback [text _location, _marker, [_allegiance,floor ((count _buildings)/3),floor ((count _roads)/2),0, random 15]];
 	
 } forEach INS_areaMarkers;
 
@@ -144,6 +136,9 @@ private _excl = (selectRandom _nearestThree) select 0;
 	private _disp = random [52, 60, 90];
 	(_zone select 2) set [0, _disp];
 } forEach _nearestThree;
+
+// Setup zones however the mission designer wants them
+[] call (compile preprocessFileLineNumbers "mission_specific_zone_setups.sqf");
 
 // Static verification
 INS_areaCount = count INS_controlAreas;

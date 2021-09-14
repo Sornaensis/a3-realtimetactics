@@ -21,7 +21,7 @@ if ( _group in RTS_commandingGroups ) then {
 				terminate _x;
 			} forEach ( _group getVariable ["subscripts", []]);
 			
-			if ( vehicle (leader _group) == (leader _group) ) then {
+			if ( vehicle (leader _group) == (leader _group) && ( count _tempcommands == 0 ) ) then {
 				[_group, getPos (leader _group)] call RTS_fnc_addMoveCommand;
 			};
 			
