@@ -727,7 +727,6 @@ INS_currentMissionName = { format ["blufor_task_%1",INS_currentMission] };
 
 INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 	{
-		
 		{
 			private _unit = _x;
 			private _pos = getPos _x;
@@ -739,8 +738,8 @@ INS_missionMonitor = addMissionEventHandler [ "EachFrame",
 					deleteVehicle _unit;
 				};
 			} forEach RTS_restrictionZone;
-		} forEach ( allUnits select { (side (group _x)) == east && !(captive _x) && !(_x getVariable ["cqb_soldier", false]) } );
-	
+		} forEach ( allUnits select { (side (group _x)) == east && !(captive _x) && !(_x getVariable ["cqb_soldier", false]) } );	
+		
 		if ( INS_bluforMission == "NONE" ) then {
 			// Setup aid delivery mission
 			

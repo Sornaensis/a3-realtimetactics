@@ -1,14 +1,16 @@
 INS_cqbStarted = false;
 publicVariable "INS_cqbStarted";
 
-INS_cqbArea = "CQB Zone";
+INS_cqbArea = "cqb_area";
 publicVariable "INS_cqbArea";
 INS_cqbStarting = false;
 
+//INS_cqbArea setMarkerAlpha 0;
+
 /** Server Setting **/
 INS_cqbMinimum = 10;
-INS_cqbUseArea = false;
-INS_cqbDensity = [true,0.25,false,0.75]; // 45% of positions will have a soldier
+INS_cqbUseArea = true;
+INS_cqbDensity = [true,0.45,false,0.55]; // 45% of positions will have a soldier
 INS_civChance  = [0,0.9,1,0.1]; // 1 in 5 are civ
 
 /** Client Editable Setting **/
@@ -16,6 +18,19 @@ INS_civilians = false;
 publicVariable "INS_civilians";
 INS_shootBack = false;
 publicVariable "INS_shootBack";
+
+if ( INS_cqbUseArea ) then {
+	(getMarkerSize INS_cqbArea) params ["_mx","_my"];
+	private _markerSize = _mx max _my;
+	private _pos = getMarkerPos INS_cqbArea;
+	
+	private _buildings = _pos nearObjects ["House",_markerSize];
+	{
+		if ( (getPos _x) inArea INS_cqbArea ) then {
+			_x allowDamage false;
+		};
+	} forEach _buildings;
+};
 
 INS_getCqbSoldiersAlive = {
 	(allUnits) select { (alive _x) && (_x getVariable ["cqb_soldier", false]) };

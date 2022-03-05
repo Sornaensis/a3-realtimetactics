@@ -889,6 +889,24 @@ if ( side player == west ) then {
 		""
 	];
 	
+	cqb_flag addAction [
+		"Deploy to Airbase",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			(vehicle player) setPosATL ((getPos base_flag) findEmptyPosition [2, 50, typeOf (vehicle player)]);
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"true",
+		5,
+		false,
+		"",
+		""
+	];
+	
 	// TP
 	base_flag addAction [
 		"Deploy to FOB",
@@ -902,6 +920,25 @@ if ( side player == west ) then {
 		true,
 		"",
 		"INS_fobDeployed && count ([fob_flag, allUnits select { side (group _x) != civilian && side (group _x) != west }, 500] call CBA_fnc_getNearest) == 0",
+		10,
+		false,
+		"",
+		""
+	];
+	
+	// TP
+	base_flag addAction [
+		"Travel to CQB",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			(vehicle player) setPosATL ((getPos cqb_flag) findEmptyPosition [2, 50, typeOf (vehicle player)]);
+		},
+		nil,
+		1.5,
+		true,
+		true,
+		"",
+		"true",
 		10,
 		false,
 		"",
